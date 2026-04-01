@@ -189,13 +189,13 @@ export default function Index() {
               className="text-4xl md:text-6xl font-display font-bold gradient-text mb-4 animate-slide-up-fade drop-shadow-lg"
               style={{ animationDelay: "0.15s" }}
             >
-              Where to next?
+              {t.heading}
             </h2>
             <p
               className="text-foreground/70 mb-12 max-w-md text-base animate-slide-up-fade"
               style={{ animationDelay: "0.3s" }}
             >
-              Plan trips anywhere in the world — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
+              {t.subtitle}
             </p>
 
             {locationLabel && !geoLoading && (
