@@ -108,19 +108,19 @@ export default function Index() {
           <div className="flex flex-col items-center justify-center h-full px-4 text-center">
             {/* Hero */}
             <div
-              className="mb-8 opacity-0 animate-slide-up-fade"
+              className="mb-8 animate-slide-up-fade"
               style={{ animationDelay: "0s" }}
             >
               <Logo size={80} />
             </div>
             <h2
-              className="text-4xl md:text-6xl font-display font-bold gradient-text mb-4 opacity-0 animate-slide-up-fade drop-shadow-lg"
+              className="text-4xl md:text-6xl font-display font-bold gradient-text mb-4 animate-slide-up-fade drop-shadow-lg"
               style={{ animationDelay: "0.15s" }}
             >
               Where to next?
             </h2>
             <p
-              className="text-foreground/70 mb-12 max-w-md text-base opacity-0 animate-slide-up-fade"
+              className="text-foreground/70 mb-12 max-w-md text-base animate-slide-up-fade"
               style={{ animationDelay: "0.3s" }}
             >
               Plan trips anywhere in the world — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
@@ -128,7 +128,7 @@ export default function Index() {
 
             {/* Location label */}
             {locationLabel && !geoLoading && (
-              <p className="text-sm text-primary/80 mb-4 opacity-0 animate-slide-up-fade" style={{ animationDelay: "0.35s" }}>
+              <p className="text-sm text-primary/80 mb-4 animate-slide-up-fade" style={{ animationDelay: "0.35s" }}>
                 📍 {locationLabel}
               </p>
             )}
@@ -143,7 +143,7 @@ export default function Index() {
                     <button
                       key={prompt.text}
                       onClick={() => sendMessage(prompt.text)}
-                      className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 opacity-0 animate-slide-up-fade"
+                      className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 animate-slide-up-fade"
                       style={{ animationDelay: `${0.4 + i * 0.1}s` }}
                     >
                       <div className="flex items-start gap-3">

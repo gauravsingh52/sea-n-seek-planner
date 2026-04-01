@@ -11,39 +11,91 @@ export type Message = {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 function parseItineraryJson(text: string): ItineraryData | null {
-  const marker = "```itinerary-json";
-  const startIdx = text.indexOf(marker);
-  if (startIdx === -1) return null;
+  // Try multiple marker formats
+  const markers = ["```itinerary-json", "```json"];
+  
+  for (const marker of markers) {
+    const startIdx = text.indexOf(marker);
+    if (startIdx === -1) continue;
 
-  const jsonStart = text.indexOf("\n", startIdx) + 1;
-  const endIdx = text.indexOf("```", jsonStart);
-  if (endIdx === -1) return null;
+    const jsonStart = text.indexOf("\n", startIdx) + 1;
+    // Find closing ``` after the json content
+    const endIdx = text.indexOf("```", jsonStart);
+    if (endIdx === -1) continue;
 
+    try {
+      const jsonStr = text.slice(jsonStart, endIdx).trim();
+      const raw = JSON.parse(jsonStr);
+      if (raw && Array.isArray(raw.legs)) {
+        return {
+          legs: raw.legs.map((leg: any, i: number) => ({
+            id: leg.id || `leg-${i}`,
+            type: leg.type || "activity",
+            title: leg.title || "",
+            description: leg.description || "",
+            from: leg.from,
+            to: leg.to,
+            fromCoords: leg.fromCoords,
+            toCoords: leg.toCoords,
+            time: leg.time,
+            cost: Number(leg.cost) || 0,
+            icon: leg.icon,
+          })),
+          totalCost: Number(raw.totalCost) || 0,
+          currency: raw.currency || "EUR",
+          title: raw.title,
+        };
+      }
+    } catch {
+      // try next marker
+    }
+  }
+
+  // Last resort: try to find raw JSON with "legs" array anywhere
   try {
-    const raw = JSON.parse(text.slice(jsonStart, endIdx).trim());
-    if (raw && Array.isArray(raw.legs)) {
-      return {
-        legs: raw.legs.map((leg: any, i: number) => ({
-          id: leg.id || `leg-${i}`,
-          type: leg.type || "activity",
-          title: leg.title || "",
-          description: leg.description || "",
-          from: leg.from,
-          to: leg.to,
-          fromCoords: leg.fromCoords,
-          toCoords: leg.toCoords,
-          time: leg.time,
-          cost: Number(leg.cost) || 0,
-          icon: leg.icon,
-        })),
-        totalCost: Number(raw.totalCost) || 0,
-        currency: raw.currency || "EUR",
-        title: raw.title,
-      };
+    const legsIdx = text.indexOf('"legs"');
+    if (legsIdx !== -1) {
+      // Find the opening { before "legs"
+      let braceStart = text.lastIndexOf("{", legsIdx);
+      if (braceStart !== -1) {
+        let depth = 0;
+        let braceEnd = -1;
+        for (let i = braceStart; i < text.length; i++) {
+          if (text[i] === "{") depth++;
+          else if (text[i] === "}") {
+            depth--;
+            if (depth === 0) { braceEnd = i + 1; break; }
+          }
+        }
+        if (braceEnd !== -1) {
+          const raw = JSON.parse(text.slice(braceStart, braceEnd));
+          if (raw && Array.isArray(raw.legs) && raw.legs.length > 0) {
+            return {
+              legs: raw.legs.map((leg: any, i: number) => ({
+                id: leg.id || `leg-${i}`,
+                type: leg.type || "activity",
+                title: leg.title || "",
+                description: leg.description || "",
+                from: leg.from,
+                to: leg.to,
+                fromCoords: leg.fromCoords,
+                toCoords: leg.toCoords,
+                time: leg.time,
+                cost: Number(leg.cost) || 0,
+                icon: leg.icon,
+              })),
+              totalCost: Number(raw.totalCost) || 0,
+              currency: raw.currency || "EUR",
+              title: raw.title,
+            };
+          }
+        }
+      }
     }
   } catch {
-    // ignore parse errors
+    // ignore
   }
+  
   return null;
 }
 
