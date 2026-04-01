@@ -151,7 +151,8 @@ export default function Itinerary() {
             <div className="max-w-3xl mx-auto space-y-4 pt-2">
               {itinerary.legs.map((leg, i) => {
                 const Icon = getIcon(leg);
-                const symbol = itinerary.currency === "GBP" ? "£" : itinerary.currency === "USD" ? "$" : "€";
+                const currencySymbols: Record<string, string> = { INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥", THB: "฿", AUD: "A$" };
+                const symbol = currencySymbols[itinerary.currency] || itinerary.currency;
                 const borderColor = legColors[leg.type] || "border-l-primary";
                 const iconBg = legIconBg[leg.type] || "bg-primary/15 text-primary";
                 return (

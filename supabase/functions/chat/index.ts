@@ -89,8 +89,8 @@ The format MUST be exactly:
 \`\`\`itinerary-json
 {
   "title": "Trip title",
-  "currency": "EUR",
-  "totalCost": 250,
+  "currency": "INR",
+  "totalCost": 5500,
   "legs": [
     {
       "type": "transport",
