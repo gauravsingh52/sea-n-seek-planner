@@ -70,6 +70,66 @@ const COUNTRY_PROMPTS: Record<string, GeoSuggestion[]> = {
     { icon: Ship, text: "Corsica ferry from Nice with coastal village tour" },
     { icon: Palmtree, text: "Provence lavender fields and wine tasting trip" },
   ],
+  IT: [
+    { icon: Train, text: "High-speed Frecciarossa from Rome to Florence" },
+    { icon: Car, text: "Amalfi Coast road trip from Naples to Positano" },
+    { icon: Ship, text: "Venice to Croatian coast ferry adventure" },
+    { icon: Palmtree, text: "Tuscany wine country cycling tour" },
+  ],
+  ES: [
+    { icon: Train, text: "AVE high-speed train from Madrid to Barcelona" },
+    { icon: Car, text: "Andalusia road trip: Seville → Granada → Málaga" },
+    { icon: Ship, text: "Ibiza and Mallorca island-hopping ferry trip" },
+    { icon: Palmtree, text: "Camino de Santiago walking pilgrimage" },
+  ],
+  CA: [
+    { icon: Car, text: "Icefields Parkway drive from Banff to Jasper" },
+    { icon: Train, text: "Rocky Mountaineer scenic rail from Vancouver to Banff" },
+    { icon: Palmtree, text: "Whistler adventure getaway with skiing and hiking" },
+    { icon: Ship, text: "BC Ferries to Vancouver Island and Tofino" },
+  ],
+  BR: [
+    { icon: Car, text: "Rio to Paraty coastal road trip with beach stops" },
+    { icon: Palmtree, text: "Fernando de Noronha island paradise trip" },
+    { icon: Ship, text: "Amazon river cruise from Manaus" },
+    { icon: Train, text: "Serra Verde Express through Atlantic rainforest" },
+  ],
+  MX: [
+    { icon: Car, text: "Yucatán road trip: Cancún → Tulum → Mérida" },
+    { icon: Palmtree, text: "Oaxaca food and mezcal cultural tour" },
+    { icon: Ship, text: "Baja California whale watching cruise" },
+    { icon: Train, text: "Copper Canyon Chepe train through Sierra Madre" },
+  ],
+  KR: [
+    { icon: Train, text: "KTX from Seoul to Busan with temple stays" },
+    { icon: Car, text: "Jeju Island scenic road trip around the coast" },
+    { icon: Palmtree, text: "Gyeongju ancient capital and cherry blossoms" },
+    { icon: Ship, text: "Island hopping in the South Sea near Tongyeong" },
+  ],
+  NZ: [
+    { icon: Car, text: "South Island road trip: Queenstown to Milford Sound" },
+    { icon: Palmtree, text: "Bay of Islands sailing and dolphin swimming" },
+    { icon: Train, text: "TranzAlpine rail across the Southern Alps" },
+    { icon: Ship, text: "Interislander ferry between North and South Island" },
+  ],
+  EG: [
+    { icon: Ship, text: "Nile cruise from Luxor to Aswan with temple visits" },
+    { icon: Car, text: "Red Sea diving road trip: Hurghada to Marsa Alam" },
+    { icon: Palmtree, text: "Siwa Oasis desert adventure from Cairo" },
+    { icon: Train, text: "Cairo to Alexandria Mediterranean express" },
+  ],
+  TR: [
+    { icon: Car, text: "Turquoise Coast road trip: Antalya → Fethiye → Bodrum" },
+    { icon: Palmtree, text: "Cappadocia hot air balloon and cave hotel stay" },
+    { icon: Ship, text: "Bosphorus cruise and Istanbul old city walking tour" },
+    { icon: Train, text: "Eastern Express from Ankara to Kars in winter" },
+  ],
+  ZA: [
+    { icon: Car, text: "Garden Route drive from Cape Town to Port Elizabeth" },
+    { icon: Palmtree, text: "Kruger National Park safari adventure" },
+    { icon: Ship, text: "Cape Town harbour cruise to Robben Island" },
+    { icon: Train, text: "Blue Train luxury journey from Pretoria to Cape Town" },
+  ],
 };
 
 const REGION_PROMPTS: Record<string, GeoSuggestion[]> = {

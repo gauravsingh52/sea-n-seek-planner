@@ -21,6 +21,7 @@ import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useGeoSuggestions } from "@/hooks/useGeoSuggestions";
+import { useSmartSuggestions } from "@/hooks/useSmartSuggestions";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useChatHistory } from "@/hooks/useChatHistory";
