@@ -42,7 +42,7 @@ function parseItineraryJson(text: string): ItineraryData | null {
             icon: leg.icon,
           })),
           totalCost: Number(raw.totalCost) || 0,
-          currency: raw.currency || "EUR",
+          currency: raw.currency || "",
           title: raw.title,
         };
       }
@@ -85,7 +85,7 @@ function parseItineraryJson(text: string): ItineraryData | null {
                 icon: leg.icon,
               })),
               totalCost: Number(raw.totalCost) || 0,
-              currency: raw.currency || "EUR",
+              currency: raw.currency || "",
               title: raw.title,
             };
           }
