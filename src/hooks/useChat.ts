@@ -35,6 +35,7 @@ function mapItinerary(raw: any): ItineraryData & { followUpSuggestions?: string[
     nights: raw.nights,
     packingList: Array.isArray(raw.packingList) ? raw.packingList : undefined,
     followUpSuggestions: Array.isArray(raw.followUpSuggestions) ? raw.followUpSuggestions : undefined,
+    emergencyInfo: raw.emergencyInfo || undefined,
   };
 }
 
