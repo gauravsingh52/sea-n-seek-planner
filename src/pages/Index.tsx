@@ -1,16 +1,134 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Send, Anchor, Trash2, Map } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChatMessage } from "@/components/ChatMessage";
+import { WaveLoader } from "@/components/WaveLoader";
+import { useChat } from "@/hooks/useChat";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const QUICK_PROMPTS = [
+  "Plan a ferry trip from Dover to Calais for 2 adults next weekend",
+  "Find cheap ferries to Ireland in June",
+  "Compare ferry routes from UK to Netherlands",
+  "Plan a Mediterranean island-hopping trip by boat",
+];
+
+export default function Index() {
+  const [input, setInput] = useState("");
+  const { messages, isLoading, sendMessage, clearChat } = useChat();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    sendMessage(input.trim());
+    setInput("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  const hasMessages = messages.length > 0;
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="flex flex-col h-screen bg-background">
+      {/* Header */}
+      <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-border bg-card/80 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-lg ocean-gradient flex items-center justify-center">
+            <Anchor className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="text-lg font-display font-bold text-foreground leading-none">BoatTrip Planner</h1>
+            <p className="text-xs text-muted-foreground">AI-powered ferry travel planning</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {hasMessages && (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/itinerary")}>
+                <Map className="w-4 h-4 mr-1" /> Itinerary
+              </Button>
+              <Button variant="ghost" size="icon" onClick={clearChat} title="New chat">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* Chat area */}
+      <div className="flex-1 overflow-hidden">
+        {!hasMessages ? (
+          /* Welcome screen */
+          <div className="flex flex-col items-center justify-center h-full px-4 text-center">
+            <div className="w-16 h-16 rounded-2xl ocean-gradient flex items-center justify-center mb-6">
+              <Anchor className="w-8 h-8 text-primary-foreground" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">
+              Where shall we sail?
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-md">
+              Plan ferry trips, compare routes &amp; prices, find hotels near ports, and build complete travel itineraries.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
+              {QUICK_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => sendMessage(prompt)}
+                  className="text-left px-4 py-3 rounded-xl border border-border bg-card hover:bg-secondary/60 transition-colors text-sm text-foreground"
+                >
+                  ⛴️ {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <ScrollArea className="h-full" ref={scrollRef}>
+            <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+              {messages.map((msg) => (
+                <ChatMessage key={msg.id} message={msg} />
+              ))}
+              {isLoading && messages[messages.length - 1]?.role !== "assistant" && <WaveLoader />}
+            </div>
+          </ScrollArea>
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="border-t border-border bg-card/80 backdrop-blur-sm p-3 md:p-4">
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask about ferry routes, hotels, or plan a trip..."
+            rows={1}
+            className="flex-1 resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            disabled={isLoading}
+          />
+          <Button type="submit" size="icon" className="rounded-xl h-[46px] w-[46px]" disabled={!input.trim() || isLoading}>
+            <Send className="w-4 h-4" />
+          </Button>
+        </form>
+        <p className="text-center text-xs text-muted-foreground mt-2">
+          Prices are AI-generated estimates. Always verify with ferry operators before booking.
+        </p>
+      </div>
     </div>
   );
-};
-
-const Index = PlaceholderIndex;
-
-export default Index;
+}
