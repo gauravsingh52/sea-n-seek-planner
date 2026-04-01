@@ -281,6 +281,8 @@ export default function Index() {
           onDelete={deleteSession}
           onClearAll={clearHistory}
           trigger={<span className="hidden" />}
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
         />
       </div>
     </div>

@@ -203,8 +203,14 @@ serve(async (req) => {
         const langName = langMap[settings.language] || settings.language;
         parts.push(`IMPORTANT: You MUST respond ENTIRELY in ${langName}. All headings, descriptions, tips, suggestions, and the followUpSuggestions array values must be in ${langName}. Do NOT mix languages.`);
       }
-      if (parts.length > 0) {
-        contextMsg = `\n\n[Trip Context: ${parts.join(", ")}]`;
+      // Extract language override separately
+      const langPart = parts.find(p => p.startsWith("IMPORTANT:"));
+      const otherParts = parts.filter(p => !p.startsWith("IMPORTANT:"));
+      if (otherParts.length > 0) {
+        contextMsg = `\n\n[Trip Context: ${otherParts.join(", ")}]`;
+      }
+      if (langPart) {
+        contextMsg += `\n\n${langPart}`;
       }
     }
 
