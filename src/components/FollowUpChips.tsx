@@ -8,7 +8,7 @@ interface FollowUpChipsProps {
 
 const DEFAULT_FOLLOW_UPS = [
   "Show cheaper alternatives",
-  "Add hotel recommendations",
+  "Compare 3 different options",
   "What should I pack?",
 ];
 
