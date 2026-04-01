@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import type { ItineraryData } from "@/types/itinerary";
+import { playMessageSound } from "@/hooks/useMessageSound";
 
 export type Message = {
   id: string;
