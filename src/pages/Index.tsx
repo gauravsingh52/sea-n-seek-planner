@@ -15,6 +15,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { MobileNav } from "@/components/MobileNav";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { ChatHistory } from "@/components/ChatHistory";
+import { TripComparison } from "@/components/TripComparison";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
@@ -50,7 +51,7 @@ export default function Index() {
     language: navigator.language?.slice(0, 2) || "en",
   });
   const [historyOpen, setHistoryOpen] = useState(false);
-  const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, followUpSuggestions } = useChat();
+  const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions } = useChat();
   const { setItinerary } = useTrip();
   const { suggestions, locationLabel, isLoading: geoLoading } = useGeoSuggestions();
   const { count: savedCount } = useSavedTrips();
@@ -222,10 +223,18 @@ export default function Index() {
                 ))}
                 {isLoading && messages[messages.length - 1]?.role !== "assistant" && <WaveLoader />}
                 {showFollowUps && (
-                  <FollowUpChips
-                    suggestions={followUpSuggestions}
-                    onSelect={(text) => sendMessage(text, tripSettings)}
-                    disabled={isLoading}
+                  <>
+                    <FollowUpChips
+                      suggestions={followUpSuggestions}
+                      onSelect={(text) => sendMessage(text, tripSettings)}
+                      disabled={isLoading}
+                    />
+                  </>
+                )}
+                {comparisonItineraries.length > 1 && (
+                  <TripComparison
+                    itineraries={comparisonItineraries}
+                    onSelect={(it) => { setItinerary(it); navigate("/itinerary"); }}
                   />
                 )}
               </div>
@@ -237,11 +246,9 @@ export default function Index() {
 
       {/* Input area */}
       <div className="relative z-10 p-3 md:p-4 mb-14 md:mb-0">
-        {hasMessages && (
-          <div className="max-w-3xl mx-auto mb-2">
-            <TripSettings settings={tripSettings} onChange={setTripSettings} />
-          </div>
-        )}
+        <div className="max-w-3xl mx-auto mb-2">
+          <TripSettings settings={tripSettings} onChange={setTripSettings} />
+        </div>
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
           <div className="flex-1 relative group">
             <textarea
@@ -283,6 +290,8 @@ export default function Index() {
           onDelete={deleteSession}
           onClearAll={clearHistory}
           trigger={<span className="hidden" />}
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
         />
       </div>
     </div>

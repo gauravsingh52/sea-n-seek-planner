@@ -12,42 +12,6 @@ export type Message = {
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
-function parseItineraryJson(text: string): (ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] }) | null {
-  const markers = ["```itinerary-json", "```json"];
-  
-  for (const marker of markers) {
-    const startIdx = text.indexOf(marker);
-    if (startIdx === -1) continue;
-    const jsonStart = text.indexOf("\n", startIdx) + 1;
-    const endIdx = text.indexOf("```", jsonStart);
-    if (endIdx === -1) continue;
-    try {
-      const raw = JSON.parse(text.slice(jsonStart, endIdx).trim());
-      if (raw && Array.isArray(raw.legs)) return mapItinerary(raw);
-    } catch { /* try next */ }
-  }
-
-  try {
-    const legsIdx = text.indexOf('"legs"');
-    if (legsIdx !== -1) {
-      let braceStart = text.lastIndexOf("{", legsIdx);
-      if (braceStart !== -1) {
-        let depth = 0, braceEnd = -1;
-        for (let i = braceStart; i < text.length; i++) {
-          if (text[i] === "{") depth++;
-          else if (text[i] === "}") { depth--; if (depth === 0) { braceEnd = i + 1; break; } }
-        }
-        if (braceEnd !== -1) {
-          const raw = JSON.parse(text.slice(braceStart, braceEnd));
-          if (raw && Array.isArray(raw.legs) && raw.legs.length > 0) return mapItinerary(raw);
-        }
-      }
-    }
-  } catch { /* ignore */ }
-  
-  return null;
-}
-
 function mapItinerary(raw: any): ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] } {
   return {
     legs: raw.legs.map((leg: any, i: number) => ({
@@ -74,19 +38,72 @@ function mapItinerary(raw: any): ItineraryData & { followUpSuggestions?: string[
   };
 }
 
-function stripItineraryBlock(text: string): string {
-  const marker = "```itinerary-json";
-  const startIdx = text.indexOf(marker);
-  if (startIdx === -1) return text;
-  const endIdx = text.indexOf("```", startIdx + marker.length);
-  if (endIdx === -1) return text;
-  return (text.slice(0, startIdx) + text.slice(endIdx + 3)).trim();
+function parseAllItineraryBlocks(text: string): (ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] })[] {
+  const results: (ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] })[] = [];
+  const markers = ["```itinerary-json", "```json"];
+
+  for (const marker of markers) {
+    let searchFrom = 0;
+    while (true) {
+      const startIdx = text.indexOf(marker, searchFrom);
+      if (startIdx === -1) break;
+      const jsonStart = text.indexOf("\n", startIdx) + 1;
+      const endIdx = text.indexOf("```", jsonStart);
+      if (endIdx === -1) break;
+      try {
+        const raw = JSON.parse(text.slice(jsonStart, endIdx).trim());
+        if (raw && Array.isArray(raw.legs) && raw.legs.length > 0) {
+          results.push(mapItinerary(raw));
+        }
+      } catch { /* skip invalid */ }
+      searchFrom = endIdx + 3;
+    }
+  }
+
+  // Fallback: try to find a raw JSON object with "legs"
+  if (results.length === 0) {
+    try {
+      const legsIdx = text.indexOf('"legs"');
+      if (legsIdx !== -1) {
+        let braceStart = text.lastIndexOf("{", legsIdx);
+        if (braceStart !== -1) {
+          let depth = 0, braceEnd = -1;
+          for (let i = braceStart; i < text.length; i++) {
+            if (text[i] === "{") depth++;
+            else if (text[i] === "}") { depth--; if (depth === 0) { braceEnd = i + 1; break; } }
+          }
+          if (braceEnd !== -1) {
+            const raw = JSON.parse(text.slice(braceStart, braceEnd));
+            if (raw && Array.isArray(raw.legs) && raw.legs.length > 0) results.push(mapItinerary(raw));
+          }
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  return results;
+}
+
+function stripItineraryBlocks(text: string): string {
+  let result = text;
+  const markers = ["```itinerary-json", "```json"];
+  for (const marker of markers) {
+    while (true) {
+      const startIdx = result.indexOf(marker);
+      if (startIdx === -1) break;
+      const endIdx = result.indexOf("```", startIdx + marker.length);
+      if (endIdx === -1) break;
+      result = (result.slice(0, startIdx) + result.slice(endIdx + 3)).trim();
+    }
+  }
+  return result;
 }
 
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [latestItinerary, setLatestItinerary] = useState<ItineraryData | null>(null);
+  const [comparisonItineraries, setComparisonItineraries] = useState<ItineraryData[]>([]);
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [packingList, setPackingList] = useState<string[]>([]);
 
@@ -96,6 +113,7 @@ export function useChat() {
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     setFollowUpSuggestions([]);
+    setComparisonItineraries([]);
 
     let assistantContent = "";
     const assistantId = crypto.randomUUID();
@@ -153,7 +171,7 @@ export function useChat() {
             if (content) {
               if (!assistantContent) playMessageSound();
               assistantContent += content;
-              const displayContent = stripItineraryBlock(assistantContent);
+              const displayContent = stripItineraryBlocks(assistantContent);
               setMessages(prev => {
                 const last = prev[prev.length - 1];
                 if (last?.role === "assistant" && last.id === assistantId) {
@@ -169,11 +187,19 @@ export function useChat() {
         }
       }
 
-      const itineraryData = parseItineraryJson(assistantContent);
-      if (itineraryData) {
-        setLatestItinerary(itineraryData);
-        if (itineraryData.followUpSuggestions) setFollowUpSuggestions(itineraryData.followUpSuggestions);
-        if (itineraryData.packingList) setPackingList(itineraryData.packingList);
+      const allItineraries = parseAllItineraryBlocks(assistantContent);
+      if (allItineraries.length > 1) {
+        setComparisonItineraries(allItineraries);
+        setLatestItinerary(allItineraries[0]);
+      } else if (allItineraries.length === 1) {
+        setLatestItinerary(allItineraries[0]);
+      }
+      
+      // Extract suggestions/packing from first itinerary
+      if (allItineraries.length > 0) {
+        const first = allItineraries[0];
+        if (first.followUpSuggestions) setFollowUpSuggestions(first.followUpSuggestions);
+        if (first.packingList) setPackingList(first.packingList);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Something went wrong";
@@ -189,6 +215,7 @@ export function useChat() {
   const clearChat = useCallback(() => {
     setMessages([]);
     setLatestItinerary(null);
+    setComparisonItineraries([]);
     setFollowUpSuggestions([]);
     setPackingList([]);
   }, []);
@@ -196,9 +223,10 @@ export function useChat() {
   const loadChat = useCallback((msgs: Message[], itinerary?: ItineraryData | null) => {
     setMessages(msgs);
     setLatestItinerary(itinerary || null);
+    setComparisonItineraries([]);
     setFollowUpSuggestions([]);
     setPackingList([]);
   }, []);
 
-  return { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, followUpSuggestions, packingList };
+  return { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions, packingList };
 }

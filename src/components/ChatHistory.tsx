@@ -13,9 +13,19 @@ interface ChatHistoryProps {
   trigger?: React.ReactNode;
 }
 
-export function ChatHistory({ sessions, onLoad, onDelete, onClearAll, trigger }: ChatHistoryProps) {
+interface ChatHistoryProps {
+  sessions: ChatSession[];
+  onLoad: (session: ChatSession) => void;
+  onDelete: (id: string) => void;
+  onClearAll: () => void;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function ChatHistory({ sessions, onLoad, onDelete, onClearAll, trigger, open, onOpenChange }: ChatHistoryProps) {
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         {trigger || (
           <Button variant="ghost" size="sm" className="glass text-foreground">
