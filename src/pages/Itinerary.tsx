@@ -63,6 +63,7 @@ function CostBreakdown({ legs, totalCost, currency }: { legs: ItineraryLeg[]; to
 export default function Itinerary() {
   const navigate = useNavigate();
   const { itinerary } = useTrip();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="min-h-screen bg-background relative travel-bg">
