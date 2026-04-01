@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "@/components/ChatMessage";
 import { WaveLoader } from "@/components/WaveLoader";
 import { useChat } from "@/hooks/useChat";
-
+import { useTrip } from "@/contexts/TripContext";
 const QUICK_PROMPTS = [
   { icon: Ship, text: "Plan a weekend trip from London to Paris with ferry and hotels" },
   { icon: Train, text: "Compare travel options from UK to Amsterdam — ferry vs train" },
@@ -36,10 +36,17 @@ function Particles() {
 
 export default function Index() {
   const [input, setInput] = useState("");
-  const { messages, isLoading, sendMessage, clearChat } = useChat();
+  const { messages, isLoading, sendMessage, clearChat, latestItinerary } = useChat();
+  const { setItinerary } = useTrip();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (latestItinerary) {
+      setItinerary(latestItinerary);
+    }
+  }, [latestItinerary, setItinerary]);
 
   useEffect(() => {
     if (scrollRef.current) {

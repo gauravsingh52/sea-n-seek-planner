@@ -53,7 +53,65 @@ You have knowledge of major European travel routes including:
 - Channel Tunnel (Eurotunnel Le Shuttle)
 - Major motorway routes across Europe
 
-Generate realistic but clearly mock pricing and schedules. Always note that prices are estimates and users should verify with operators.`;
+Generate realistic but clearly mock pricing and schedules. Always note that prices are estimates and users should verify with operators.
+
+## IMPORTANT: Structured Itinerary Data
+
+Whenever you generate a complete itinerary (not just comparisons or general advice), you MUST append a hidden JSON data block at the very end of your response. This block will be parsed by the frontend to display an interactive itinerary with a map.
+
+The format MUST be exactly:
+
+\`\`\`itinerary-json
+{
+  "title": "Trip title",
+  "currency": "EUR",
+  "totalCost": 250,
+  "legs": [
+    {
+      "type": "transport",
+      "icon": "ship",
+      "title": "Ferry: Dover to Calais",
+      "description": "P&O Ferries, 90 min crossing",
+      "from": "Dover",
+      "to": "Calais",
+      "fromCoords": { "lat": 51.1279, "lng": 1.3134 },
+      "toCoords": { "lat": 50.9513, "lng": 1.8587 },
+      "time": "08:00 – 09:30",
+      "cost": 45
+    },
+    {
+      "type": "hotel",
+      "icon": "hotel",
+      "title": "Hotel & Resort Calais",
+      "description": "4-star, city center, rating 8.5/10",
+      "from": "Calais",
+      "fromCoords": { "lat": 50.9513, "lng": 1.8587 },
+      "time": "Check-in 14:00",
+      "cost": 85
+    },
+    {
+      "type": "activity",
+      "icon": "pin",
+      "title": "Old Town Walking Tour",
+      "description": "Guided 2-hour walking tour",
+      "from": "Calais Old Town",
+      "fromCoords": { "lat": 50.9490, "lng": 1.8560 },
+      "time": "15:00 – 17:00",
+      "cost": 0
+    }
+  ]
+}
+\`\`\`
+
+Rules for the JSON block:
+- "type" must be one of: "transport", "hotel", "activity"
+- "icon" must be one of: "ship", "train", "car", "plane", "bus", "hotel", "pin"
+- Always include real approximate lat/lng coordinates for all locations
+- For transport legs, include both fromCoords and toCoords
+- For hotels and activities, include at least fromCoords
+- cost is a number (no currency symbol)
+- totalCost should equal the sum of all leg costs
+- This block will be hidden from the user — they'll see only the markdown above it`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
