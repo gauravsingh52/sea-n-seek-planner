@@ -1,30 +1,37 @@
 
 
-## Three Features: Sound Effects, Test Typing, Dark/Light Mode
+## Location-Based Trip Suggestions
 
-### 1. Message Arrival Sound Effect
-- Create a subtle notification sound using the Web Audio API (no external files needed) — a short sine wave "pop" tone
-- Create `src/hooks/useMessageSound.ts` that plays a brief tone when called
-- In `src/hooks/useChat.ts`, trigger the sound when a new assistant message starts arriving
-- No haptic feedback (web standard `navigator.vibrate` is unreliable and unsupported on iOS)
+### Idea
+Detect the user's approximate location via a free IP geolocation API and show personalized quick-start prompts based on their region/country. Falls back to the current global prompts if geolocation fails.
 
-### 2. Test Typing Animation
-- I'll use the browser tools to send a test message and verify the typing effect renders correctly
+### How It Works
 
-### 3. Dark/Light Mode Toggle
-- Add a light theme `:root` variables block in `src/index.css` and move current dark colors under `.dark`
-- Create `src/hooks/useTheme.ts` — reads/writes `localStorage`, toggles `.dark` class on `<html>`
-- Add a Sun/Moon toggle button in the header of `src/pages/Index.tsx`
-- Light theme: warm off-white background, dark text, adjusted glass effects
-- Travel background image works for both modes with different overlay opacity
+**1. Create `src/hooks/useGeoSuggestions.ts`**
+- On mount, call a free IP geolocation API (`https://ipapi.co/json/` — no API key needed, 1000 req/day free)
+- Extract `country_code`, `city`, `region`, `continent_code`
+- Based on the detected region, return a set of 4 region-specific prompt suggestions
+- Region mapping:
+  - **Europe** → Channel ferry trips, Eurostar, Mediterranean island hopping, Alpine road trips
+  - **North America** → US road trips, Caribbean cruises, cross-country trains, Mexico flights
+  - **Asia** → Bullet trains Japan, island hopping SE Asia, India rail, China high-speed
+  - **South America** → Patagonia road trip, Amazon river, Galapagos ferries
+  - **Oceania** → NZ road trip, Australian coast, Fiji island hopping
+  - **Africa** → Safari routes, Morocco coastal, Cape Town to Kruger
+  - **Fallback** → Current global prompts
+- Personalize the greeting: "Popular trips near {city}" or "Suggested for travelers in {country}"
+- Returns `{ suggestions, locationLabel, isLoading }`
+
+**2. Update `src/pages/Index.tsx`**
+- Import and use `useGeoSuggestions()`
+- Show a small label above prompt cards: "Popular trips near London" (or wherever they are)
+- Replace the static `QUICK_PROMPTS` with the dynamic region-based ones
+- Show a skeleton/shimmer while loading, then animate the cards in
+- Keep static prompts as fallback if API fails or takes too long (2s timeout)
 
 ### Files
 | File | Action |
 |------|--------|
-| `src/hooks/useMessageSound.ts` | Create — Web Audio pop sound |
-| `src/hooks/useChat.ts` | Edit — play sound on assistant reply |
-| `src/index.css` | Edit — light/dark theme variables |
-| `src/hooks/useTheme.ts` | Create — theme toggle logic |
-| `src/pages/Index.tsx` | Edit — add theme toggle button in header |
-| `src/pages/Itinerary.tsx` | Edit — add same toggle for consistency |
+| `src/hooks/useGeoSuggestions.ts` | Create — IP geolocation + region-based prompt mapping |
+| `src/pages/Index.tsx` | Edit — use dynamic suggestions, show location label |
 
