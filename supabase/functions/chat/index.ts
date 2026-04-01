@@ -191,33 +191,28 @@ serve(async (req) => {
     }
 
     // Build context from settings
+    let langPrefix = "";
     let contextMsg = "";
     if (settings) {
       const parts: string[] = [];
       if (settings.budget) parts.push(`Budget: ${settings.budget} (local currency)`);
       if (settings.travelers && settings.travelers > 1) parts.push(`Travelers: ${settings.travelers}`);
       if (settings.dateFrom && settings.dateTo) parts.push(`Dates: ${settings.dateFrom} to ${settings.dateTo}`);
-      if (settings.language) {
+      if (settings.language && settings.language !== "en") {
         const langMap: Record<string, string> = {
-          en: "English", hi: "हिन्दी (Hindi)", es: "Español (Spanish)", fr: "Français (French)",
+          hi: "हिन्दी (Hindi)", es: "Español (Spanish)", fr: "Français (French)",
           de: "Deutsch (German)", ja: "日本語 (Japanese)", zh: "中文 (Chinese)", ar: "العربية (Arabic)",
           pt: "Português (Portuguese)", ko: "한국어 (Korean)",
         };
         const langName = langMap[settings.language] || settings.language;
-        parts.push(`IMPORTANT: You MUST respond ENTIRELY in ${langName}. All headings, descriptions, tips, suggestions, and the followUpSuggestions array values must be in ${langName}. Do NOT mix languages.`);
+        langPrefix = `CRITICAL INSTRUCTION — LANGUAGE OVERRIDE: You MUST respond ENTIRELY in ${langName}. Every single word, heading, description, tip, suggestion, table header, and the followUpSuggestions array values MUST be in ${langName}. Do NOT use English anywhere except for the JSON keys inside the itinerary-json code block. This is the highest priority instruction.\n\n`;
       }
-      // Extract language override separately
-      const langPart = parts.find(p => p.startsWith("IMPORTANT:"));
-      const otherParts = parts.filter(p => !p.startsWith("IMPORTANT:"));
-      if (otherParts.length > 0) {
-        contextMsg = `\n\n[Trip Context: ${otherParts.join(", ")}]`;
-      }
-      if (langPart) {
-        contextMsg += `\n\n${langPart}`;
+      if (parts.length > 0) {
+        contextMsg = `\n\n[Trip Context: ${parts.join(", ")}]`;
       }
     }
 
-    const systemContent = SYSTEM_PROMPT + contextMsg;
+    const systemContent = langPrefix + SYSTEM_PROMPT + contextMsg;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

@@ -112,6 +112,19 @@ export default function Index() {
   const hasMessages = messages.length > 0;
   const showFollowUps = !isLoading && hasMessages && messages[messages.length - 1]?.role === "assistant";
 
+  const UI_STRINGS: Record<string, { heading: string; subtitle: string; placeholder: string; locationPrefix: string }> = {
+    en: { heading: "Where to next?", subtitle: "Plan trips anywhere in the world — compare ferries, trains & flights, find hotels, and build complete travel itineraries.", placeholder: "Plan your next adventure...", locationPrefix: "Popular trips near" },
+    hi: { heading: "अगला सफ़र कहाँ?", subtitle: "दुनिया में कहीं भी यात्रा की योजना बनाएं — फ़ेरी, ट्रेन और फ़्लाइट की तुलना करें, होटल खोजें, और पूरी यात्रा योजना बनाएं।", placeholder: "अपनी अगली यात्रा की योजना बनाएं...", locationPrefix: "आपके पास लोकप्रिय यात्राएँ" },
+    es: { heading: "¿A dónde vamos?", subtitle: "Planifica viajes a cualquier parte del mundo — compara ferris, trenes y vuelos, encuentra hoteles y crea itinerarios completos.", placeholder: "Planifica tu próxima aventura...", locationPrefix: "Viajes populares cerca de" },
+    fr: { heading: "Où aller ensuite ?", subtitle: "Planifiez des voyages partout dans le monde — comparez ferries, trains et vols, trouvez des hôtels et créez des itinéraires complets.", placeholder: "Planifiez votre prochaine aventure...", locationPrefix: "Voyages populaires près de" },
+    de: { heading: "Wohin als Nächstes?", subtitle: "Planen Sie Reisen weltweit — vergleichen Sie Fähren, Züge & Flüge, finden Sie Hotels und erstellen Sie Reiserouten.", placeholder: "Planen Sie Ihr nächstes Abenteuer...", locationPrefix: "Beliebte Reisen in der Nähe von" },
+    ja: { heading: "次はどこへ？", subtitle: "世界中の旅行を計画 — フェリー、電車、フライトを比較し、ホテルを見つけ、完全な旅程を作成。", placeholder: "次の冒険を計画...", locationPrefix: "近くの人気旅行" },
+    zh: { heading: "下一站去哪？", subtitle: "规划全球旅行 — 比较渡轮、火车和航班，找酒店，制定完整行程。", placeholder: "规划你的下一次冒险...", locationPrefix: "附近热门旅行" },
+    ko: { heading: "다음은 어디로?", subtitle: "전 세계 여행을 계획하세요 — 페리, 기차, 항공편을 비교하고 호텔을 찾고 완전한 여행 일정을 만드세요.", placeholder: "다음 모험을 계획하세요...", locationPrefix: "근처 인기 여행" },
+  };
+  const lang = tripSettings.language || "en";
+  const t = UI_STRINGS[lang] || UI_STRINGS.en;
+
   return (
     <div className="flex flex-col h-screen bg-background relative travel-bg">
       <Particles />
