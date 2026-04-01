@@ -50,7 +50,7 @@ export default function Index() {
     language: navigator.language?.slice(0, 2) || "en",
   });
   const [historyOpen, setHistoryOpen] = useState(false);
-  const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, followUpSuggestions } = useChat();
+  const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions } = useChat();
   const { setItinerary } = useTrip();
   const { suggestions, locationLabel, isLoading: geoLoading } = useGeoSuggestions();
   const { count: savedCount } = useSavedTrips();
