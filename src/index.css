@@ -59,56 +59,56 @@
   }
 
   .dark {
-    --background: 220 25% 10%;
-    --foreground: 210 20% 92%;
+    --background: 220 20% 11%;
+    --foreground: 210 15% 90%;
 
-    --card: 220 22% 14%;
-    --card-foreground: 210 20% 92%;
+    --card: 220 18% 15%;
+    --card-foreground: 210 15% 90%;
 
-    --popover: 220 22% 14%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 220 18% 15%;
+    --popover-foreground: 210 15% 90%;
 
-    --primary: 175 65% 45%;
-    --primary-foreground: 220 25% 8%;
+    --primary: 220 40% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 18% 20%;
-    --secondary-foreground: 210 20% 85%;
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 210 15% 85%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 210 12% 55%;
+    --muted: 220 12% 18%;
+    --muted-foreground: 210 10% 55%;
 
-    --accent: 35 85% 55%;
-    --accent-foreground: 220 25% 8%;
+    --accent: 38 40% 58%;
+    --accent-foreground: 220 20% 10%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 22%;
-    --input: 220 15% 22%;
-    --ring: 175 65% 45%;
+    --border: 220 12% 22%;
+    --input: 220 12% 22%;
+    --ring: 220 40% 55%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 220 22% 12%;
-    --sidebar-foreground: 210 20% 88%;
-    --sidebar-primary: 175 65% 45%;
-    --sidebar-primary-foreground: 220 25% 8%;
-    --sidebar-accent: 220 18% 18%;
-    --sidebar-accent-foreground: 210 20% 88%;
-    --sidebar-border: 220 15% 22%;
-    --sidebar-ring: 175 65% 45%;
+    --sidebar-background: 220 18% 13%;
+    --sidebar-foreground: 210 15% 88%;
+    --sidebar-primary: 220 40% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 210 15% 88%;
+    --sidebar-border: 220 12% 22%;
+    --sidebar-ring: 220 40% 55%;
 
-    --earth-deep: 220 30% 15%;
-    --earth-mid: 200 35% 30%;
-    --earth-light: 195 30% 50%;
-    --sand: 35 60% 55%;
-    --sunset: 15 80% 55%;
+    --earth-deep: 220 25% 15%;
+    --earth-mid: 220 30% 30%;
+    --earth-light: 220 25% 48%;
+    --sand: 38 30% 50%;
+    --sunset: 38 40% 55%;
 
-    --glass-bg: 220 25% 12% / 0.75;
-    --glass-border: 210 20% 92% / 0.08;
-    --glass-border-strong: 210 20% 92% / 0.15;
-    --glow-primary: 175 65% 45% / 0.25;
-    --glow-accent: 35 85% 55% / 0.2;
+    --glass-bg: 220 20% 12% / 0.8;
+    --glass-border: 210 15% 90% / 0.08;
+    --glass-border-strong: 210 15% 90% / 0.12;
+    --glow-primary: 220 40% 55% / 0.15;
+    --glow-accent: 38 40% 58% / 0.12;
   }
 }
 
