@@ -1,4 +1,4 @@
-import { lazy, Suspense, Component, ReactNode } from "react";
+import { lazy, Suspense, Component, ReactNode, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, CloudSun, Clock, Luggage } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,10 @@ import { ExportPDF } from "@/components/ExportPDF";
 import { CopyItinerary } from "@/components/CopyItinerary";
 import { TravelChecklist } from "@/components/TravelChecklist";
 import { CustomStop } from "@/components/CustomStop";
+import { BookingLinks } from "@/components/BookingLinks";
+import { DestinationPhotos } from "@/components/DestinationPhotos";
+import { TripDuration } from "@/components/TripDuration";
+import { EmergencyInfo } from "@/components/EmergencyInfo";
 import { useTrip } from "@/contexts/TripContext";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useWeather } from "@/hooks/useWeather";
