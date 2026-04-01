@@ -109,10 +109,9 @@
   .gradient-text {
     background: linear-gradient(
       135deg,
+      hsl(0 0% 100%),
       hsl(var(--primary)),
-      hsl(var(--accent)),
-      hsl(var(--sunset)),
-      hsl(var(--primary))
+      hsl(0 0% 100%)
     );
     background-size: 300% 300%;
     -webkit-background-clip: text;

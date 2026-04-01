@@ -10,10 +10,10 @@ import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 
 const QUICK_PROMPTS = [
-  { icon: Ship, text: "Plan a weekend trip from London to Paris with ferry and hotels" },
-  { icon: Train, text: "Compare travel options from UK to Amsterdam — ferry vs train" },
-  { icon: Car, text: "Find the best route for an Italian coast road trip" },
-  { icon: Palmtree, text: "Plan a budget island-hopping trip in Greece" },
+  { icon: Ship, text: "Plan a ferry trip from Barcelona to Ibiza with hotels" },
+  { icon: Train, text: "Compare bullet trains vs flights from Tokyo to Osaka" },
+  { icon: Car, text: "Road trip itinerary along the California coast" },
+  { icon: Palmtree, text: "Plan a budget island-hopping trip in Bali" },
 ];
 
 function Particles() {
