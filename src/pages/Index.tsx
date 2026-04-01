@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Anchor, Trash2, Map } from "lucide-react";
+import { Send, Globe, Trash2, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "@/components/ChatMessage";
@@ -8,10 +8,10 @@ import { WaveLoader } from "@/components/WaveLoader";
 import { useChat } from "@/hooks/useChat";
 
 const QUICK_PROMPTS = [
-  "Plan a ferry trip from Dover to Calais for 2 adults next weekend",
-  "Find cheap ferries to Ireland in June",
-  "Compare ferry routes from UK to Netherlands",
-  "Plan a Mediterranean island-hopping trip by boat",
+  "Plan a weekend trip from London to Paris with ferry and hotels",
+  "Compare travel options from UK to Amsterdam — ferry vs train",
+  "Find the best route for an Italian coast road trip",
+  "Plan a budget island-hopping trip in Greece",
 ];
 
 export default function Index() {
@@ -48,12 +48,12 @@ export default function Index() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-border bg-card/80 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg ocean-gradient flex items-center justify-center">
-            <Anchor className="w-5 h-5 text-primary-foreground" />
+          <div className="w-9 h-9 rounded-lg earth-gradient flex items-center justify-center">
+            <Globe className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-lg font-display font-bold text-foreground leading-none">BoatTrip Planner</h1>
-            <p className="text-xs text-muted-foreground">AI-powered ferry travel planning</p>
+            <h1 className="text-lg font-display font-bold text-foreground leading-none">TripMap Planner</h1>
+            <p className="text-xs text-muted-foreground">AI-powered travel planning</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -73,16 +73,15 @@ export default function Index() {
       {/* Chat area */}
       <div className="flex-1 overflow-hidden">
         {!hasMessages ? (
-          /* Welcome screen */
           <div className="flex flex-col items-center justify-center h-full px-4 text-center">
-            <div className="w-16 h-16 rounded-2xl ocean-gradient flex items-center justify-center mb-6">
-              <Anchor className="w-8 h-8 text-primary-foreground" />
+            <div className="w-16 h-16 rounded-2xl earth-gradient flex items-center justify-center mb-6">
+              <Globe className="w-8 h-8 text-primary-foreground" />
             </div>
             <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">
-              Where shall we sail?
+              Where to next?
             </h2>
             <p className="text-muted-foreground mb-8 max-w-md">
-              Plan ferry trips, compare routes &amp; prices, find hotels near ports, and build complete travel itineraries.
+              Plan trips across Europe — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
               {QUICK_PROMPTS.map((prompt) => (
@@ -91,7 +90,7 @@ export default function Index() {
                   onClick={() => sendMessage(prompt)}
                   className="text-left px-4 py-3 rounded-xl border border-border bg-card hover:bg-secondary/60 transition-colors text-sm text-foreground"
                 >
-                  ⛴️ {prompt}
+                  🗺️ {prompt}
                 </button>
               ))}
             </div>
@@ -116,7 +115,7 @@ export default function Index() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about ferry routes, hotels, or plan a trip..."
+            placeholder="Plan your next adventure..."
             rows={1}
             className="flex-1 resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
             disabled={isLoading}
@@ -126,7 +125,7 @@ export default function Index() {
           </Button>
         </form>
         <p className="text-center text-xs text-muted-foreground mt-2">
-          Prices are AI-generated estimates. Always verify with ferry operators before booking.
+          Prices are AI-generated estimates. Always verify with operators before booking.
         </p>
       </div>
     </div>
