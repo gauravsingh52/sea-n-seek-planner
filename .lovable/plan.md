@@ -1,49 +1,43 @@
 
 
-## Classic Color Palette Redesign
+## Fix Itinerary Feature — Root Cause Analysis & Plan
 
-### Problem
-The current teal + bright orange/amber combination looks garish — high-saturation warm accents clashing with cool teal creates a visually noisy, unrefined feel.
+### Problems Found
 
-### New Classic Palette
-Shift to a sophisticated, muted palette inspired by premium travel brands — deep navy, soft slate, warm ivory, and a single refined accent (muted gold).
+**1. Itinerary page crashes with blank screen**
+The console shows `TypeError: render2 is not a function` at `updateContextConsumer`. This is caused by `react-leaflet` v5's internal context usage conflicting during render. Even though `TripMap` only renders when `itinerary` is not null, the import of `react-leaflet` at the top of `TripMap.tsx` can cause initialization issues. The fix is to **lazy-load** the `TripMap` component.
 
-**Light mode:**
-- Background: `0 0% 98%` (clean off-white)
-- Foreground: `220 20% 18%` (near-black navy)
-- Primary: `220 45% 42%` (deep slate blue — trustworthy, classic)
-- Accent: `38 45% 52%` (muted gold — elegant, not flashy)
-- Muted: `220 10% 92%` (soft gray)
-- Cards: `0 0% 96%` (subtle warm white)
-- Sunset/earth tones: removed or greatly desaturated
+**2. AI response doesn't include the `itinerary-json` block**
+The streaming response I tested showed a full trip plan but did NOT include the structured JSON block at the end. Without this block, `parseItineraryJson()` returns `null`, so `latestItinerary` is never set, and the Itinerary page always shows "No itinerary yet." The system prompt instructs the AI to include it, but the model doesn't always comply — especially with shorter/simpler requests.
 
-**Dark mode:**
-- Background: `220 20% 11%` (deep navy)
-- Foreground: `210 15% 90%` (warm white)
-- Primary: `220 40% 55%` (brighter slate blue)
-- Accent: `38 40% 58%` (soft gold)
-- Cards: `220 18% 15%`
+**3. Landing page hero content invisible**
+The "Where to next?" text and suggestion cards use `opacity-0 animate-slide-up-fade` but appear invisible in some cases. The `opacity-0` utility class can override the animation's final `opacity: 1` state. Need to remove the `opacity-0` class and let the animation handle it entirely via initial keyframe state.
 
-### Changes
+### Fixes
 
-**`src/index.css`**
-- Replace all CSS variables with the new classic palette
-- Tone down `earth-gradient` to use navy → slate → gold (subtle)
-- Reduce glass glow effects — use soft shadows instead of colored glows
-- Update `gradient-text` to use foreground → primary (no orange/sunset)
+**Fix 1: Lazy-load TripMap** (`src/pages/Itinerary.tsx`)
+- Use `React.lazy()` and `Suspense` to dynamically import `TripMap` only when needed
+- Add a loading fallback while the map component loads
+- This avoids the `react-leaflet` context crash on initial page render
 
-**`tailwind.config.ts`**
-- Keep color token names, just update underlying variables
-- Reduce `pulse-glow` animation intensity
+**Fix 2: Improve itinerary JSON reliability** (`src/hooks/useChat.ts`, `supabase/functions/chat/index.ts`)
+- In the system prompt, make the JSON instruction more forceful — move it to the end and emphasize it's mandatory
+- In `useChat.ts`, add a fallback: if streaming completes without an `itinerary-json` block, and the response contains itinerary-like content (day-by-day plan, costs), show a toast/notification telling the user to click "View Itinerary" or auto-retry
+- Also fix the `parseItineraryJson` function to handle edge cases (extra whitespace, partial blocks)
 
-**`src/pages/Index.tsx`**
-- Remove `glow-pulse` inline style from logo/send button (too flashy)
-- Use simple `shadow-lg` instead of glowing colored shadows on hover
+**Fix 3: Fix animation visibility** (`src/pages/Index.tsx`)
+- Remove `opacity-0` class from all animated elements
+- Instead, set `opacity: 0` in the animation's `0%` keyframe (already done in tailwind config), so the element starts invisible and animates to visible without class conflict
+
+**Fix 4: Add error boundary for map** (`src/pages/Itinerary.tsx`)
+- Wrap the map in an error boundary so if leaflet crashes, the rest of the itinerary cards still render
 
 ### Files Modified
+
 | File | Change |
 |------|--------|
-| `src/index.css` | New classic color palette (both themes), toned-down gradients/glows |
-| `tailwind.config.ts` | Adjusted glow keyframe intensity |
-| `src/pages/Index.tsx` | Remove garish glow animations, use subtle shadows |
+| `src/pages/Itinerary.tsx` | Lazy-load TripMap with Suspense + error boundary |
+| `src/pages/Index.tsx` | Remove `opacity-0` from animated elements |
+| `src/hooks/useChat.ts` | More robust JSON parsing, handle edge cases |
+| `supabase/functions/chat/index.ts` | Strengthen system prompt JSON instruction |
 
