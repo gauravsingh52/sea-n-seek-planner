@@ -1,6 +1,17 @@
 import ReactMarkdown from "react-markdown";
 import { MapPin, Navigation } from "lucide-react";
 import type { Message } from "@/hooks/useChat";
+import { useTypingEffect } from "@/hooks/useTypingEffect";
+
+function AssistantContent({ content }: { content: string }) {
+  const { displayed, isTyping } = useTypingEffect(content);
+  return (
+    <div className="prose prose-sm max-w-none prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-td:text-foreground prose-th:text-foreground prose-a:text-primary">
+      <ReactMarkdown>{displayed}</ReactMarkdown>
+      {isTyping && <span className="typing-cursor">▍</span>}
+    </div>
+  );
+}
 
 export function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === "user";
@@ -37,9 +48,7 @@ export function ChatMessage({ message }: { message: Message }) {
         {isUser ? (
           <p>{message.content}</p>
         ) : (
-          <div className="prose prose-sm max-w-none prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-td:text-foreground prose-th:text-foreground prose-a:text-primary">
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          </div>
+          <AssistantContent content={message.content} />
         )}
       </div>
     </div>
