@@ -1,5 +1,5 @@
 import ReactMarkdown from "react-markdown";
-import { Ship, Bot } from "lucide-react";
+import { MapPin, Globe } from "lucide-react";
 import type { Message } from "@/hooks/useChat";
 
 export function ChatMessage({ message }: { message: Message }) {
@@ -9,10 +9,10 @@ export function ChatMessage({ message }: { message: Message }) {
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
         className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-          isUser ? "bg-primary text-primary-foreground" : "ocean-gradient text-primary-foreground"
+          isUser ? "bg-primary text-primary-foreground" : "earth-gradient text-primary-foreground"
         }`}
       >
-        {isUser ? <Ship className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+        {isUser ? <MapPin className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
       </div>
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${

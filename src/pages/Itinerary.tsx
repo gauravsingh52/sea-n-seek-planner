@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Ship, Hotel, Bus, MapPin, Anchor } from "lucide-react";
+import { ArrowLeft, Ship, Hotel, Bus, MapPin, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Itinerary() {
   const navigate = useNavigate();
@@ -13,8 +13,8 @@ export default function Itinerary() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg ocean-gradient flex items-center justify-center">
-            <Anchor className="w-4 h-4 text-primary-foreground" />
+          <div className="w-8 h-8 rounded-lg earth-gradient flex items-center justify-center">
+            <Globe className="w-4 h-4 text-primary-foreground" />
           </div>
           <h1 className="text-lg font-display font-bold text-foreground">Your Itinerary</h1>
         </div>
@@ -27,14 +27,13 @@ export default function Itinerary() {
           </div>
           <h2 className="text-xl font-display font-bold text-foreground mb-2">No itinerary yet</h2>
           <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-            Chat with BoatTrip Planner to create a travel plan. Your itinerary will appear here once generated.
+            Chat with TripMap Planner to create a travel plan. Your itinerary will appear here once generated.
           </p>
           <Button onClick={() => navigate("/")} className="rounded-xl">
-            <Ship className="w-4 h-4 mr-2" /> Start Planning
+            <Globe className="w-4 h-4 mr-2" /> Start Planning
           </Button>
         </div>
 
-        {/* Example structure for when itinerary is populated */}
         <div className="space-y-4 hidden">
           {[
             { icon: Ship, title: "Ferry", desc: "Dover → Calais", time: "08:00 – 09:30", cost: "€45" },
