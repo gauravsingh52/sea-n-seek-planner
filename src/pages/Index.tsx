@@ -55,12 +55,12 @@ export default function Index() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions } = useChat();
   const { setItinerary } = useTrip();
+  const { count: savedCount } = useSavedTrips();
+  const { sessions, saveSession, renameSession, deleteSession, clearAll: clearHistory } = useChatHistory();
   const { suggestions: geoSuggestions, locationLabel: geoLabel, isLoading: geoLoading, countryCode } = useGeoSuggestions();
   const { suggestions: smartSuggestions, label: smartLabel } = useSmartSuggestions(sessions, geoSuggestions, geoLoading);
   const suggestions = smartSuggestions;
   const locationLabel = smartLabel || geoLabel;
-  const { count: savedCount } = useSavedTrips();
-  const { sessions, saveSession, renameSession, deleteSession, clearAll: clearHistory } = useChatHistory();
   const { theme, toggleTheme } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
