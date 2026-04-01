@@ -160,5 +160,5 @@ export function useGeoSuggestions(): GeoResult {
     };
   }, []);
 
-  return { suggestions, locationLabel, isLoading };
+  return { suggestions, locationLabel, isLoading, countryCode };
 }
