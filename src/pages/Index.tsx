@@ -15,6 +15,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { MobileNav } from "@/components/MobileNav";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { ChatHistory } from "@/components/ChatHistory";
+import { TripComparison } from "@/components/TripComparison";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
