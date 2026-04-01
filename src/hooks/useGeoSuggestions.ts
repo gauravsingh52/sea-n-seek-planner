@@ -114,6 +114,7 @@ export function useGeoSuggestions(): GeoResult {
   const [suggestions, setSuggestions] = useState<GeoSuggestion[]>(FALLBACK);
   const [locationLabel, setLocationLabel] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [countryCode, setCountryCode] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
