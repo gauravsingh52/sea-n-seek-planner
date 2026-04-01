@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Globe, Trash2, Map, Ship, Train, Car, Palmtree, ArrowRight } from "lucide-react";
+import { Send, Trash2, Map, Ship, Train, Car, Palmtree, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "@/components/ChatMessage";
 import { WaveLoader } from "@/components/WaveLoader";
+import { Logo } from "@/components/Logo";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
+
 const QUICK_PROMPTS = [
   { icon: Ship, text: "Plan a weekend trip from London to Paris with ferry and hotels" },
   { icon: Train, text: "Compare travel options from UK to Amsterdam — ferry vs train" },
@@ -71,14 +73,14 @@ export default function Index() {
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex flex-col h-screen bg-background relative">
+    <div className="flex flex-col h-screen bg-background relative travel-bg">
       <Particles />
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-3 glass-strong">
+      <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-3 glass-strong border-b border-border/30">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl earth-gradient flex items-center justify-center shadow-lg group cursor-pointer transition-transform duration-300 hover:scale-110">
-            <Globe className="w-5 h-5 text-primary-foreground transition-transform duration-700 group-hover:rotate-180" />
+          <div className="transition-transform duration-300 hover:scale-110" style={{ animation: "glow-pulse 3s ease-in-out infinite" }}>
+            <Logo size={42} />
           </div>
           <div>
             <h1 className="text-lg font-display font-bold gradient-text leading-none">TripMap Planner</h1>
@@ -88,10 +90,10 @@ export default function Index() {
         <div className="flex gap-2">
           {hasMessages && (
             <>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/itinerary")} className="glass hover:glow-primary transition-all duration-300">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/itinerary")} className="glass hover:glow-primary transition-all duration-300 text-foreground">
                 <Map className="w-4 h-4 mr-1" /> Itinerary
               </Button>
-              <Button variant="ghost" size="icon" onClick={clearChat} title="New chat" className="glass hover:glow-primary transition-all duration-300">
+              <Button variant="ghost" size="icon" onClick={clearChat} title="New chat" className="glass hover:glow-primary transition-all duration-300 text-foreground">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </>
@@ -105,40 +107,40 @@ export default function Index() {
           <div className="flex flex-col items-center justify-center h-full px-4 text-center">
             {/* Hero */}
             <div
-              className="w-20 h-20 rounded-2xl earth-gradient flex items-center justify-center mb-6 shadow-2xl animate-slide-up-fade animate-pulse-glow"
-              style={{ animationDelay: "0s" }}
+              className="mb-8 opacity-0 animate-slide-up-fade"
+              style={{ animationDelay: "0s", animation: "slide-up-fade 0.6s ease-out forwards, glow-pulse 3s ease-in-out infinite 0.6s" }}
             >
-              <Globe className="w-10 h-10 text-primary-foreground animate-spin-slow" />
+              <Logo size={80} />
             </div>
             <h2
-              className="text-3xl md:text-5xl font-display font-bold gradient-text mb-3 opacity-0 animate-slide-up-fade"
+              className="text-4xl md:text-6xl font-display font-bold gradient-text mb-4 opacity-0 animate-slide-up-fade drop-shadow-lg"
               style={{ animationDelay: "0.15s" }}
             >
               Where to next?
             </h2>
             <p
-              className="text-muted-foreground mb-10 max-w-md text-base opacity-0 animate-slide-up-fade"
+              className="text-muted-foreground mb-12 max-w-md text-base opacity-0 animate-slide-up-fade"
               style={{ animationDelay: "0.3s" }}
             >
               Plan trips across Europe — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
             </p>
 
             {/* Prompt cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl w-full">
               {QUICK_PROMPTS.map((prompt, i) => (
                 <button
                   key={prompt.text}
                   onClick={() => sendMessage(prompt.text)}
-                  className="group relative text-left px-4 py-4 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl opacity-0 animate-slide-up-fade"
+                  className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 opacity-0 animate-slide-up-fade"
                   style={{ animationDelay: `${0.4 + i * 0.1}s` }}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 transition-colors duration-300 group-hover:bg-primary/20">
-                      <prompt.icon className="w-4 h-4 text-primary transition-transform duration-300 group-hover:scale-110" />
+                    <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:bg-primary/25 group-hover:shadow-md group-hover:shadow-primary/20">
+                      <prompt.icon className="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" />
                     </div>
                     <span className="text-sm text-foreground leading-snug flex-1">{prompt.text}</span>
                   </div>
-                  <ArrowRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground opacity-0 translate-x-[-8px] transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" />
+                  <ArrowRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-0 translate-x-[-8px] transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" />
                 </button>
               ))}
             </div>
@@ -166,7 +168,7 @@ export default function Index() {
               onKeyDown={handleKeyDown}
               placeholder="Plan your next adventure..."
               rows={1}
-              className="w-full resize-none rounded-2xl glass-strong px-5 py-3.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all duration-300 disabled:opacity-50"
+              className="w-full resize-none rounded-2xl glass-strong px-5 py-3.5 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-all duration-300 disabled:opacity-50"
               disabled={isLoading}
             />
           </div>
@@ -174,14 +176,15 @@ export default function Index() {
             type="submit"
             size="icon"
             className={`rounded-2xl h-[48px] w-[48px] earth-gradient shadow-lg transition-all duration-300 ${
-              input.trim() ? "animate-pulse-glow scale-100" : "scale-95 opacity-70"
+              input.trim() ? "scale-100 shadow-primary/30" : "scale-95 opacity-70"
             }`}
             disabled={!input.trim() || isLoading}
+            style={input.trim() ? { animation: "glow-pulse 2s ease-in-out infinite" } : {}}
           >
             <Send className="w-4 h-4" />
           </Button>
         </form>
-        <p className="text-center text-xs text-muted-foreground mt-2 opacity-60">
+        <p className="text-center text-xs text-muted-foreground mt-2 opacity-40">
           Prices are AI-generated estimates. Always verify with operators before booking.
         </p>
       </div>

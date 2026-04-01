@@ -67,7 +67,9 @@ export default {
           light: "hsl(var(--earth-light))",
         },
         sand: "hsl(var(--sand))",
-        sunset: "hsl(var(--sunset))",
+        sunset: {
+          DEFAULT: "hsl(var(--sunset))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
