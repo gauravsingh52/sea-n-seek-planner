@@ -11,6 +11,7 @@ interface GeoResult {
   suggestions: GeoSuggestion[];
   locationLabel: string;
   isLoading: boolean;
+  countryCode: string;
 }
 
 const FALLBACK: GeoSuggestion[] = [
