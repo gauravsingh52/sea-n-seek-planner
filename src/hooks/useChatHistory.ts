@@ -55,16 +55,18 @@ export function useChatHistory() {
   const saveSession = useCallback((messages: Message[], itinerary?: ItineraryData | null) => {
     if (messages.length === 0) return;
     const firstUserMsg = messages.find(m => m.role === "user");
-    const title = firstUserMsg?.content.slice(0, 60) || "Untitled chat";
+    const autoTitle = firstUserMsg?.content.slice(0, 60) || "Untitled chat";
     const sessionId = messages[0].id;
 
     setSessions(prev => {
       const existing = prev.findIndex(s => s.id === sessionId);
+      const existingSession = existing >= 0 ? prev[existing] : null;
       const session: ChatSession = {
         id: sessionId,
-        title,
+        title: existingSession?.customTitle ? existingSession.title : autoTitle,
+        customTitle: existingSession?.customTitle,
         messages,
-        createdAt: existing >= 0 ? prev[existing].createdAt : new Date().toISOString(),
+        createdAt: existingSession?.createdAt || new Date().toISOString(),
         itinerary,
       };
       if (existing >= 0) {
@@ -76,6 +78,10 @@ export function useChatHistory() {
     });
   }, []);
 
+  const renameSession = useCallback((id: string, newTitle: string) => {
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, title: newTitle, customTitle: true } : s));
+  }, []);
+
   const deleteSession = useCallback((id: string) => {
     setSessions(prev => prev.filter(s => s.id !== id));
   }, []);
@@ -84,5 +90,5 @@ export function useChatHistory() {
     setSessions([]);
   }, []);
 
-  return { sessions, saveSession, deleteSession, clearAll };
+  return { sessions, saveSession, renameSession, deleteSession, clearAll };
 }

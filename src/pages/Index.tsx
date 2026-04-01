@@ -305,6 +305,7 @@ export default function Index() {
           onLoad={handleLoadSession}
           onDelete={deleteSession}
           onClearAll={clearHistory}
+          onRename={renameSession}
           trigger={<span className="hidden" />}
           open={historyOpen}
           onOpenChange={setHistoryOpen}
