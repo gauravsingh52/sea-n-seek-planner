@@ -191,7 +191,6 @@ export default function Index() {
               input.trim() ? "scale-100 shadow-primary/30" : "scale-95 opacity-70"
             }`}
             disabled={!input.trim() || isLoading}
-            style={input.trim() ? { animation: "glow-pulse 2s ease-in-out infinite" } : {}}
           >
             <Send className="w-4 h-4" />
           </Button>

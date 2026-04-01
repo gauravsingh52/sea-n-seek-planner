@@ -164,7 +164,7 @@
       135deg,
       hsl(var(--foreground)),
       hsl(var(--primary)),
-      hsl(var(--foreground))
+      hsl(var(--accent))
     );
     background-size: 300% 300%;
     -webkit-background-clip: text;

@@ -110,8 +110,8 @@ export default {
           "100%": { transform: "rotate(360deg)" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 8px hsl(25 65% 48% / 0.2)" },
-          "50%": { boxShadow: "0 0 20px hsl(25 65% 48% / 0.4), 0 0 40px hsl(25 65% 48% / 0.2)" },
+          "0%, 100%": { boxShadow: "0 0 6px hsl(220 45% 42% / 0.15)" },
+          "50%": { boxShadow: "0 0 14px hsl(220 45% 42% / 0.25), 0 0 28px hsl(220 45% 42% / 0.1)" },
         },
         "shimmer": {
           "0%": { backgroundPosition: "-200% 0" },
