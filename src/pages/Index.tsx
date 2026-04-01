@@ -16,6 +16,7 @@ import { MobileNav } from "@/components/MobileNav";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { ChatHistory } from "@/components/ChatHistory";
 import { TripComparison } from "@/components/TripComparison";
+import { TripTemplates } from "@/components/TripTemplates";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
@@ -55,7 +56,7 @@ export default function Index() {
   const { setItinerary } = useTrip();
   const { suggestions, locationLabel, isLoading: geoLoading } = useGeoSuggestions();
   const { count: savedCount } = useSavedTrips();
-  const { sessions, saveSession, deleteSession, clearAll: clearHistory } = useChatHistory();
+  const { sessions, saveSession, renameSession, deleteSession, clearAll: clearHistory } = useChatHistory();
   const { theme, toggleTheme } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -152,6 +153,7 @@ export default function Index() {
               onLoad={handleLoadSession}
               onDelete={deleteSession}
               onClearAll={clearHistory}
+              onRename={renameSession}
             />
             <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -226,6 +228,7 @@ export default function Index() {
                     </button>
                   ))}
             </div>
+            <TripTemplates onSelect={(prompt) => sendMessage(prompt, tripSettings)} />
           </div>
         ) : (
           <div className="relative h-full">
@@ -302,6 +305,7 @@ export default function Index() {
           onLoad={handleLoadSession}
           onDelete={deleteSession}
           onClearAll={clearHistory}
+          onRename={renameSession}
           trigger={<span className="hidden" />}
           open={historyOpen}
           onOpenChange={setHistoryOpen}
