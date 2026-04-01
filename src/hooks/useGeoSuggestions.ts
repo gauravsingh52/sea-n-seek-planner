@@ -171,6 +171,66 @@ const REGION_PROMPTS: Record<string, GeoSuggestion[]> = {
   ],
 };
 
+interface GeoData {
+  city: string;
+  country: string;
+  countryCode: string;
+  continent: string;
+}
+
+async function tryProvider(url: string, normalize: (d: any) => GeoData | null, signal: AbortSignal): Promise<GeoData | null> {
+  try {
+    const r = await fetch(url, { signal });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return normalize(data);
+  } catch {
+    return null;
+  }
+}
+
+const PROVIDERS: { url: string; normalize: (d: any) => GeoData | null }[] = [
+  {
+    url: "https://ipwho.is/",
+    normalize: (d) => d.success === false ? null : ({
+      city: d.city || "",
+      country: d.country || "",
+      countryCode: d.country_code || "",
+      continent: d.continent_code || "",
+    }),
+  },
+  {
+    url: "https://ip-api.com/json/?fields=status,country,countryCode,city,continentCode",
+    normalize: (d) => d.status !== "success" ? null : ({
+      city: d.city || "",
+      country: d.country || "",
+      countryCode: d.countryCode || "",
+      continent: d.continentCode || "",
+    }),
+  },
+  {
+    url: "https://api.ipapi.is/",
+    normalize: (d) => (!d.location ? null : ({
+      city: d.location?.city || "",
+      country: d.location?.country || "",
+      countryCode: d.location?.country_code || "",
+      continent: d.location?.continent || "",
+    })),
+  },
+];
+
+const LANG_TO_COUNTRY: Record<string, string> = {
+  hi: "IN", bn: "IN", ta: "IN", te: "IN", mr: "IN", gu: "IN", kn: "IN", ml: "IN", pa: "IN",
+  ja: "JP", ko: "KR", de: "DE", fr: "FR", es: "ES", it: "IT", pt: "BR", tr: "TR",
+  ar: "EG", th: "TH", vi: "VN", zh: "CN", nl: "NL", pl: "PL", ru: "RU",
+};
+
+function guessCountryFromLanguage(): string {
+  const lang = (navigator.language || "").split("-");
+  if (lang.length >= 2 && lang[1].length === 2) return lang[1].toUpperCase();
+  return LANG_TO_COUNTRY[lang[0]] || "";
+}
+
 export function useGeoSuggestions(): GeoResult {
   const [suggestions, setSuggestions] = useState<GeoSuggestion[]>(FALLBACK);
   const [locationLabel, setLocationLabel] = useState("");
@@ -179,41 +239,48 @@ export function useGeoSuggestions(): GeoResult {
 
   useEffect(() => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
+    const timeout = setTimeout(() => controller.abort(), 4000);
 
-    fetch("https://ipapi.co/json/", { signal: controller.signal })
-      .then((r) => r.json())
-      .then((data) => {
-        const continent = data.continent_code as string;
-        const city = data.city as string;
-        const country = data.country_name as string;
-        const cc = data.country_code as string;
+    (async () => {
+      let geo: GeoData | null = null;
+
+      for (const provider of PROVIDERS) {
+        geo = await tryProvider(provider.url, provider.normalize, controller.signal);
+        if (geo && geo.countryCode) break;
+      }
+
+      // Language-based fallback
+      if (!geo || !geo.countryCode) {
+        const cc = guessCountryFromLanguage();
+        if (cc) {
+          geo = { city: "", country: "", countryCode: cc, continent: "" };
+        }
+      }
+
+      if (geo && geo.countryCode) {
+        const cc = geo.countryCode;
         setCountryCode(cc);
 
-        // Priority: country → continent → fallback
-        if (cc && COUNTRY_PROMPTS[cc]) {
+        if (COUNTRY_PROMPTS[cc]) {
           const prompts = COUNTRY_PROMPTS[cc].map((p) => ({
             ...p,
-            text: city ? p.text.replace("{city}", city) : p.text.replace(/from \{city\} /g, ""),
+            text: geo!.city ? p.text.replace("{city}", geo!.city) : p.text.replace(/from \{city\} /g, ""),
           }));
           setSuggestions(prompts);
-        } else if (continent && REGION_PROMPTS[continent]) {
-          setSuggestions(REGION_PROMPTS[continent]);
+        } else if (geo.continent && REGION_PROMPTS[geo.continent]) {
+          setSuggestions(REGION_PROMPTS[geo.continent]);
         }
 
-        if (city) {
-          setLocationLabel(`Popular trips near ${city}`);
-        } else if (country) {
-          setLocationLabel(`Suggested for travelers in ${country}`);
+        if (geo.city) {
+          setLocationLabel(`Popular trips near ${geo.city}`);
+        } else if (geo.country) {
+          setLocationLabel(`Suggested for travelers in ${geo.country}`);
         }
-      })
-      .catch(() => {
-        // fallback silently
-      })
-      .finally(() => {
-        clearTimeout(timeout);
-        setIsLoading(false);
-      });
+      }
+
+      clearTimeout(timeout);
+      setIsLoading(false);
+    })();
 
     return () => {
       controller.abort();
