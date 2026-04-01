@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Trash2, Map, Ship, Train, Car, Palmtree, ArrowRight } from "lucide-react";
+import { Send, Trash2, Map, Ship, Train, Car, Palmtree, ArrowRight, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "@/components/ChatMessage";
@@ -8,6 +8,7 @@ import { WaveLoader } from "@/components/WaveLoader";
 import { Logo } from "@/components/Logo";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
+import { useTheme } from "@/hooks/useTheme";
 
 const QUICK_PROMPTS = [
   { icon: Ship, text: "Plan a ferry trip from Barcelona to Ibiza with hotels" },
@@ -40,6 +41,7 @@ export default function Index() {
   const [input, setInput] = useState("");
   const { messages, isLoading, sendMessage, clearChat, latestItinerary } = useChat();
   const { setItinerary } = useTrip();
+  const { theme, toggleTheme } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
@@ -88,6 +90,9 @@ export default function Index() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
           {hasMessages && (
             <>
               <Button variant="ghost" size="sm" onClick={() => navigate("/itinerary")} className="glass hover:glow-primary transition-all duration-300 text-foreground">

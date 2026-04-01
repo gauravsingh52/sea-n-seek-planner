@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane } from "lucide-react";
+import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
 import { useTrip } from "@/contexts/TripContext";
 import { TripMap } from "@/components/TripMap";
 import type { ItineraryLeg } from "@/types/itinerary";
+import { useTheme } from "@/hooks/useTheme";
 
 const iconMap: Record<string, any> = {
   ship: Ship, train: Train, car: Car, plane: Plane, bus: Bus, hotel: Hotel, pin: MapPin,
@@ -62,6 +63,7 @@ function CostBreakdown({ legs, totalCost, currency }: { legs: ItineraryLeg[]; to
 export default function Itinerary() {
   const navigate = useNavigate();
   const { itinerary } = useTrip();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="min-h-screen bg-background relative travel-bg">
@@ -71,16 +73,19 @@ export default function Itinerary() {
         ))}
       </div>
 
-      <header className="relative z-10 flex items-center gap-3 px-4 md:px-6 py-3 glass-strong border-b border-border/30">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass text-foreground">
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div className="flex items-center gap-2">
+      <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-3 glass-strong border-b border-border/30">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass text-foreground">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
           <Logo size={36} />
           <h1 className="text-lg font-display font-bold gradient-text">
             {itinerary?.title || "Your Itinerary"}
           </h1>
         </div>
+        <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
+          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </Button>
       </header>
 
       {!itinerary ? (
