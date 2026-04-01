@@ -83,8 +83,8 @@ export default function Index() {
             <Logo size={42} />
           </div>
           <div>
-            <h1 className="text-lg font-display font-bold gradient-text leading-none">TripMap Planner</h1>
-            <p className="text-xs text-muted-foreground">AI-powered travel planning</p>
+            <h1 className="text-lg font-display font-bold text-foreground leading-none">TripMap Planner</h1>
+            <p className="text-xs text-foreground/50">AI-powered travel planning</p>
           </div>
         </div>
         <div className="flex gap-2">
