@@ -11,7 +11,14 @@ export interface ItineraryLeg {
   toCoords?: { lat: number; lng: number };
   time?: string;
   cost: number;
-  icon?: string; // e.g. "ship", "train", "car", "hotel", "pin"
+  icon?: string;
+}
+
+export interface WeatherData {
+  tempHigh: number;
+  tempLow: number;
+  condition: string;
+  icon: string;
 }
 
 export interface ItineraryData {
