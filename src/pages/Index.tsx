@@ -56,7 +56,7 @@ export default function Index() {
   const { setItinerary } = useTrip();
   const { suggestions, locationLabel, isLoading: geoLoading } = useGeoSuggestions();
   const { count: savedCount } = useSavedTrips();
-  const { sessions, saveSession, deleteSession, clearAll: clearHistory } = useChatHistory();
+  const { sessions, saveSession, renameSession, deleteSession, clearAll: clearHistory } = useChatHistory();
   const { theme, toggleTheme } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
