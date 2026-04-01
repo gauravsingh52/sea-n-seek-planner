@@ -38,6 +38,7 @@ export default function Index() {
   const { messages, isLoading, sendMessage, clearChat, latestItinerary } = useChat();
   const { setItinerary } = useTrip();
   const { suggestions, locationLabel, isLoading: geoLoading } = useGeoSuggestions();
+  const { count: savedCount } = useSavedTrips();
   const { theme, toggleTheme } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
