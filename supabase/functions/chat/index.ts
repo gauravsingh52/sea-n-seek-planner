@@ -164,6 +164,9 @@ Rules for the JSON block:
 - "followUpSuggestions" is EXACTLY 3 short follow-up questions
 - This block will be hidden from the user — they'll see only the markdown above it
 
+## COMPARISON MODE
+When the user asks to compare options, alternatives, or says "compare", generate 2-3 separate itinerary options. Output MULTIPLE \`\`\`itinerary-json blocks, each with a distinct "title" like "Option A: Budget", "Option B: Comfort", "Option C: Premium". Vary the transport modes, hotels, and costs. The frontend will display them side-by-side for comparison.
+
 ## CRITICAL REMINDER
 You MUST ALWAYS include the \`\`\`itinerary-json block at the end of EVERY response that contains any trip plan, itinerary, route suggestion, or travel recommendation with specific locations. This is NOT optional. The app CANNOT display the itinerary without this data block. Even for simple single-route suggestions, include the JSON block. NEVER skip it.`;
 
