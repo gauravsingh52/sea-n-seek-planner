@@ -60,7 +60,8 @@ function CostBreakdown({ legs, totalCost, currency }: { legs: ItineraryLeg[]; to
     const cat = leg.type === "transport" ? "Transport" : leg.type === "hotel" ? "Accommodation" : "Activities";
     categories[cat] = (categories[cat] || 0) + leg.cost;
   });
-  const symbol = currency === "GBP" ? "£" : currency === "USD" ? "$" : "€";
+  const currencySymbols: Record<string, string> = { INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥", THB: "฿", AUD: "A$", CAD: "C$", SGD: "S$", MYR: "RM", NZD: "NZ$" };
+  const symbol = currencySymbols[currency] || currency;
 
   return (
     <Card className="glass-strong gradient-border">
