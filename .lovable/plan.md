@@ -1,69 +1,29 @@
 
 
-## Sub-batch C: Booking Links, Destination Photos, Trip Duration, Emergency Info, Multi-City
+## Upgrade Chat History Storage: localStorage → IndexedDB
 
-### 1. Booking Links on Leg Cards
+### Problem
+The current chat history uses `localStorage` which has a ~5MB limit. Long AI conversations with itinerary data quickly fill this up, causing sessions to silently fail to save or lose data. The user reports only prompts are saved, not full conversations — this is the localStorage quota being exceeded.
 
-Add clickable "Book" links to transport and hotel legs that deep-link to relevant booking platforms.
+### Solution
+Switch to **IndexedDB** via the lightweight `idb-keyval` library. IndexedDB supports hundreds of MB, enough to store full conversation histories with all message content and itinerary data.
 
-**`src/components/BookingLinks.tsx`** — New component
-- Transport legs: Generate links to Google Flights (plane), Google Maps directions (car/bus), or rail booking sites based on `icon` type
-- Hotel legs: Link to Google Hotels search with destination pre-filled
-- Renders as small external-link buttons on each leg card
+### Changes
 
-**`src/pages/Itinerary.tsx`** — Add `<BookingLinks>` inside `LegCard`
+**1. `src/hooks/useChatHistory.ts`** — Rewrite storage layer
+- Replace `localStorage.getItem/setItem` with IndexedDB using `idb-keyval` (get/set)
+- Load sessions asynchronously on mount
+- Save sessions to IndexedDB on every update
+- Keep the same `ChatSession` interface and hook API
+- Add a one-time migration: on first load, check localStorage for old data, move it to IndexedDB, then clear localStorage
 
-### 2. Destination Photos via Unsplash
+**2. `src/pages/Index.tsx`** — Minor adjustment
+- The auto-save effect already calls `saveSession(messages, latestItinerary)` — no change needed, just ensure the full `messages` array (not truncated) is passed
 
-**`supabase/functions/destination-photos/index.ts`** — New edge function
-- Accepts `{ query: "Shimla" }`, calls Unsplash API (`/search/photos`) using a free API key
-- Returns 3-4 photo URLs (small size)
-- Uses `LOVABLE_API_KEY` — actually we'll use the free Unsplash source URL pattern (`source.unsplash.com`) which requires no API key, just construct URLs
+**3. `package.json`** — Add `idb-keyval` dependency (~1KB gzipped)
 
-**Simpler approach**: Skip edge function entirely. Use `https://source.unsplash.com/featured/?{destination},travel` URLs directly in the frontend — no API key needed.
-
-**`src/components/DestinationPhotos.tsx`** — New component
-- Takes destination names from itinerary legs (unique `to`/`from` values)
-- Shows a horizontal scrollable gallery of Unsplash photos
-- Renders as a card above the cost breakdown
-
-### 3. Trip Duration Calculator
-
-**`src/components/TripDuration.tsx`** — New component
-- Calculates from itinerary legs:
-  - Total travel time (sum of transport leg durations parsed from `time` field like "06:00 – 16:00")
-  - Number of activities, hotels, transport segments
-  - Breakdown: "X hours transit, Y activities, Z nights accommodation"
-- Renders as a compact stats card
-
-### 4. Emergency Info Card
-
-**`src/components/EmergencyInfo.tsx`** — New component
-- Hardcoded emergency numbers for ~20 common countries, keyed by destination name/country detection
-- Shows: Police, Ambulance, Tourist helpline, nearest embassy info placeholder
-- Also ask the AI to include emergency info in the JSON response
-
-**`src/types/itinerary.ts`** — Add optional `emergencyInfo` field to `ItineraryData`
-
-**`supabase/functions/chat/index.ts`** — Add `emergencyInfo` to JSON schema instruction so AI provides it
-
-### 5. Multi-City Planner Enhancement
-
-The AI already supports multi-stop routes, but we need explicit UI support.
-
-**`supabase/functions/chat/index.ts`** — Add instruction: "When the user mentions 3+ cities, treat it as a multi-city trip. Optimize the route order for minimum travel time and include connecting transport between each city pair."
-
-**`src/pages/Itinerary.tsx`** — Add a route summary header showing the full route chain (e.g., "Delhi → Agra → Jaipur → Udaipur") extracted from leg `from`/`to` fields
-
-### Files Modified
-
-| File | Change |
-|------|--------|
-| `src/components/BookingLinks.tsx` | Create — deep links to booking platforms per leg type |
-| `src/components/DestinationPhotos.tsx` | Create — Unsplash photo gallery for destinations |
-| `src/components/TripDuration.tsx` | Create — travel time/activity stats breakdown |
-| `src/components/EmergencyInfo.tsx` | Create — emergency numbers by country |
-| `src/types/itinerary.ts` | Add `emergencyInfo` optional field |
-| `src/pages/Itinerary.tsx` | Integrate all 4 new components + route summary header |
-| `supabase/functions/chat/index.ts` | Add emergencyInfo to JSON schema, multi-city optimization instruction |
+### Technical Detail
+- `idb-keyval` provides simple `get(key)` / `set(key, value)` that wraps IndexedDB
+- Sessions are stored as a single array under key `"tripmap-chat-history"`
+- Async loading means sessions start as `[]` and populate after mount (no visible delay since the history panel is closed by default)
 
