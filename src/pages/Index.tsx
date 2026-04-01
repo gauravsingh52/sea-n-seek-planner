@@ -10,10 +10,10 @@ import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 
 const QUICK_PROMPTS = [
-  { icon: Ship, text: "Plan a weekend trip from London to Paris with ferry and hotels" },
-  { icon: Train, text: "Compare travel options from UK to Amsterdam — ferry vs train" },
-  { icon: Car, text: "Find the best route for an Italian coast road trip" },
-  { icon: Palmtree, text: "Plan a budget island-hopping trip in Greece" },
+  { icon: Ship, text: "Plan a ferry trip from Barcelona to Ibiza with hotels" },
+  { icon: Train, text: "Compare bullet trains vs flights from Tokyo to Osaka" },
+  { icon: Car, text: "Road trip itinerary along the California coast" },
+  { icon: Palmtree, text: "Plan a budget island-hopping trip in Bali" },
 ];
 
 function Particles() {
@@ -83,8 +83,8 @@ export default function Index() {
             <Logo size={42} />
           </div>
           <div>
-            <h1 className="text-lg font-display font-bold gradient-text leading-none">TripMap Planner</h1>
-            <p className="text-xs text-muted-foreground">AI-powered travel planning</p>
+            <h1 className="text-lg font-display font-bold text-foreground leading-none">TripMap Planner</h1>
+            <p className="text-xs text-foreground/50">AI-powered travel planning</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -119,10 +119,10 @@ export default function Index() {
               Where to next?
             </h2>
             <p
-              className="text-muted-foreground mb-12 max-w-md text-base opacity-0 animate-slide-up-fade"
+              className="text-foreground/70 mb-12 max-w-md text-base opacity-0 animate-slide-up-fade"
               style={{ animationDelay: "0.3s" }}
             >
-              Plan trips across Europe — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
+              Plan trips anywhere in the world — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
             </p>
 
             {/* Prompt cards */}
