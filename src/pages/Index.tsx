@@ -244,6 +244,7 @@ export default function Index() {
                       suggestions={followUpSuggestions}
                       onSelect={(text) => sendMessage(text, tripSettings)}
                       disabled={isLoading}
+                      regionCode={countryCode}
                     />
                   </>
                 )}
