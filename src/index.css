@@ -6,6 +6,59 @@
 
 @layer base {
   :root {
+    --background: 40 30% 96%;
+    --foreground: 220 25% 15%;
+
+    --card: 40 25% 93%;
+    --card-foreground: 220 25% 15%;
+
+    --popover: 40 25% 93%;
+    --popover-foreground: 220 25% 15%;
+
+    --primary: 175 65% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 18% 88%;
+    --secondary-foreground: 220 20% 25%;
+
+    --muted: 40 15% 90%;
+    --muted-foreground: 220 12% 45%;
+
+    --accent: 35 85% 55%;
+    --accent-foreground: 220 25% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 82%;
+    --input: 220 15% 82%;
+    --ring: 175 65% 38%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 40 22% 94%;
+    --sidebar-foreground: 220 20% 20%;
+    --sidebar-primary: 175 65% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 40 18% 88%;
+    --sidebar-accent-foreground: 220 20% 20%;
+    --sidebar-border: 220 15% 82%;
+    --sidebar-ring: 175 65% 38%;
+
+    --earth-deep: 220 30% 15%;
+    --earth-mid: 200 35% 30%;
+    --earth-light: 195 30% 50%;
+    --sand: 35 60% 55%;
+    --sunset: 15 80% 55%;
+
+    --glass-bg: 40 25% 96% / 0.8;
+    --glass-border: 220 25% 15% / 0.08;
+    --glass-border-strong: 220 25% 15% / 0.12;
+    --glow-primary: 175 65% 38% / 0.15;
+    --glow-accent: 35 85% 55% / 0.12;
+  }
+
+  .dark {
     --background: 220 25% 10%;
     --foreground: 210 20% 92%;
 
@@ -109,9 +162,9 @@
   .gradient-text {
     background: linear-gradient(
       135deg,
-      hsl(0 0% 100%),
+      hsl(var(--foreground)),
       hsl(var(--primary)),
-      hsl(0 0% 100%)
+      hsl(var(--foreground))
     );
     background-size: 300% 300%;
     -webkit-background-clip: text;
@@ -157,6 +210,10 @@
     opacity: 0.15;
     z-index: 0;
     pointer-events: none;
+  }
+
+  .dark .travel-bg::before {
+    opacity: 0.15;
   }
 
   .travel-bg::after {
@@ -227,4 +284,15 @@
   color: hsl(var(--primary));
   animation: blink 0.8s step-end infinite;
   font-weight: bold;
+}
+
+/* Light mode prose overrides */
+.prose-invert {
+  --tw-prose-body: hsl(var(--foreground) / 0.9);
+  --tw-prose-headings: hsl(var(--foreground));
+}
+
+.dark .prose-invert {
+  --tw-prose-invert-body: hsl(var(--foreground) / 0.9);
+  --tw-prose-invert-headings: hsl(var(--foreground));
 }

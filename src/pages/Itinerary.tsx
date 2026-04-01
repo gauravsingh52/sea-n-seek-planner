@@ -73,16 +73,19 @@ export default function Itinerary() {
         ))}
       </div>
 
-      <header className="relative z-10 flex items-center gap-3 px-4 md:px-6 py-3 glass-strong border-b border-border/30">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass text-foreground">
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div className="flex items-center gap-2">
+      <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-3 glass-strong border-b border-border/30">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass text-foreground">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
           <Logo size={36} />
           <h1 className="text-lg font-display font-bold gradient-text">
             {itinerary?.title || "Your Itinerary"}
           </h1>
         </div>
+        <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
+          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </Button>
       </header>
 
       {!itinerary ? (

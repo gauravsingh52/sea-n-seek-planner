@@ -112,6 +112,7 @@ export function useChat() {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
+              if (!assistantContent) playMessageSound();
               assistantContent += content;
               const displayContent = stripItineraryBlock(assistantContent);
               setMessages(prev => {
