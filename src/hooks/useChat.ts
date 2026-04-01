@@ -40,7 +40,7 @@ function mapItinerary(raw: any): ItineraryData & { followUpSuggestions?: string[
 
 function parseAllItineraryBlocks(text: string): (ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] })[] {
   const results: (ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] })[] = [];
-  const markers = ["```itinerary-json", "```json"];
+  const markers = ["```itinerary-json", "~~~itinerary-json", "```json"];
 
   for (const marker of markers) {
     let searchFrom = 0;
@@ -48,7 +48,8 @@ function parseAllItineraryBlocks(text: string): (ItineraryData & { followUpSugge
       const startIdx = text.indexOf(marker, searchFrom);
       if (startIdx === -1) break;
       const jsonStart = text.indexOf("\n", startIdx) + 1;
-      const endIdx = text.indexOf("```", jsonStart);
+      const closingMarker = marker.startsWith("~~~") ? "~~~" : "```";
+      const endIdx = text.indexOf(closingMarker, jsonStart);
       if (endIdx === -1) break;
       try {
         const raw = JSON.parse(text.slice(jsonStart, endIdx).trim());
@@ -86,12 +87,13 @@ function parseAllItineraryBlocks(text: string): (ItineraryData & { followUpSugge
 
 function stripItineraryBlocks(text: string): string {
   let result = text;
-  const markers = ["```itinerary-json", "```json"];
+  const markers = ["```itinerary-json", "~~~itinerary-json", "```json"];
   for (const marker of markers) {
     while (true) {
       const startIdx = result.indexOf(marker);
       if (startIdx === -1) break;
-      const endIdx = result.indexOf("```", startIdx + marker.length);
+      const closingMarker = marker.startsWith("~~~") ? "~~~" : "```";
+      const endIdx = result.indexOf(closingMarker, startIdx + marker.length);
       if (endIdx === -1) break;
       result = (result.slice(0, startIdx) + result.slice(endIdx + 3)).trim();
     }
