@@ -269,7 +269,7 @@ export default function Index() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Plan your next adventure..."
+              placeholder={t.placeholder}
               rows={1}
               className="w-full resize-none rounded-2xl glass-strong px-5 py-3.5 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-all duration-300 disabled:opacity-50"
               disabled={isLoading}
