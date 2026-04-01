@@ -65,7 +65,7 @@ const countryKeywords: Record<string, string[]> = {
   mexico: ["mexico city", "cancun", "tulum", "playa del carmen"],
   canada: ["toronto", "vancouver", "montreal", "calgary", "ottawa"],
   "new zealand": ["auckland", "queenstown", "wellington", "christchurch"],
-  south korea: ["seoul", "busan", "jeju"],
+  "south korea": ["seoul", "busan", "jeju"],
   china: ["beijing", "shanghai", "guangzhou", "shenzhen", "chengdu", "xi'an"],
   egypt: ["cairo", "luxor", "aswan", "alexandria", "sharm el sheikh"],
   malaysia: ["kuala lumpur", "penang", "langkawi", "malacca"],
