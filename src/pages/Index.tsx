@@ -41,6 +41,7 @@ export default function Index() {
   const [input, setInput] = useState("");
   const { messages, isLoading, sendMessage, clearChat, latestItinerary } = useChat();
   const { setItinerary } = useTrip();
+  const { theme, toggleTheme } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
