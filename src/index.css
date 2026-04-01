@@ -216,3 +216,15 @@
   0%, 100% { box-shadow: 0 0 15px hsl(var(--glow-primary)), 0 0 30px hsl(var(--glow-primary)); }
   50% { box-shadow: 0 0 25px hsl(var(--glow-primary)), 0 0 50px hsl(var(--glow-primary)), 0 0 80px hsl(var(--glow-primary)); }
 }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typing-cursor {
+  display: inline;
+  color: hsl(var(--primary));
+  animation: blink 0.8s step-end infinite;
+  font-weight: bold;
+}
