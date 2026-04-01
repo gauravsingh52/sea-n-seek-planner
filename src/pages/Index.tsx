@@ -109,7 +109,7 @@ export default function Index() {
             {/* Hero */}
             <div
               className="mb-8 opacity-0 animate-slide-up-fade"
-              style={{ animationDelay: "0s", animation: "slide-up-fade 0.6s ease-out forwards, glow-pulse 3s ease-in-out infinite 0.6s" }}
+              style={{ animationDelay: "0s" }}
             >
               <Logo size={80} />
             </div>
