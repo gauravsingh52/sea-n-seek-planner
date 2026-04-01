@@ -1,33 +1,47 @@
-import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef, useState } from "react";
 import type { ItineraryData } from "@/types/itinerary";
 
-// Fix default marker icons
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
+// Dynamically import leaflet + react-leaflet to avoid SSR/init issues
+let leafletReady = false;
+let L: any = null;
 
-function FitBounds({ coords }: { coords: [number, number][] }) {
-  const map = useMap();
+function TripMapInner({ itinerary }: { itinerary: ItineraryData }) {
+  const [modules, setModules] = useState<any>(null);
   const fitted = useRef(false);
 
   useEffect(() => {
-    if (coords.length > 0 && !fitted.current) {
-      fitted.current = true;
-      const bounds = L.latLngBounds(coords.map(([lat, lng]) => [lat, lng]));
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+    let cancelled = false;
+    async function load() {
+      try {
+        const [leafletMod, rlMod] = await Promise.all([
+          import("leaflet"),
+          import("react-leaflet"),
+        ]);
+        // Also load CSS
+        await import("leaflet/dist/leaflet.css");
+
+        L = leafletMod.default || leafletMod;
+
+        // Fix default marker icons (only once)
+        if (!leafletReady) {
+          leafletReady = true;
+          delete (L.Icon.Default.prototype as any)._getIconUrl;
+          L.Icon.Default.mergeOptions({
+            iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+            iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+            shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+          });
+        }
+
+        if (!cancelled) setModules(rlMod);
+      } catch (err) {
+        console.error("Failed to load map modules:", err);
+      }
     }
-  }, [coords, map]);
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
-  return null;
-}
-
-export function TripMap({ itinerary }: { itinerary: ItineraryData }) {
   const allCoords: [number, number][] = [];
   const polylineCoords: [number, number][] = [];
 
@@ -42,9 +56,32 @@ export function TripMap({ itinerary }: { itinerary: ItineraryData }) {
     }
   });
 
-  if (allCoords.length === 0) return null;
+  if (!modules || allCoords.length === 0) {
+    return (
+      <div className="w-full h-full rounded-2xl glass-strong flex items-center justify-center">
+        <p className="text-muted-foreground text-sm animate-pulse">
+          {allCoords.length === 0 ? "No map coordinates available" : "Loading map..."}
+        </p>
+      </div>
+    );
+  }
 
+  const { MapContainer, TileLayer, Marker, Popup, Polyline } = modules;
   const center = allCoords[0];
+
+  // FitBounds as inline effect
+  function FitBoundsEffect({ coords }: { coords: [number, number][] }) {
+    const map = modules.useMap();
+    const didFit = useRef(false);
+    useEffect(() => {
+      if (coords.length > 0 && !didFit.current && L) {
+        didFit.current = true;
+        const bounds = L.latLngBounds(coords.map(([lat, lng]: [number, number]) => [lat, lng]));
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+      }
+    }, [coords, map]);
+    return null;
+  }
 
   return (
     <div className="w-full h-full rounded-2xl overflow-hidden glass-strong gradient-border">
@@ -59,7 +96,7 @@ export function TripMap({ itinerary }: { itinerary: ItineraryData }) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <FitBounds coords={allCoords} />
+        <FitBoundsEffect coords={allCoords} />
 
         {polylineCoords.length > 1 && (
           <Polyline
@@ -73,8 +110,8 @@ export function TripMap({ itinerary }: { itinerary: ItineraryData }) {
           />
         )}
 
-        {itinerary.legs.map((leg, i) => {
-          const markers = [];
+        {itinerary.legs.map((leg) => {
+          const markers: any[] = [];
           if (leg.fromCoords) {
             markers.push(
               <Marker key={`${leg.id}-from`} position={[leg.fromCoords.lat, leg.fromCoords.lng]}>
@@ -84,7 +121,7 @@ export function TripMap({ itinerary }: { itinerary: ItineraryData }) {
                     <br />
                     {leg.description}
                     {leg.time && <><br />{leg.time}</>}
-                    {leg.cost > 0 && <><br />{leg.cost}</>}
+                    {leg.cost > 0 && <><br />Cost: {leg.cost}</>}
                   </div>
                 </Popup>
               </Marker>
@@ -106,4 +143,8 @@ export function TripMap({ itinerary }: { itinerary: ItineraryData }) {
       </MapContainer>
     </div>
   );
+}
+
+export function TripMap({ itinerary }: { itinerary: ItineraryData }) {
+  return <TripMapInner itinerary={itinerary} />;
 }
