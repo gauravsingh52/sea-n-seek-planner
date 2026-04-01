@@ -11,6 +11,7 @@ import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useGeoSuggestions } from "@/hooks/useGeoSuggestions";
+import { useSavedTrips } from "@/hooks/useSavedTrips";
 
 function Particles() {
   return (
