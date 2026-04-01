@@ -8,6 +8,7 @@ import { WaveLoader } from "@/components/WaveLoader";
 import { Logo } from "@/components/Logo";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
+import { useTheme } from "@/hooks/useTheme";
 
 const QUICK_PROMPTS = [
   { icon: Ship, text: "Plan a ferry trip from Barcelona to Ibiza with hotels" },
