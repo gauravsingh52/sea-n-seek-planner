@@ -223,10 +223,18 @@ export default function Index() {
                 ))}
                 {isLoading && messages[messages.length - 1]?.role !== "assistant" && <WaveLoader />}
                 {showFollowUps && (
-                  <FollowUpChips
-                    suggestions={followUpSuggestions}
-                    onSelect={(text) => sendMessage(text, tripSettings)}
-                    disabled={isLoading}
+                  <>
+                    <FollowUpChips
+                      suggestions={followUpSuggestions}
+                      onSelect={(text) => sendMessage(text, tripSettings)}
+                      disabled={isLoading}
+                    />
+                  </>
+                )}
+                {comparisonItineraries.length > 1 && (
+                  <TripComparison
+                    itineraries={comparisonItineraries}
+                    onSelect={(it) => { setItinerary(it); navigate("/itinerary"); }}
                   />
                 )}
               </div>
