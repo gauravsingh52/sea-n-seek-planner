@@ -6,6 +6,7 @@ import { Logo } from "@/components/Logo";
 import { useTrip } from "@/contexts/TripContext";
 import { TripMap } from "@/components/TripMap";
 import type { ItineraryLeg } from "@/types/itinerary";
+import { useTheme } from "@/hooks/useTheme";
 
 const iconMap: Record<string, any> = {
   ship: Ship, train: Train, car: Car, plane: Plane, bus: Bus, hotel: Hotel, pin: MapPin,
