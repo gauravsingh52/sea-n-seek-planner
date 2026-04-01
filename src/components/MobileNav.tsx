@@ -28,6 +28,8 @@ export function MobileNav({ onNewChat, savedCount = 0, onHistoryClick }: MobileN
             if (item.path === "new") {
               onNewChat?.();
               navigate("/");
+            } else if (item.path === "history") {
+              onHistoryClick?.();
             } else {
               navigate(item.path);
             }

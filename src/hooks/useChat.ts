@@ -193,5 +193,12 @@ export function useChat() {
     setPackingList([]);
   }, []);
 
-  return { messages, isLoading, sendMessage, clearChat, latestItinerary, followUpSuggestions, packingList };
+  const loadChat = useCallback((msgs: Message[], itinerary?: ItineraryData | null) => {
+    setMessages(msgs);
+    setLatestItinerary(itinerary || null);
+    setFollowUpSuggestions([]);
+    setPackingList([]);
+  }, []);
+
+  return { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, followUpSuggestions, packingList };
 }
