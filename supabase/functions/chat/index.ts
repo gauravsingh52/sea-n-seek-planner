@@ -194,7 +194,15 @@ serve(async (req) => {
       if (settings.budget) parts.push(`Budget: ${settings.budget} (local currency)`);
       if (settings.travelers && settings.travelers > 1) parts.push(`Travelers: ${settings.travelers}`);
       if (settings.dateFrom && settings.dateTo) parts.push(`Dates: ${settings.dateFrom} to ${settings.dateTo}`);
-      if (settings.language && settings.language !== "en") parts.push(`Respond in language: ${settings.language}`);
+      if (settings.language) {
+        const langMap: Record<string, string> = {
+          en: "English", hi: "हिन्दी (Hindi)", es: "Español (Spanish)", fr: "Français (French)",
+          de: "Deutsch (German)", ja: "日本語 (Japanese)", zh: "中文 (Chinese)", ar: "العربية (Arabic)",
+          pt: "Português (Portuguese)", ko: "한국어 (Korean)",
+        };
+        const langName = langMap[settings.language] || settings.language;
+        parts.push(`IMPORTANT: You MUST respond ENTIRELY in ${langName}. All headings, descriptions, tips, suggestions, and the followUpSuggestions array values must be in ${langName}. Do NOT mix languages.`);
+      }
       if (parts.length > 0) {
         contextMsg = `\n\n[Trip Context: ${parts.join(", ")}]`;
       }

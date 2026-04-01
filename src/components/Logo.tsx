@@ -9,34 +9,29 @@ export function Logo({ size = 40, className = "" }: { size?: number; className?:
       className={className}
     >
       <defs>
-        <linearGradient id="logo-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+        <linearGradient id="logo-grad" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="hsl(var(--primary))" />
           <stop offset="100%" stopColor="hsl(var(--accent))" />
         </linearGradient>
       </defs>
-      {/* Globe circle */}
-      <circle cx="32" cy="32" r="26" stroke="url(#logo-grad)" strokeWidth="3" fill="none" />
-      {/* Horizontal line */}
-      <ellipse cx="32" cy="32" rx="26" ry="10" stroke="url(#logo-grad)" strokeWidth="2" fill="none" />
-      {/* Vertical meridian */}
-      <ellipse cx="32" cy="32" rx="10" ry="26" stroke="url(#logo-grad)" strokeWidth="2" fill="none" />
+      {/* Compass circle */}
+      <circle cx="32" cy="32" r="28" fill="hsl(var(--primary) / 0.1)" stroke="url(#logo-grad)" strokeWidth="3" />
+      {/* North arrow */}
+      <polygon points="32,10 27,30 32,26 37,30" fill="hsl(var(--primary))" />
+      {/* South arrow */}
+      <polygon points="32,54 37,34 32,38 27,34" fill="hsl(var(--primary) / 0.35)" />
+      {/* Pin dot */}
+      <circle cx="32" cy="32" r="4" fill="hsl(var(--sunset))" />
+      <circle cx="32" cy="32" r="1.5" fill="hsl(var(--background))" />
       {/* Route arc */}
       <path
-        d="M18 44 Q28 28, 46 22"
+        d="M20 44 Q32 24, 46 20"
         stroke="hsl(var(--sunset))"
-        strokeWidth="3"
+        strokeWidth="2.5"
         strokeLinecap="round"
+        strokeDasharray="4 3"
         fill="none"
       />
-      {/* Origin dot */}
-      <circle cx="18" cy="44" r="3.5" fill="hsl(var(--primary))" />
-      {/* Destination pin */}
-      <path
-        d="M46 14 C46 14, 46 22, 46 22 C43 25, 49 25, 46 22 Z"
-        fill="hsl(var(--sunset))"
-      />
-      <circle cx="46" cy="16" r="3" fill="hsl(var(--sunset))" />
-      <circle cx="46" cy="16" r="1.5" fill="hsl(var(--background))" />
     </svg>
   );
 }

@@ -1,12 +1,13 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Map, Bookmark, Plus } from "lucide-react";
+import { Home, Map, Bookmark, Plus, MessageSquare } from "lucide-react";
 
 interface MobileNavProps {
   onNewChat?: () => void;
   savedCount?: number;
+  onHistoryClick?: () => void;
 }
 
-export function MobileNav({ onNewChat, savedCount = 0 }: MobileNavProps) {
+export function MobileNav({ onNewChat, savedCount = 0, onHistoryClick }: MobileNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -14,6 +15,7 @@ export function MobileNav({ onNewChat, savedCount = 0 }: MobileNavProps) {
     { icon: Home, label: "Home", path: "/" },
     { icon: Map, label: "Itinerary", path: "/itinerary" },
     { icon: Bookmark, label: "Saved", path: "/saved", badge: savedCount },
+    { icon: MessageSquare, label: "History", path: "history" },
     { icon: Plus, label: "New", path: "new" },
   ];
 
@@ -26,6 +28,8 @@ export function MobileNav({ onNewChat, savedCount = 0 }: MobileNavProps) {
             if (item.path === "new") {
               onNewChat?.();
               navigate("/");
+            } else if (item.path === "history") {
+              onHistoryClick?.();
             } else {
               navigate(item.path);
             }
