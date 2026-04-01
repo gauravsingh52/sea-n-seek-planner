@@ -40,7 +40,7 @@ function mapItinerary(raw: any): ItineraryData & { followUpSuggestions?: string[
 
 function parseAllItineraryBlocks(text: string): (ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] })[] {
   const results: (ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] })[] = [];
-  const markers = ["```itinerary-json", "```json"];
+  const markers = ["```itinerary-json", "~~~itinerary-json", "```json"];
 
   for (const marker of markers) {
     let searchFrom = 0;
