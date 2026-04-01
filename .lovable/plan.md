@@ -1,37 +1,30 @@
 
 
-## Location-Based Trip Suggestions
+## Fix: Country-Level Suggestions Instead of Continent-Only
 
-### Idea
-Detect the user's approximate location via a free IP geolocation API and show personalized quick-start prompts based on their region/country. Falls back to the current global prompts if geolocation fails.
+### Problem
+Currently suggestions are mapped only by continent (`AS`, `EU`, etc.), so a user in Chandigarh, India gets generic Asia suggestions about Tokyo bullet trains and Vietnam ferries — not relevant to their location at all.
 
-### How It Works
+### Solution
+Add **country-level** prompt mappings that override the continent fallback. The API already returns `country_code` — we just need to use it.
 
-**1. Create `src/hooks/useGeoSuggestions.ts`**
-- On mount, call a free IP geolocation API (`https://ipapi.co/json/` — no API key needed, 1000 req/day free)
-- Extract `country_code`, `city`, `region`, `continent_code`
-- Based on the detected region, return a set of 4 region-specific prompt suggestions
-- Region mapping:
-  - **Europe** → Channel ferry trips, Eurostar, Mediterranean island hopping, Alpine road trips
-  - **North America** → US road trips, Caribbean cruises, cross-country trains, Mexico flights
-  - **Asia** → Bullet trains Japan, island hopping SE Asia, India rail, China high-speed
-  - **South America** → Patagonia road trip, Amazon river, Galapagos ferries
-  - **Oceania** → NZ road trip, Australian coast, Fiji island hopping
-  - **Africa** → Safari routes, Morocco coastal, Cape Town to Kruger
-  - **Fallback** → Current global prompts
-- Personalize the greeting: "Popular trips near {city}" or "Suggested for travelers in {country}"
-- Returns `{ suggestions, locationLabel, isLoading }`
+### Changes — `src/hooks/useGeoSuggestions.ts`
 
-**2. Update `src/pages/Index.tsx`**
-- Import and use `useGeoSuggestions()`
-- Show a small label above prompt cards: "Popular trips near London" (or wherever they are)
-- Replace the static `QUICK_PROMPTS` with the dynamic region-based ones
-- Show a skeleton/shimmer while loading, then animate the cards in
-- Keep static prompts as fallback if API fails or takes too long (2s timeout)
+1. **Add a `COUNTRY_PROMPTS` mapping** with country-specific suggestions for major countries:
+   - **IN (India)**: Chandigarh to Manali road trip, Kerala backwater houseboat, Rajasthan palace tour (Delhi–Jaipur–Udaipur), Darjeeling Himalayan Railway
+   - **US**: California coast road trip, NYC to DC Amtrak, Hawaii island hopping, Route 66
+   - **UK**: Scottish Highlands road trip, Lake District, London to Edinburgh train, Channel Islands ferry
+   - **JP**: Bullet train Tokyo–Kyoto–Osaka, Okinawa islands, Hokkaido road trip, Mt Fuji day trip
+   - **AU**: Great Ocean Road, Sydney–Melbourne train, Whitsundays, Outback road trip
+   - **TH**: Bangkok to Chiang Mai train, island hopping Krabi, Ayutthaya day trip, Phuket coastal tour
+   - Add 6-8 popular travel countries total
 
-### Files
-| File | Action |
+2. **Update the selection logic**: Check `country_code` first → if match in `COUNTRY_PROMPTS`, use that. Otherwise fall back to continent → then global fallback.
+
+3. **Use city name in suggestions** when available — e.g. for India, dynamically prefix one suggestion with the user's city: `"Weekend getaway from {city} to Shimla"`.
+
+### Files Modified
+| File | Change |
 |------|--------|
-| `src/hooks/useGeoSuggestions.ts` | Create — IP geolocation + region-based prompt mapping |
-| `src/pages/Index.tsx` | Edit — use dynamic suggestions, show location label |
+| `src/hooks/useGeoSuggestions.ts` | Add `COUNTRY_PROMPTS` map, update selection logic to prefer country over continent, add one city-personalized suggestion |
 
