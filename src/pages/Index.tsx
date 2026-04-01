@@ -143,7 +143,7 @@ export default function Index() {
                     <button
                       key={prompt.text}
                       onClick={() => sendMessage(prompt.text)}
-                      className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 opacity-0 animate-slide-up-fade"
+                      className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 animate-slide-up-fade"
                       style={{ animationDelay: `${0.4 + i * 0.1}s` }}
                     >
                       <div className="flex items-start gap-3">

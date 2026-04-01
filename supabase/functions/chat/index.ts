@@ -111,7 +111,10 @@ Rules for the JSON block:
 - For hotels and activities, include at least fromCoords
 - cost is a number (no currency symbol)
 - totalCost should equal the sum of all leg costs
-- This block will be hidden from the user — they'll see only the markdown above it`;
+- This block will be hidden from the user — they'll see only the markdown above it
+
+## CRITICAL REMINDER
+You MUST ALWAYS include the \`\`\`itinerary-json block at the end of EVERY response that contains any trip plan, itinerary, route suggestion, or travel recommendation with specific locations. This is NOT optional. The app CANNOT display the itinerary without this data block. Even for simple single-route suggestions, include the JSON block. NEVER skip it.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

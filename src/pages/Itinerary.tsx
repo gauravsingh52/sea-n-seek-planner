@@ -1,12 +1,35 @@
+import { lazy, Suspense, Component, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
 import { useTrip } from "@/contexts/TripContext";
-import { TripMap } from "@/components/TripMap";
 import type { ItineraryLeg } from "@/types/itinerary";
 import { useTheme } from "@/hooks/useTheme";
+
+const TripMap = lazy(() => import("@/components/TripMap").then(m => ({ default: m.TripMap })));
+
+// Error boundary for map
+class MapErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-full h-full rounded-2xl glass-strong flex items-center justify-center">
+          <p className="text-muted-foreground text-sm">Map could not be loaded</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const iconMap: Record<string, any> = {
   ship: Ship, train: Train, car: Car, plane: Plane, bus: Bus, hotel: Hotel, pin: MapPin,
@@ -91,18 +114,18 @@ export default function Itinerary() {
       {!itinerary ? (
         <div className="max-w-3xl mx-auto px-4 py-8 relative z-10">
           <div className="text-center py-16">
-            <div className="w-20 h-20 rounded-2xl glass-strong flex items-center justify-center mx-auto mb-6 animate-slide-up-fade" style={{ animation: "slide-up-fade 0.6s ease-out forwards, glow-pulse 3s ease-in-out infinite 0.6s" }}>
+            <div className="w-20 h-20 rounded-2xl glass-strong flex items-center justify-center mx-auto mb-6 animate-slide-up-fade">
               <MapPin className="w-10 h-10 text-muted-foreground animate-bounce-subtle" />
             </div>
-            <h2 className="text-2xl font-display font-bold gradient-text mb-3 opacity-0 animate-slide-up-fade" style={{ animationDelay: "0.15s" }}>
+            <h2 className="text-2xl font-display font-bold gradient-text mb-3 animate-slide-up-fade" style={{ animationDelay: "0.15s" }}>
               No itinerary yet
             </h2>
-            <p className="text-muted-foreground mb-6 max-w-sm mx-auto opacity-0 animate-slide-up-fade" style={{ animationDelay: "0.3s" }}>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto animate-slide-up-fade" style={{ animationDelay: "0.3s" }}>
               Chat with TripMap Planner to create a travel plan. Your itinerary will appear here once generated.
             </p>
             <Button
               onClick={() => navigate("/")}
-              className="rounded-2xl earth-gradient shadow-lg hover:scale-105 transition-transform duration-300 opacity-0 animate-slide-up-fade"
+              className="rounded-2xl earth-gradient shadow-lg hover:scale-105 transition-transform duration-300 animate-slide-up-fade"
               style={{ animationDelay: "0.45s" }}
             >
               Start Planning
@@ -112,7 +135,15 @@ export default function Itinerary() {
       ) : (
         <div className="relative z-10 flex flex-col h-[calc(100vh-60px)]">
           <div className="h-[40vh] min-h-[250px] p-4 pb-2">
-            <TripMap itinerary={itinerary} />
+            <MapErrorBoundary>
+              <Suspense fallback={
+                <div className="w-full h-full rounded-2xl glass-strong flex items-center justify-center">
+                  <p className="text-muted-foreground text-sm animate-pulse">Loading map...</p>
+                </div>
+              }>
+                <TripMap itinerary={itinerary} />
+              </Suspense>
+            </MapErrorBoundary>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 pb-6">
@@ -128,7 +159,7 @@ export default function Itinerary() {
                       <div className="absolute left-[23px] top-[56px] bottom-[-16px] w-[2px] bg-gradient-to-b from-primary/40 to-primary/10" />
                     )}
                     <Card
-                      className={`glass gradient-border border-l-[3px] ${borderColor} opacity-0 animate-slide-up-fade hover:scale-[1.02] transition-transform duration-300`}
+                      className={`glass gradient-border border-l-[3px] ${borderColor} animate-slide-up-fade hover:scale-[1.02] transition-transform duration-300`}
                       style={{ animationDelay: `${i * 0.1}s` }}
                     >
                       <CardHeader className="flex flex-row items-center gap-3 py-3 px-4">
@@ -153,7 +184,7 @@ export default function Itinerary() {
                   </div>
                 );
               })}
-              <div className="opacity-0 animate-slide-up-fade" style={{ animationDelay: `${itinerary.legs.length * 0.1}s` }}>
+              <div className="animate-slide-up-fade" style={{ animationDelay: `${itinerary.legs.length * 0.1}s` }}>
                 <CostBreakdown legs={itinerary.legs} totalCost={itinerary.totalCost} currency={itinerary.currency} />
               </div>
             </div>
