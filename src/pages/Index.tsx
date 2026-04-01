@@ -237,11 +237,9 @@ export default function Index() {
 
       {/* Input area */}
       <div className="relative z-10 p-3 md:p-4 mb-14 md:mb-0">
-        {hasMessages && (
-          <div className="max-w-3xl mx-auto mb-2">
-            <TripSettings settings={tripSettings} onChange={setTripSettings} />
-          </div>
-        )}
+        <div className="max-w-3xl mx-auto mb-2">
+          <TripSettings settings={tripSettings} onChange={setTripSettings} />
+        </div>
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
           <div className="flex-1 relative group">
             <textarea
