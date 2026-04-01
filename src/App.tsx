@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { TripProvider } from "@/contexts/TripContext";
 import Index from "./pages/Index";
 import Itinerary from "./pages/Itinerary";
+import SavedTrips from "./pages/SavedTrips";
 import NotFound from "./pages/NotFound";
 
 
