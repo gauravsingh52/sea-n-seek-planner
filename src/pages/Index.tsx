@@ -228,6 +228,7 @@ export default function Index() {
                     </button>
                   ))}
             </div>
+            <TripTemplates onSelect={(prompt) => sendMessage(prompt, tripSettings)} />
           </div>
         ) : (
           <div className="relative h-full">
