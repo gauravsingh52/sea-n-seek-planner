@@ -1,56 +1,74 @@
 
 
-## Extraordinary UI/UX Redesign
+## Itinerary Page + Map Visualization
 
-The current UI is flat and generic — basic cards, plain background, no visual depth or delight. Here's the plan to make it extraordinary:
+### Overview
+Two major features: (1) parse structured itinerary data from AI chat responses and display them as rich cards with cost breakdown on the Itinerary page, and (2) add an interactive map showing the planned route.
 
-### 1. Immersive Landing Experience (`src/pages/Index.tsx`, `src/index.css`)
-- **Animated background**: Subtle floating particles/dots simulating a world map or constellation pattern using CSS keyframes
-- **Hero section with glassmorphism**: Large frosted-glass card in the center with backdrop-blur, subtle border glow
-- **Animated gradient text** on the "Where to next?" heading — shifting earth tones
-- **Staggered fade-in animations** on all elements (heading, subtitle, prompt cards) using CSS animation delays
-- **Prompt cards with hover effects**: Scale-up on hover, subtle gradient border animation, icon that animates on hover
+### Architecture
 
-### 2. Enhanced Prompt Cards (`src/pages/Index.tsx`)
-- Each card gets a unique icon (train, ship, car, island) instead of generic map emoji
-- Glassmorphism card style: semi-transparent background, backdrop-blur, glowing border on hover
-- Subtle arrow indicator that slides in on hover
+The AI currently returns free-form markdown. To get structured data, we'll update the system prompt to also emit a hidden JSON block (fenced with a special marker like `~~~itinerary-json`) at the end of each itinerary response. The frontend will parse this out and store it in shared state.
 
-### 3. Polished Input Area (`src/pages/Index.tsx`)
-- Floating input bar with shadow and glassmorphism effect
-- Animated send button with pulse effect when text is entered
-- Typing indicator glow around the input border
+```text
+Chat (Index.tsx)
+  ↓ AI response contains ```itinerary-json block
+  ↓ useChat parses it out → stores in itineraryData state
+  ↓ passed via URL state or context
+Itinerary Page
+  ├─ Timeline cards (transport, hotel, activity)
+  ├─ Cost breakdown summary
+  └─ Interactive map (Leaflet)
+```
 
-### 4. Chat Messages (`src/components/ChatMessage.tsx`)
-- Messages animate in with slide + fade
-- User messages get a subtle gradient background instead of flat color
-- Assistant messages get a frosted-glass card look
-- Avatar icons with a subtle glow/ring animation
+### Changes
 
-### 5. Enhanced Loading (`src/components/WaveLoader.tsx`)
-- Replace simple dots with a spinning globe or animated compass needle
-- Add shimmer/skeleton effect for the message area while loading
+**1. Update system prompt** (`supabase/functions/chat/index.ts`)
+- Add instruction: when generating an itinerary, append a fenced JSON block with structured data containing `legs[]` (each with type, title, description, from, to, lat/lng, time, cost) and a `totalCost` field.
 
-### 6. Background & Atmosphere (`src/index.css`)
-- Subtle radial gradient background (warm center fading to edges)
-- Floating decorative elements: faint compass rose or map grid lines as CSS pseudo-elements
-- Smooth color transitions throughout
+**2. Create itinerary types** (`src/types/itinerary.ts`)
+- Define `ItineraryLeg` (type: transport/hotel/activity, title, desc, from/to coords, time, cost) and `ItineraryData` (legs[], totalCost, currency).
 
-### 7. Header Polish (`src/pages/Index.tsx`)
-- Glass-effect header with stronger backdrop blur
-- Logo icon with subtle rotation animation on hover
-- Gradient text for the brand name
+**3. Update useChat hook** (`src/hooks/useChat.ts`)
+- After streaming completes, scan the final assistant message for the JSON marker, parse it, and expose `itineraryData` state alongside messages.
 
-### 8. Itinerary Page (`src/pages/Itinerary.tsx`)
-- Cards with staggered entrance animations
-- Timeline connector line with animated gradient
-- Glass-effect cards with depth
+**4. Create shared state** (`src/contexts/TripContext.tsx`)
+- React context to share `itineraryData` between Index and Itinerary pages without losing data on navigation.
 
-### Files Modified
-- `src/index.css` — New keyframes, glassmorphism utilities, animated gradient, floating particles, radial background
-- `tailwind.config.ts` — New animation keyframes and utility classes
-- `src/pages/Index.tsx` — Glassmorphism cards, animated hero, enhanced prompt cards with unique icons, floating input
-- `src/components/ChatMessage.tsx` — Animated message entrance, gradient bubbles, glass effect
-- `src/components/WaveLoader.tsx` — Enhanced loading animation
-- `src/pages/Itinerary.tsx` — Animated timeline, glass cards
+**5. Rebuild Itinerary page** (`src/pages/Itinerary.tsx`)
+- Consume `itineraryData` from context
+- Render a vertical timeline with icon-coded cards (Ship/Train/Hotel/MapPin) per leg
+- Each card shows title, description, time, and cost with glass styling
+- Bottom summary card with total cost breakdown by category
+- Keep the current empty state when no data exists
+
+**6. Add interactive map** (`src/components/TripMap.tsx`)
+- Install `react-leaflet` + `leaflet` packages
+- Render a Leaflet map with markers at each leg's coordinates
+- Draw polyline connecting the route stops
+- Custom marker popups showing leg details
+- Auto-fit bounds to show all markers
+
+**7. Integrate map into Itinerary page** (`src/pages/Itinerary.tsx`)
+- Place the map above the timeline, taking ~40% of the viewport height
+- Map and timeline scroll independently
+
+**8. Wire up navigation** (`src/pages/Index.tsx`)
+- The "Itinerary" button in the header already navigates to `/itinerary`; wrap App with TripContext so data flows through
+
+### Dependencies
+- `leaflet` + `react-leaflet` (+ `@types/leaflet`) for the map
+- Leaflet CSS import in index.css or the map component
+
+### Files Modified/Created
+| File | Action |
+|------|--------|
+| `supabase/functions/chat/index.ts` | Edit system prompt |
+| `src/types/itinerary.ts` | Create |
+| `src/hooks/useChat.ts` | Edit — parse JSON block |
+| `src/contexts/TripContext.tsx` | Create |
+| `src/components/TripMap.tsx` | Create |
+| `src/pages/Itinerary.tsx` | Rebuild |
+| `src/pages/Index.tsx` | Minor — consume context |
+| `src/App.tsx` | Wrap with TripContext |
+| `src/index.css` | Leaflet CSS import |
 
