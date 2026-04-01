@@ -15,6 +15,7 @@ export function MobileNav({ onNewChat, savedCount = 0, onHistoryClick }: MobileN
     { icon: Home, label: "Home", path: "/" },
     { icon: Map, label: "Itinerary", path: "/itinerary" },
     { icon: Bookmark, label: "Saved", path: "/saved", badge: savedCount },
+    { icon: MessageSquare, label: "History", path: "history" },
     { icon: Plus, label: "New", path: "new" },
   ];
 
