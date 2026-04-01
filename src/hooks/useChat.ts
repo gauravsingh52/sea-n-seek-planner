@@ -48,7 +48,8 @@ function parseAllItineraryBlocks(text: string): (ItineraryData & { followUpSugge
       const startIdx = text.indexOf(marker, searchFrom);
       if (startIdx === -1) break;
       const jsonStart = text.indexOf("\n", startIdx) + 1;
-      const endIdx = text.indexOf("```", jsonStart);
+      const closingMarker = marker.startsWith("~~~") ? "~~~" : "```";
+      const endIdx = text.indexOf(closingMarker, jsonStart);
       if (endIdx === -1) break;
       try {
         const raw = JSON.parse(text.slice(jsonStart, endIdx).trim());
