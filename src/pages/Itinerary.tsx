@@ -131,6 +131,16 @@ export default function Itinerary() {
   const symbol = itinerary ? (currencySymbols[itinerary.currency] || itinerary.currency || "$") : "$";
   const maxDay = itinerary?.days || Math.max(...Object.keys(dayGroups).map(Number), 1);
 
+  // Build route chain for multi-city trips
+  const routeChain = useMemo(() => {
+    if (!itinerary) return "";
+    const transportLegs = itinerary.legs.filter((l) => l.type === "transport" && l.from && l.to);
+    if (transportLegs.length < 2) return "";
+    const chain: string[] = [transportLegs[0].from!];
+    transportLegs.forEach((l) => { if (l.to && chain[chain.length - 1] !== l.to) chain.push(l.to); });
+    return chain.length >= 3 ? chain.join(" → ") : "";
+  }, [itinerary]);
+
   return (
     <div className="min-h-screen bg-background relative travel-bg">
       <div className="particles">
