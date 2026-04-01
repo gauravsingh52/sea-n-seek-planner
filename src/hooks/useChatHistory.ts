@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { get, set } from "idb-keyval";
 import type { Message } from "@/hooks/useChat";
 import type { ItineraryData } from "@/types/itinerary";
 
@@ -11,26 +12,43 @@ export interface ChatSession {
 }
 
 const STORAGE_KEY = "tripmap-chat-history";
-const MAX_SESSIONS = 20;
-
-function loadSessions(): ChatSession[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveSessions(sessions: ChatSession[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0, MAX_SESSIONS)));
-}
+const LOCAL_STORAGE_KEY = "tripmap-chat-history";
+const MAX_SESSIONS = 50;
 
 export function useChatHistory() {
-  const [sessions, setSessions] = useState<ChatSession[]>(loadSessions);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const initialized = useRef(false);
 
+  // Load from IndexedDB on mount, migrate from localStorage if needed
   useEffect(() => {
-    saveSessions(sessions);
+    (async () => {
+      try {
+        // One-time migration from localStorage
+        const localRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (localRaw) {
+          const localSessions: ChatSession[] = JSON.parse(localRaw);
+          const existing = (await get<ChatSession[]>(STORAGE_KEY)) || [];
+          const merged = [...localSessions, ...existing]
+            .filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i)
+            .slice(0, MAX_SESSIONS);
+          await set(STORAGE_KEY, merged);
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
+          setSessions(merged);
+        } else {
+          const stored = (await get<ChatSession[]>(STORAGE_KEY)) || [];
+          setSessions(stored);
+        }
+      } catch {
+        setSessions([]);
+      }
+      initialized.current = true;
+    })();
+  }, []);
+
+  // Persist to IndexedDB whenever sessions change (skip initial empty state)
+  useEffect(() => {
+    if (!initialized.current) return;
+    set(STORAGE_KEY, sessions.slice(0, MAX_SESSIONS)).catch(() => {});
   }, [sessions]);
 
   const saveSession = useCallback((messages: Message[], itinerary?: ItineraryData | null) => {
