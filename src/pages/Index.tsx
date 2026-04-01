@@ -77,7 +77,7 @@ export default function Index() {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-3 glass-strong border-b border-border/30">
         <div className="flex items-center gap-3">
-          <div className="transition-transform duration-300 hover:scale-110" style={{ animation: "glow-pulse 3s ease-in-out infinite" }}>
+          <div className="transition-transform duration-300 hover:scale-110">
             <Logo size={42} />
           </div>
           <div>
@@ -109,7 +109,7 @@ export default function Index() {
             {/* Hero */}
             <div
               className="mb-8 opacity-0 animate-slide-up-fade"
-              style={{ animationDelay: "0s", animation: "slide-up-fade 0.6s ease-out forwards, glow-pulse 3s ease-in-out infinite 0.6s" }}
+              style={{ animationDelay: "0s" }}
             >
               <Logo size={80} />
             </div>
@@ -191,7 +191,6 @@ export default function Index() {
               input.trim() ? "scale-100 shadow-primary/30" : "scale-95 opacity-70"
             }`}
             disabled={!input.trim() || isLoading}
-            style={input.trim() ? { animation: "glow-pulse 2s ease-in-out infinite" } : {}}
           >
             <Send className="w-4 h-4" />
           </Button>
