@@ -9,6 +9,7 @@ export interface ChatSession {
   messages: Message[];
   createdAt: string;
   itinerary?: ItineraryData | null;
+  customTitle?: boolean;
 }
 
 const STORAGE_KEY = "tripmap-chat-history";
