@@ -91,12 +91,20 @@ export default function Index() {
           <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/saved")} className="glass text-foreground relative">
+            <Bookmark className="w-4 h-4 mr-1" /> Saved
+            {savedCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+                {savedCount > 9 ? "9+" : savedCount}
+              </span>
+            )}
+          </Button>
           {hasMessages && (
             <>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/itinerary")} className="glass hover:glow-primary transition-all duration-300 text-foreground">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/itinerary")} className="glass text-foreground">
                 <Map className="w-4 h-4 mr-1" /> Itinerary
               </Button>
-              <Button variant="ghost" size="icon" onClick={clearChat} title="New chat" className="glass hover:glow-primary transition-all duration-300 text-foreground">
+              <Button variant="ghost" size="icon" onClick={clearChat} title="New chat" className="glass text-foreground">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </>
