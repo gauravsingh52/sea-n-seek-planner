@@ -1,21 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Trash2, Map, Ship, Train, Car, Palmtree, ArrowRight, Sun, Moon } from "lucide-react";
+import { Send, Trash2, Map, ArrowRight, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ChatMessage } from "@/components/ChatMessage";
 import { WaveLoader } from "@/components/WaveLoader";
 import { Logo } from "@/components/Logo";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
-
-const QUICK_PROMPTS = [
-  { icon: Ship, text: "Plan a ferry trip from Barcelona to Ibiza with hotels" },
-  { icon: Train, text: "Compare bullet trains vs flights from Tokyo to Osaka" },
-  { icon: Car, text: "Road trip itinerary along the California coast" },
-  { icon: Palmtree, text: "Plan a budget island-hopping trip in Bali" },
-];
+import { useGeoSuggestions } from "@/hooks/useGeoSuggestions";
 
 function Particles() {
   return (
@@ -41,6 +36,7 @@ export default function Index() {
   const [input, setInput] = useState("");
   const { messages, isLoading, sendMessage, clearChat, latestItinerary } = useChat();
   const { setItinerary } = useTrip();
+  const { suggestions, locationLabel, isLoading: geoLoading } = useGeoSuggestions();
   const { theme, toggleTheme } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -130,24 +126,35 @@ export default function Index() {
               Plan trips anywhere in the world — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
             </p>
 
+            {/* Location label */}
+            {locationLabel && !geoLoading && (
+              <p className="text-sm text-primary/80 mb-4 opacity-0 animate-slide-up-fade" style={{ animationDelay: "0.35s" }}>
+                📍 {locationLabel}
+              </p>
+            )}
+
             {/* Prompt cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl w-full">
-              {QUICK_PROMPTS.map((prompt, i) => (
-                <button
-                  key={prompt.text}
-                  onClick={() => sendMessage(prompt.text)}
-                  className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 opacity-0 animate-slide-up-fade"
-                  style={{ animationDelay: `${0.4 + i * 0.1}s` }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:bg-primary/25 group-hover:shadow-md group-hover:shadow-primary/20">
-                      <prompt.icon className="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" />
-                    </div>
-                    <span className="text-sm text-foreground leading-snug flex-1">{prompt.text}</span>
-                  </div>
-                  <ArrowRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-0 translate-x-[-8px] transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" />
-                </button>
-              ))}
+              {geoLoading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-[72px] rounded-2xl" />
+                  ))
+                : suggestions.map((prompt, i) => (
+                    <button
+                      key={prompt.text}
+                      onClick={() => sendMessage(prompt.text)}
+                      className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 opacity-0 animate-slide-up-fade"
+                      style={{ animationDelay: `${0.4 + i * 0.1}s` }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:bg-primary/25 group-hover:shadow-md group-hover:shadow-primary/20">
+                          <prompt.icon className="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" />
+                        </div>
+                        <span className="text-sm text-foreground leading-snug flex-1">{prompt.text}</span>
+                      </div>
+                      <ArrowRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-0 translate-x-[-8px] transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" />
+                    </button>
+                  ))}
             </div>
           </div>
         ) : (
