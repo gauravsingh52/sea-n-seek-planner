@@ -36,10 +36,17 @@ function Particles() {
 
 export default function Index() {
   const [input, setInput] = useState("");
-  const { messages, isLoading, sendMessage, clearChat } = useChat();
+  const { messages, isLoading, sendMessage, clearChat, latestItinerary } = useChat();
+  const { setItinerary } = useTrip();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (latestItinerary) {
+      setItinerary(latestItinerary);
+    }
+  }, [latestItinerary, setItinerary]);
 
   useEffect(() => {
     if (scrollRef.current) {
