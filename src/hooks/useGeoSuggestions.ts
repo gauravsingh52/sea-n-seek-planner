@@ -130,8 +130,8 @@ export function useGeoSuggestions(): GeoResult {
         setCountryCode(cc);
 
         // Priority: country → continent → fallback
-        if (countryCode && COUNTRY_PROMPTS[countryCode]) {
-          const prompts = COUNTRY_PROMPTS[countryCode].map((p) => ({
+        if (cc && COUNTRY_PROMPTS[cc]) {
+          const prompts = COUNTRY_PROMPTS[cc].map((p) => ({
             ...p,
             text: city ? p.text.replace("{city}", city) : p.text.replace(/from \{city\} /g, ""),
           }));
