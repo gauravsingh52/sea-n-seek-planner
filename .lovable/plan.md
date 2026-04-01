@@ -1,102 +1,54 @@
 
 
-## Batch Feature Upgrade — 25 High-Impact Features
+## Fix 4 Issues: Language Switching, Scrolling, Logo, Chat History
 
-Adding 200 features at once would break things and take days. Instead, here are **25 carefully chosen features** across all 4 categories that will make the biggest difference. We'll implement them in one batch since most are small additions.
+### 1. Language Not Switching
 
----
+**Root cause**: The language is stored in `tripSettings.language` and passed to the edge function as a context hint (`Respond in language: ${settings.language}`), but only when `language !== "en"`. The AI receives it as a soft instruction — it may or may not comply. The real issue is the language selector is only visible in the desktop header (`hidden md:flex`), so on many viewports it's invisible. Also, the language instruction is too weak in the system prompt.
 
-### A. Core Travel Planning (9 features)
+**Fix**:
+- Make the language selector visible on mobile too (add to `MobileNav` or input area)
+- Strengthen the language instruction in the edge function: instead of a context hint, make it a hard system instruction like `"IMPORTANT: You MUST respond entirely in Hindi (हिन्दी). All text including headings, tips, and suggestions must be in this language."`
+- Always send language even when it's "en" so the AI knows explicitly
 
-| # | Feature | Implementation |
-|---|---------|---------------|
-| 1 | **Budget input** | Add budget field in chat input area — pass to AI so it respects spending limits |
-| 2 | **Traveler count** | Quick selector (1-10 travelers) — AI adjusts pricing per person |
-| 3 | **Date picker** | Inline date range picker for trip dates — sent as context to AI |
-| 4 | **Packing list generator** | AI generates a packing list based on destination weather + trip type, shown in itinerary page |
-| 5 | **Visa info card** | AI includes visa requirements in response based on popular origin-destination pairs |
-| 6 | **Currency converter widget** | Small converter tool on itinerary page — uses exchangerate API |
-| 7 | **Day-by-day grouping** | Group itinerary legs under Day 1, Day 2 headers |
-| 8 | **Trip duration badge** | Show "3 days, 2 nights" badge at top of itinerary |
-| 9 | **Emergency contacts** | AI includes local emergency numbers (police, ambulance) for destination country |
+### 2. Main Page Not Scrolling
 
-### B. Social & Sharing (4 features)
+**Root cause**: The landing page (no messages) is inside `<div className="flex-1 overflow-hidden">` with content centered via `justify-center h-full`. When content overflows (e.g., on smaller screens), `overflow-hidden` clips it. The suggestion cards and input area get cut off.
 
-| # | Feature | Implementation |
-|---|---------|---------------|
-| 10 | **Share as text** | Copy full itinerary as formatted text (already partial — enhance formatting) |
-| 11 | **Share via WhatsApp/Telegram** | Share buttons that open `wa.me` / `t.me` with itinerary text |
-| 12 | **Download as PDF** | Generate a styled PDF of the itinerary using browser print API |
-| 13 | **Share link with URL params** | Encode itinerary as compressed base64 in URL for sharing |
+**Fix**:
+- Change `overflow-hidden` to `overflow-y-auto` for the empty-state container
+- The centering still works with `min-h-full` instead of `h-full` on the inner div
 
-### C. Smart AI Enhancements (6 features)
+### 3. Logo Redesign
 
-| # | Feature | Implementation |
-|---|---------|---------------|
-| 14 | **Follow-up suggestions** | After AI responds, show 3 clickable follow-up chips (e.g., "Show cheaper options", "Add hotels") |
-| 15 | **Multi-language support** | Detect browser language, add language selector, instruct AI to respond in chosen language |
-| 16 | **Voice input** | Microphone button using Web Speech API for speech-to-text |
-| 17 | **Trip comparison** | "Compare with alternatives" button that asks AI to show 3 different itinerary options |
-| 18 | **Smart destination photos** | Show a destination photo from Unsplash API in itinerary header |
-| 19 | **Travel tips section** | AI includes 3-5 practical tips at the end of each itinerary |
+**Root cause**: Current logo is a complex globe SVG with thin lines that don't render cleanly, especially at small sizes.
 
-### D. User Experience Polish (6 features)
+**Fix**: Replace with a simpler, bolder logo — a stylized compass/pin icon using filled shapes instead of thin strokes. Use the primary navy color with the accent warm tone for the pin/route element. Fewer paths, thicker lines, cleaner at 40px.
 
-| # | Feature | Implementation |
-|---|---------|---------------|
-| 20 | **Onboarding tooltip tour** | First-visit guided tour highlighting key features (3-4 steps) |
-| 21 | **Keyboard shortcuts** | Enter to send, Ctrl+N for new chat, Ctrl+S to save trip |
-| 22 | **Loading skeleton for itinerary** | Animated skeleton cards while itinerary loads |
-| 23 | **Scroll-to-top button** | Floating button in chat when scrolled up |
-| 24 | **Mobile bottom nav** | Bottom navigation bar on mobile instead of header buttons |
-| 25 | **Toast notifications** | Contextual toasts for save, copy, share actions (already partial — improve) |
+### 4. Chat History
 
----
+**Root cause**: Currently `clearChat` wipes all messages. There's no way to revisit past conversations. The saved trips feature only saves itineraries, not chat conversations.
 
-### Implementation Approach
+**Fix**:
+- Create `src/hooks/useChatHistory.ts` — stores chat sessions in localStorage
+- Each session: `{ id, title (first user message), messages, createdAt, itinerary? }`
+- Auto-save current chat on each assistant reply
+- Max 20 sessions, oldest auto-deleted
+- Add a chat history sidebar/drawer accessible from header and mobile nav
+- Create `src/components/ChatHistory.tsx` — slide-out drawer with list of past chats
+- Clicking a past chat loads its messages into `useChat`
+- Add `loadChat` method to `useChat` hook
+- Add History icon to header and mobile nav
 
-We'll implement these in **3 sub-batches** to keep things stable:
+### Files Modified
 
-**Batch 1 — AI & Chat Enhancements** (features 1-3, 5, 9, 14-19)
-- Update `supabase/functions/chat/index.ts` system prompt to include visa info, emergency contacts, travel tips, packing lists, follow-up suggestions
-- Add `TripSettings` component with budget, travelers, dates — passed as context to chat
-- Add follow-up suggestion chips to `ChatMessage.tsx`
-- Add voice input button to `Index.tsx`
-- Add language selector
-
-**Batch 2 — Itinerary Page** (features 4, 6-8, 10-13, 18, 22)
-- Day grouping logic in `Itinerary.tsx`
-- Trip duration calculator
-- Share buttons (WhatsApp, Telegram, PDF, URL)
-- Currency converter widget
-- Destination photo from Unsplash
-- Loading skeletons
-
-**Batch 3 — UX Polish** (features 20-21, 23-25)
-- Onboarding tour component
-- Keyboard shortcuts hook
-- Scroll-to-top button
-- Mobile bottom nav
-- Enhanced toasts
-
-### Files Modified/Created
-
-| File | Action |
+| File | Change |
 |------|--------|
-| `supabase/functions/chat/index.ts` | Expand prompt: visa, tips, packing, follow-ups, emergency info |
-| `src/components/TripSettings.tsx` | Create — budget, travelers, date picker panel |
-| `src/components/FollowUpChips.tsx` | Create — clickable suggestion chips after AI response |
-| `src/components/VoiceInput.tsx` | Create — mic button with Web Speech API |
-| `src/components/ShareButtons.tsx` | Create — WhatsApp, Telegram, PDF, link sharing |
-| `src/components/CurrencyConverter.tsx` | Create — small converter widget |
-| `src/components/DestinationPhoto.tsx` | Create — Unsplash photo header |
-| `src/components/OnboardingTour.tsx` | Create — first-visit tooltip tour |
-| `src/components/ScrollToTop.tsx` | Create — floating scroll button |
-| `src/components/MobileNav.tsx` | Create — bottom navigation for mobile |
-| `src/components/LanguageSelector.tsx` | Create — language picker dropdown |
-| `src/hooks/useKeyboardShortcuts.ts` | Create — keyboard shortcut handler |
-| `src/hooks/useOnboarding.ts` | Create — first-visit detection |
-| `src/pages/Index.tsx` | Add trip settings, voice input, follow-ups, mobile nav, onboarding |
-| `src/pages/Itinerary.tsx` | Day grouping, duration badge, share buttons, converter, photo, skeletons |
-| `src/hooks/useChat.ts` | Pass trip settings (budget, travelers, dates, language) to AI |
+| `src/pages/Index.tsx` | Fix overflow-hidden → overflow-y-auto, add history button, add language selector to mobile area |
+| `src/components/Logo.tsx` | New simpler bold logo SVG |
+| `src/hooks/useChatHistory.ts` | Create — localStorage chat session CRUD |
+| `src/components/ChatHistory.tsx` | Create — slide-out drawer listing past chats |
+| `src/hooks/useChat.ts` | Add `loadChat` method, auto-save to history on replies |
+| `src/components/MobileNav.tsx` | Add History item |
+| `supabase/functions/chat/index.ts` | Strengthen language instruction |
 
