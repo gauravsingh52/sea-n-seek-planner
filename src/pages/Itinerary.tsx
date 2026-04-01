@@ -7,6 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Logo } from "@/components/Logo";
 import { ShareButtons } from "@/components/ShareButtons";
 import { CurrencyConverter } from "@/components/CurrencyConverter";
+import { ExportPDF } from "@/components/ExportPDF";
+import { CopyItinerary } from "@/components/CopyItinerary";
+import { TravelChecklist } from "@/components/TravelChecklist";
+import { CustomStop } from "@/components/CustomStop";
 import { useTrip } from "@/contexts/TripContext";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useWeather } from "@/hooks/useWeather";
@@ -75,23 +79,6 @@ function CostBreakdown({ legs, totalCost, currency }: { legs: ItineraryLeg[]; to
   );
 }
 
-function ItinerarySkeleton() {
-  return (
-    <div className="space-y-4">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="flex gap-3 items-center">
-          <Skeleton className="w-12 h-12 rounded-xl flex-shrink-0" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
-          </div>
-          <Skeleton className="h-4 w-16" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function PackingListCard({ items }: { items: string[] }) {
   return (
     <Card className="glass-strong gradient-border">
@@ -114,7 +101,7 @@ function PackingListCard({ items }: { items: string[] }) {
 
 export default function Itinerary() {
   const navigate = useNavigate();
-  const { itinerary } = useTrip();
+  const { itinerary, addCustomLeg } = useTrip();
   const { theme, toggleTheme } = useTheme();
   const { saveTrip, isSaved } = useSavedTrips();
   const { weather } = useWeather(itinerary);
@@ -138,6 +125,7 @@ export default function Itinerary() {
   }
   const hasDays = itinerary && Object.keys(dayGroups).length > 1;
   const symbol = itinerary ? (currencySymbols[itinerary.currency] || itinerary.currency || "$") : "$";
+  const maxDay = itinerary?.days || Math.max(...Object.keys(dayGroups).map(Number), 1);
 
   return (
     <div className="min-h-screen bg-background relative travel-bg">
@@ -165,9 +153,11 @@ export default function Itinerary() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {itinerary && (
             <>
+              <ExportPDF itinerary={itinerary} />
+              <CopyItinerary itinerary={itinerary} />
               <Button
                 variant="ghost" size="icon" title={saved ? "Saved" : "Save trip"}
                 className="glass text-foreground" onClick={handleSave} disabled={saved}
@@ -212,7 +202,6 @@ export default function Itinerary() {
             </MapErrorBoundary>
           </div>
 
-          {/* Weather summary */}
           {Object.keys(weather).length > 0 && (
             <div className="px-4 pb-2">
               <div className="max-w-3xl mx-auto">
@@ -237,7 +226,6 @@ export default function Itinerary() {
 
           <div className="flex-1 overflow-y-auto px-4 pb-6">
             <div className="max-w-3xl mx-auto space-y-4 pt-2">
-              {/* Day-by-day grouping */}
               {hasDays ? (
                 Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
                   <div key={day}>
@@ -257,22 +245,22 @@ export default function Itinerary() {
                 ))
               )}
 
+              {/* Add custom stop */}
+              <CustomStop onAdd={addCustomLeg} maxDay={maxDay} />
+
               {/* Packing list */}
               {itinerary.packingList && itinerary.packingList.length > 0 && (
-                <div className="animate-slide-up-fade" style={{ animationDelay: `${itinerary.legs.length * 0.1}s` }}>
-                  <PackingListCard items={itinerary.packingList} />
-                </div>
+                <PackingListCard items={itinerary.packingList} />
               )}
 
+              {/* Travel checklist */}
+              <TravelChecklist tripId={itinerary.title} />
+
               {/* Cost breakdown */}
-              <div className="animate-slide-up-fade" style={{ animationDelay: `${(itinerary.legs.length + 1) * 0.1}s` }}>
-                <CostBreakdown legs={itinerary.legs} totalCost={itinerary.totalCost} currency={itinerary.currency} />
-              </div>
+              <CostBreakdown legs={itinerary.legs} totalCost={itinerary.totalCost} currency={itinerary.currency} />
 
               {/* Currency converter */}
-              <div className="animate-slide-up-fade" style={{ animationDelay: `${(itinerary.legs.length + 2) * 0.1}s` }}>
-                <CurrencyConverter baseCurrency={itinerary.currency} />
-              </div>
+              <CurrencyConverter baseCurrency={itinerary.currency} />
             </div>
           </div>
         </div>
