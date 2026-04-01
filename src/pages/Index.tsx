@@ -77,7 +77,7 @@ export default function Index() {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-3 glass-strong border-b border-border/30">
         <div className="flex items-center gap-3">
-          <div className="transition-transform duration-300 hover:scale-110" style={{ animation: "glow-pulse 3s ease-in-out infinite" }}>
+          <div className="transition-transform duration-300 hover:scale-110">
             <Logo size={42} />
           </div>
           <div>
