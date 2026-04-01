@@ -128,7 +128,7 @@ export default function Index() {
 
             {/* Location label */}
             {locationLabel && !geoLoading && (
-              <p className="text-sm text-primary/80 mb-4 opacity-0 animate-slide-up-fade" style={{ animationDelay: "0.35s" }}>
+              <p className="text-sm text-primary/80 mb-4 animate-slide-up-fade" style={{ animationDelay: "0.35s" }}>
                 📍 {locationLabel}
               </p>
             )}
