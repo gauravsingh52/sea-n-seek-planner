@@ -1,56 +1,36 @@
 
 
-## Major Visual Upgrade: Colors, Background, and Logo
+## Fix Text Colors, Replace Logo, Update Global Scope
 
-### Problems Identified
-The current UI looks washed out — pale beige tones with low contrast, no visual background imagery, no real logo, and the prompt cards are missing from the landing page (they appear to not be rendering). The overall feel is bland and empty.
+### Problems
+1. **Text colors are hard to read** — the `gradient-text` utility cycles through teal/amber/orange which clashes with the dark map background. Subtitle uses `text-muted-foreground` which is too dim.
+2. **Logo looks bad** — the compass SVG is overly complex with thin lines that don't render well at small sizes. Needs a cleaner, bolder design.
+3. **Copy says "Europe"** — should say "worldwide" since the app covers global travel.
 
 ### Changes
 
-**1. New Color Palette** (`src/index.css`)
-- Shift from pale beige to a richer, more vibrant scheme: deep navy/slate as base, with vivid teal, coral/orange accents, and warm gold highlights
-- Higher contrast between background and foreground
-- Dark mode as the default aesthetic (dark backgrounds make travel imagery pop)
+**1. Better Text Colors** (`src/index.css`, `src/pages/Index.tsx`)
+- Change `gradient-text` to use brighter, higher-contrast stops: white → light teal → white (instead of teal → amber → orange)
+- Make subtitle text `text-foreground/70` instead of `text-muted-foreground` for better readability
+- Ensure prompt card text is pure white (`text-white`) not dim foreground
+- Header brand name: use solid white or light teal instead of gradient
 
-**2. Travel-Themed Background** (`src/index.css`, `src/pages/Index.tsx`)
-- Add a full-screen background using a high-quality travel/map image (world map illustration or aerial landscape) with a dark overlay for readability
-- Use CSS `background-image` with a free Unsplash travel photo or an SVG world map pattern
-- Layered gradient overlay on top for depth and brand colors bleeding through
-- Replace the plain particle animation with a more subtle, atmospheric effect
+**2. New Logo** (`src/components/Logo.tsx`)
+- Replace the busy compass with a clean, bold design: a stylized globe with a curved route/pin
+- Thicker strokes, fewer details, reads well at 40px and 80px
+- Uses primary (teal) and accent (amber) fills for brand consistency
 
-**3. Custom SVG Logo** (`src/components/Logo.tsx`)
-- Create a custom inline SVG logo combining a compass rose with a map pin or route line
-- Stylized "TM" monogram integrated into the compass design
-- Uses brand gradient colors
-- Replace the plain Globe icon in the header and hero section
+**3. Global Scope Update** (`src/pages/Index.tsx`)
+- Change "Plan trips across Europe" → "Plan trips anywhere in the world"
+- Update prompt examples to include worldwide destinations (e.g., Tokyo, Bali, New York)
 
-**4. Landing Page Overhaul** (`src/pages/Index.tsx`)
-- Hero section with the new logo prominently displayed over the map background
-- Prompt cards with semi-transparent dark glass effect and colored icon accents
-- More impactful typography with larger heading and a subtle text shadow
-- Animate the logo with a slow pulse/glow effect
+**4. Prompt Card Icons** (`src/pages/Index.tsx`)
+- Update the four quick prompts to reflect global travel, not just European routes
 
-**5. Chat Message Polish** (`src/components/ChatMessage.tsx`)
-- User messages: vibrant gradient (teal to coral)
-- Assistant messages: dark glass card with colored left border accent
-- Better avatar styling with gradient rings
-
-**6. Itinerary Page Background** (`src/pages/Itinerary.tsx`)
-- Same map background treatment as Index for visual consistency
-- Timeline cards with colored left borders matching leg type (blue for transport, green for hotel, amber for activity)
-
-**7. Header & Input Upgrades** (`src/pages/Index.tsx`)
-- Header with stronger glass blur over the map background
-- Input bar with a glowing border animation on focus
-- Send button with a more vivid gradient
-
-### Files Modified/Created
-| File | Action |
+### Files Modified
+| File | Change |
 |------|--------|
-| `src/index.css` | New color palette, background image, stronger glass effects |
-| `src/components/Logo.tsx` | Create — custom SVG compass/route logo |
-| `src/pages/Index.tsx` | Map background, new logo, enhanced prompt cards |
-| `src/components/ChatMessage.tsx` | Richer message styling |
-| `src/pages/Itinerary.tsx` | Consistent background, colored leg cards |
-| `tailwind.config.ts` | Updated color tokens |
+| `src/index.css` | Brighter gradient-text stops |
+| `src/components/Logo.tsx` | New cleaner globe+route SVG |
+| `src/pages/Index.tsx` | Text colors, global copy, worldwide prompts |
 
