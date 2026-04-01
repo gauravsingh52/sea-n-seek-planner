@@ -86,12 +86,13 @@ function parseAllItineraryBlocks(text: string): (ItineraryData & { followUpSugge
 
 function stripItineraryBlocks(text: string): string {
   let result = text;
-  const markers = ["```itinerary-json", "```json"];
+  const markers = ["```itinerary-json", "~~~itinerary-json", "```json"];
   for (const marker of markers) {
     while (true) {
       const startIdx = result.indexOf(marker);
       if (startIdx === -1) break;
-      const endIdx = result.indexOf("```", startIdx + marker.length);
+      const closingMarker = marker.startsWith("~~~") ? "~~~" : "```";
+      const endIdx = result.indexOf(closingMarker, startIdx + marker.length);
       if (endIdx === -1) break;
       result = (result.slice(0, startIdx) + result.slice(endIdx + 3)).trim();
     }
