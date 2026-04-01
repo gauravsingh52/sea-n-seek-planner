@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Trash2, Map, ArrowRight, Sun, Moon, Bookmark } from "lucide-react";
+import { Send, Trash2, Map, ArrowRight, Sun, Moon, Bookmark, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,12 +14,14 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { MobileNav } from "@/components/MobileNav";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { ChatHistory } from "@/components/ChatHistory";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useGeoSuggestions } from "@/hooks/useGeoSuggestions";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useChatHistory } from "@/hooks/useChatHistory";
 
 function Particles() {
   return (
@@ -47,10 +49,12 @@ export default function Index() {
     travelers: 1,
     language: navigator.language?.slice(0, 2) || "en",
   });
-  const { messages, isLoading, sendMessage, clearChat, latestItinerary, followUpSuggestions } = useChat();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, followUpSuggestions } = useChat();
   const { setItinerary } = useTrip();
   const { suggestions, locationLabel, isLoading: geoLoading } = useGeoSuggestions();
   const { count: savedCount } = useSavedTrips();
+  const { sessions, saveSession, deleteSession, clearAll: clearHistory } = useChatHistory();
   const { theme, toggleTheme } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -65,6 +69,13 @@ export default function Index() {
       setItinerary(latestItinerary);
     }
   }, [latestItinerary, setItinerary]);
+
+  // Auto-save to chat history when assistant replies
+  useEffect(() => {
+    if (messages.length > 0 && messages[messages.length - 1]?.role === "assistant") {
+      saveSession(messages, latestItinerary);
+    }
+  }, [messages, latestItinerary, saveSession]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -92,6 +103,11 @@ export default function Index() {
     inputRef.current?.focus();
   };
 
+  const handleLoadSession = (session: typeof sessions[0]) => {
+    loadChat(session.messages, session.itinerary);
+    if (session.itinerary) setItinerary(session.itinerary);
+  };
+
   const hasMessages = messages.length > 0;
   const showFollowUps = !isLoading && hasMessages && messages[messages.length - 1]?.role === "assistant";
 
@@ -111,39 +127,47 @@ export default function Index() {
             <p className="text-xs text-foreground/50">AI-powered travel planning</p>
           </div>
         </div>
-        <div className="hidden md:flex gap-2">
+        <div className="flex gap-2">
           <LanguageSelector
             value={tripSettings.language}
             onChange={(lang) => setTripSettings(s => ({ ...s, language: lang }))}
           />
-          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/saved")} className="glass text-foreground relative">
-            <Bookmark className="w-4 h-4 mr-1" /> Saved
-            {savedCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
-                {savedCount > 9 ? "9+" : savedCount}
-              </span>
+          <div className="hidden md:flex gap-2">
+            <ChatHistory
+              sessions={sessions}
+              onLoad={handleLoadSession}
+              onDelete={deleteSession}
+              onClearAll={clearHistory}
+            />
+            <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/saved")} className="glass text-foreground relative">
+              <Bookmark className="w-4 h-4 mr-1" /> Saved
+              {savedCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+                  {savedCount > 9 ? "9+" : savedCount}
+                </span>
+              )}
+            </Button>
+            {hasMessages && (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/itinerary")} className="glass text-foreground">
+                  <Map className="w-4 h-4 mr-1" /> Itinerary
+                </Button>
+                <Button variant="ghost" size="icon" onClick={clearChat} title="New chat" className="glass text-foreground">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </>
             )}
-          </Button>
-          {hasMessages && (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/itinerary")} className="glass text-foreground">
-                <Map className="w-4 h-4 mr-1" /> Itinerary
-              </Button>
-              <Button variant="ghost" size="icon" onClick={clearChat} title="New chat" className="glass text-foreground">
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </>
-          )}
+          </div>
         </div>
       </header>
 
       {/* Chat area */}
-      <div className="flex-1 overflow-hidden relative z-10">
+      <div className="flex-1 overflow-y-auto relative z-10">
         {!hasMessages ? (
-          <div className="flex flex-col items-center justify-center h-full px-4 text-center">
+          <div className="flex flex-col items-center justify-center min-h-full px-4 py-8 text-center">
             <div className="mb-8 animate-slide-up-fade" style={{ animationDelay: "0s" }}>
               <Logo size={80} />
             </div>
@@ -249,7 +273,18 @@ export default function Index() {
       </div>
 
       {/* Mobile bottom nav */}
-      <MobileNav onNewChat={clearChat} savedCount={savedCount} />
+      <MobileNav onNewChat={clearChat} savedCount={savedCount} onHistoryClick={() => setHistoryOpen(true)} />
+
+      {/* Mobile history drawer - triggered programmatically */}
+      <div className="md:hidden">
+        <ChatHistory
+          sessions={sessions}
+          onLoad={handleLoadSession}
+          onDelete={deleteSession}
+          onClearAll={clearHistory}
+          trigger={<span className="hidden" />}
+        />
+      </div>
     </div>
   );
 }
