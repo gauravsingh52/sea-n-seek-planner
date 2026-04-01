@@ -327,6 +327,7 @@ function LegCard({ leg, symbol, weather, isLast, index }: { leg: ItineraryLeg; s
           <div className="text-right flex-shrink-0">
             <p className="text-sm font-semibold text-foreground">{leg.cost > 0 ? `${symbol}${leg.cost}` : "Free"}</p>
             {leg.time && <p className="text-xs text-muted-foreground">{leg.time}</p>}
+            <BookingLinks leg={leg} />
           </div>
         </CardHeader>
       </Card>
