@@ -153,6 +153,7 @@ export default function Index() {
               onLoad={handleLoadSession}
               onDelete={deleteSession}
               onClearAll={clearHistory}
+              onRename={renameSession}
             />
             <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
