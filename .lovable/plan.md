@@ -1,26 +1,87 @@
 
 
-## Fix Trip Comparison: Response Too Long for JSON Blocks
+## Market Research: Features Missing from TripMap Planner
 
-### Root Cause
-The AI generates extremely detailed markdown for all 3 options (transport tables, accommodation tables, day-by-day itineraries, activities, visa info, tips) BEFORE appending the `itinerary-json` blocks. This exceeds the model's output token limit, so the response gets cut off before any JSON data is emitted. Without JSON blocks, `parseAllItineraryBlocks` finds nothing, so comparison cards never appear.
+### Current State
+The app has: AI chat itinerary generation, map view, weather badges, currency converter, trip comparison, save/load trips (localStorage), voice input, language selector, dark mode, share buttons, chat history, follow-up chips, onboarding tour, trip settings (budget/travelers/dates).
 
-### Solution: Two-Pronged Fix
+### What Top Competitors Offer (Wanderlog, Layla, Travo, Voyaiger)
 
-**1. Set higher `max_tokens` in edge function (`supabase/functions/chat/index.ts`)**
-- Add `max_tokens: 16000` to the API request body to allow enough room for full comparison responses.
+After researching the 2026 travel planner market, here are the **high-impact features we're missing**, grouped by priority:
 
-**2. Shorten comparison prompt to prioritize JSON output (`supabase/functions/chat/index.ts`)**
-- Update the COMPARISON MODE instruction: tell the AI to keep markdown summaries brief when comparing (short paragraph per option, no full day-by-day for each), and output the JSON blocks immediately after the summaries.
-- Change instruction to: "When comparing, write a SHORT summary paragraph for each option (3-4 sentences max per option, no full day-by-day breakdown). Then immediately output the itinerary-json blocks. The comparison cards in the UI will show the detailed data — the markdown is just an overview."
+---
 
-**3. Add `~~~itinerary-json` as additional marker (`src/hooks/useChat.ts`)**
-- The memory note mentions `~~~itinerary-json` fencing. Add this as a third marker in `parseAllItineraryBlocks` and `stripItineraryBlocks` for robustness.
+### Batch 1: Essential (implement now — 15 features)
 
-### Files Modified
+| # | Feature | What it does |
+|---|---------|-------------|
+| 1 | **Export itinerary as PDF** | Download a clean, printable PDF of the trip plan |
+| 2 | **Drag-and-drop itinerary reorder** | Let users rearrange legs/activities within a day |
+| 3 | **Add custom stops/notes** | Users manually add their own activities or notes to the generated itinerary |
+| 4 | **Collaborative trip sharing via link** | Generate a shareable URL so friends can view the same itinerary |
+| 5 | **Offline access** | PWA with service worker — cache the itinerary for offline viewing |
+| 6 | **Travel checklist / to-do list** | Editable checklist (visa, insurance, packing) attached to each trip |
+| 7 | **Budget tracker** | Track actual spending vs planned budget with a progress bar |
+| 8 | **Flight/hotel booking links** | Deep links to Kayak/Google Flights/Booking.com for each transport/hotel leg |
+| 9 | **Photo gallery per destination** | Show destination photos (Unsplash API) in itinerary cards |
+| 10 | **Trip duration calculator** | Show total travel time, idle time, activity time breakdown |
+| 11 | **Emergency info card** | Always-visible card with local emergency numbers, embassy info |
+| 12 | **User authentication** | Sign up/login so trips persist across devices (using Lovable Cloud) |
+| 13 | **Cloud-synced saved trips** | Store trips in database instead of localStorage |
+| 14 | **Multi-city / multi-stop planner** | Explicit support for complex routes (A→B→C→D) with optimized ordering |
+| 15 | **Copy itinerary as text** | One-click copy the full itinerary as formatted text for WhatsApp/email |
+
+### Batch 2: Differentiators (implement next — 10 features)
+
+| # | Feature | What it does |
+|---|---------|-------------|
+| 16 | **Real-time price estimates** | Use web search to show current flight/hotel prices (via Perplexity API) |
+| 17 | **Travel document checklist** | Auto-generate visa/passport/insurance requirements based on nationality + destination |
+| 18 | **Trip countdown timer** | Dashboard showing days until departure |
+| 19 | **Expense splitter** | Split costs among travelers with per-person breakdown |
+| 20 | **Alternative route suggestions** | "Show me a scenic route" or "fastest route" toggle |
+| 21 | **Attraction ratings & reviews** | Show Google/TripAdvisor-style ratings for suggested activities |
+| 22 | **Time zone awareness** | Show local time at each destination, jet lag calculator |
+| 23 | **Travel insurance comparison** | Suggest travel insurance options based on destination |
+| 24 | **Seasonal travel advice** | "Best time to visit" badges based on weather/crowd data |
+| 25 | **Trip templates** | Pre-built itinerary templates ("Weekend in Paris", "Backpacking SEA") users can start from |
+
+---
+
+### Implementation Plan (Batch 1 — 15 features)
+
+Since implementing all 15 at once risks breaking things, I recommend doing them in **3 sub-batches**:
+
+**Sub-batch A (Core UX — 5 features):**
+- Export PDF, Copy as text, Add custom stops, Drag-and-drop reorder, Travel checklist
+
+**Sub-batch B (Auth + Cloud — 4 features):**
+- User authentication, Cloud-synced trips, Collaborative sharing via link, Budget tracker
+
+**Sub-batch C (Content enrichment — 6 features):**
+- Booking links, Destination photos, Trip duration calculator, Emergency info card, Multi-city planner, Offline PWA
+
+### Files to Create/Modify
 
 | File | Change |
 |------|--------|
-| `supabase/functions/chat/index.ts` | Add `max_tokens: 16000`, shorten comparison mode instructions to prioritize JSON output |
-| `src/hooks/useChat.ts` | Add `~~~itinerary-json` as additional parsing marker |
+| `src/components/ExportPDF.tsx` | Create — PDF generation using html2canvas + jsPDF |
+| `src/components/CopyItinerary.tsx` | Create — copy formatted text to clipboard |
+| `src/components/CustomStop.tsx` | Create — form to add user-defined stops |
+| `src/components/DraggableItinerary.tsx` | Create — drag-and-drop day planner using dnd-kit |
+| `src/components/TravelChecklist.tsx` | Create — editable checklist component |
+| `src/components/BudgetTracker.tsx` | Create — spending vs budget progress |
+| `src/components/BookingLinks.tsx` | Create — deep links to booking sites |
+| `src/components/DestinationPhotos.tsx` | Create — Unsplash photos for destinations |
+| `src/components/EmergencyInfo.tsx` | Create — emergency contacts card |
+| `src/components/TripCountdown.tsx` | Create — days until departure |
+| `src/pages/Itinerary.tsx` | Integrate all new components |
+| `src/pages/Index.tsx` | Add auth UI, trip templates |
+| `src/pages/Auth.tsx` | Create — login/signup page |
+| `supabase/functions/destination-photos/index.ts` | Create — Unsplash proxy |
+| Database migration | `saved_trips` table, `user_profiles` table |
+
+### Recommendation
+
+Start with **Sub-batch A** (5 features: PDF export, copy text, custom stops, drag-drop, checklist). These are purely frontend, no auth needed, and give the most immediate user value. Should I proceed with Sub-batch A?
 
