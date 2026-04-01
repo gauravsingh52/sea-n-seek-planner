@@ -12,6 +12,7 @@ export interface ItineraryLeg {
   time?: string;
   cost: number;
   icon?: string;
+  day?: number;
 }
 
 export interface WeatherData {
@@ -26,4 +27,8 @@ export interface ItineraryData {
   totalCost: number;
   currency: string;
   title?: string;
+  days?: number;
+  nights?: number;
+  packingList?: string[];
+  followUpSuggestions?: string[];
 }

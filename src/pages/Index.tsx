@@ -7,11 +7,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChatMessage } from "@/components/ChatMessage";
 import { WaveLoader } from "@/components/WaveLoader";
 import { Logo } from "@/components/Logo";
+import { TripSettings, type TripSettingsData } from "@/components/TripSettings";
+import { FollowUpChips } from "@/components/FollowUpChips";
+import { VoiceInput } from "@/components/VoiceInput";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { ScrollToTop } from "@/components/ScrollToTop";
+import { MobileNav } from "@/components/MobileNav";
+import { OnboardingTour } from "@/components/OnboardingTour";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useGeoSuggestions } from "@/hooks/useGeoSuggestions";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 function Particles() {
   return (
@@ -35,7 +43,11 @@ function Particles() {
 
 export default function Index() {
   const [input, setInput] = useState("");
-  const { messages, isLoading, sendMessage, clearChat, latestItinerary } = useChat();
+  const [tripSettings, setTripSettings] = useState<TripSettingsData>({
+    travelers: 1,
+    language: navigator.language?.slice(0, 2) || "en",
+  });
+  const { messages, isLoading, sendMessage, clearChat, latestItinerary, followUpSuggestions } = useChat();
   const { setItinerary } = useTrip();
   const { suggestions, locationLabel, isLoading: geoLoading } = useGeoSuggestions();
   const { count: savedCount } = useSavedTrips();
@@ -43,6 +55,10 @@ export default function Index() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
+
+  useKeyboardShortcuts({
+    onNewChat: clearChat,
+  });
 
   useEffect(() => {
     if (latestItinerary) {
@@ -52,14 +68,15 @@ export default function Index() {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const viewport = scrollRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement;
+      viewport?.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
     }
   }, [messages]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    sendMessage(input.trim());
+    sendMessage(input.trim(), tripSettings);
     setInput("");
   };
 
@@ -70,11 +87,18 @@ export default function Index() {
     }
   };
 
+  const handleVoiceTranscript = (text: string) => {
+    setInput(text);
+    inputRef.current?.focus();
+  };
+
   const hasMessages = messages.length > 0;
+  const showFollowUps = !isLoading && hasMessages && messages[messages.length - 1]?.role === "assistant";
 
   return (
     <div className="flex flex-col h-screen bg-background relative travel-bg">
       <Particles />
+      <OnboardingTour />
 
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-3 glass-strong border-b border-border/30">
@@ -87,7 +111,11 @@ export default function Index() {
             <p className="text-xs text-foreground/50">AI-powered travel planning</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="hidden md:flex gap-2">
+          <LanguageSelector
+            value={tripSettings.language}
+            onChange={(lang) => setTripSettings(s => ({ ...s, language: lang }))}
+          />
           <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
@@ -116,11 +144,7 @@ export default function Index() {
       <div className="flex-1 overflow-hidden relative z-10">
         {!hasMessages ? (
           <div className="flex flex-col items-center justify-center h-full px-4 text-center">
-            {/* Hero */}
-            <div
-              className="mb-8 animate-slide-up-fade"
-              style={{ animationDelay: "0s" }}
-            >
+            <div className="mb-8 animate-slide-up-fade" style={{ animationDelay: "0s" }}>
               <Logo size={80} />
             </div>
             <h2
@@ -136,14 +160,12 @@ export default function Index() {
               Plan trips anywhere in the world — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
             </p>
 
-            {/* Location label */}
             {locationLabel && !geoLoading && (
               <p className="text-sm text-primary/80 mb-4 animate-slide-up-fade" style={{ animationDelay: "0.35s" }}>
                 📍 {locationLabel}
               </p>
             )}
 
-            {/* Prompt cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl w-full">
               {geoLoading
                 ? Array.from({ length: 4 }).map((_, i) => (
@@ -152,7 +174,7 @@ export default function Index() {
                 : suggestions.map((prompt, i) => (
                     <button
                       key={prompt.text}
-                      onClick={() => sendMessage(prompt.text)}
+                      onClick={() => sendMessage(prompt.text, tripSettings)}
                       className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 animate-slide-up-fade"
                       style={{ animationDelay: `${0.4 + i * 0.1}s` }}
                     >
@@ -168,19 +190,34 @@ export default function Index() {
             </div>
           </div>
         ) : (
-          <ScrollArea className="h-full" ref={scrollRef}>
-            <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-              {messages.map((msg) => (
-                <ChatMessage key={msg.id} message={msg} />
-              ))}
-              {isLoading && messages[messages.length - 1]?.role !== "assistant" && <WaveLoader />}
-            </div>
-          </ScrollArea>
+          <div className="relative h-full">
+            <ScrollArea className="h-full" ref={scrollRef}>
+              <div className="max-w-3xl mx-auto px-4 py-6 space-y-6 pb-4">
+                {messages.map((msg) => (
+                  <ChatMessage key={msg.id} message={msg} />
+                ))}
+                {isLoading && messages[messages.length - 1]?.role !== "assistant" && <WaveLoader />}
+                {showFollowUps && (
+                  <FollowUpChips
+                    suggestions={followUpSuggestions}
+                    onSelect={(text) => sendMessage(text, tripSettings)}
+                    disabled={isLoading}
+                  />
+                )}
+              </div>
+            </ScrollArea>
+            <ScrollToTop scrollRef={scrollRef} />
+          </div>
         )}
       </div>
 
-      {/* Input */}
-      <div className="relative z-10 p-3 md:p-4">
+      {/* Input area */}
+      <div className="relative z-10 p-3 md:p-4 mb-14 md:mb-0">
+        {hasMessages && (
+          <div className="max-w-3xl mx-auto mb-2">
+            <TripSettings settings={tripSettings} onChange={setTripSettings} />
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
           <div className="flex-1 relative group">
             <textarea
@@ -194,6 +231,7 @@ export default function Index() {
               disabled={isLoading}
             />
           </div>
+          <VoiceInput onTranscript={handleVoiceTranscript} disabled={isLoading} />
           <Button
             type="submit"
             size="icon"
@@ -209,6 +247,9 @@ export default function Index() {
           Prices are AI-generated estimates. Always verify with operators before booking.
         </p>
       </div>
+
+      {/* Mobile bottom nav */}
+      <MobileNav onNewChat={clearChat} savedCount={savedCount} />
     </div>
   );
 }

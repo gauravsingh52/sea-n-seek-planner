@@ -1,9 +1,12 @@
 import { lazy, Suspense, Component, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Copy, Bookmark, BookmarkCheck, CloudSun } from "lucide-react";
+import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, CloudSun, Clock, Luggage } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Logo } from "@/components/Logo";
+import { ShareButtons } from "@/components/ShareButtons";
+import { CurrencyConverter } from "@/components/CurrencyConverter";
 import { useTrip } from "@/contexts/TripContext";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useWeather } from "@/hooks/useWeather";
@@ -14,28 +17,15 @@ import { toast } from "sonner";
 const TripMap = lazy(() => import("@/components/TripMap").then(m => ({ default: m.TripMap })));
 
 class MapErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
-  constructor(props: { children: ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
+  constructor(props: { children: ReactNode }) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
   render() {
-    if (this.state.hasError) {
-      return (
-        <div className="w-full h-full rounded-2xl glass-strong flex items-center justify-center">
-          <p className="text-muted-foreground text-sm">Map could not be loaded</p>
-        </div>
-      );
-    }
+    if (this.state.hasError) return <div className="w-full h-full rounded-2xl glass-strong flex items-center justify-center"><p className="text-muted-foreground text-sm">Map could not be loaded</p></div>;
     return this.props.children;
   }
 }
 
-const iconMap: Record<string, any> = {
-  ship: Ship, train: Train, car: Car, plane: Plane, bus: Bus, hotel: Hotel, pin: MapPin,
-};
+const iconMap: Record<string, any> = { ship: Ship, train: Train, car: Car, plane: Plane, bus: Bus, hotel: Hotel, pin: MapPin };
 
 function getIcon(leg: ItineraryLeg) {
   if (leg.icon && iconMap[leg.icon]) return iconMap[leg.icon];
@@ -44,21 +34,9 @@ function getIcon(leg: ItineraryLeg) {
   return MapPin;
 }
 
-const legColors: Record<string, string> = {
-  transport: "border-l-primary",
-  hotel: "border-l-accent",
-  activity: "border-l-secondary",
-};
-
-const legIconBg: Record<string, string> = {
-  transport: "bg-primary/15 text-primary",
-  hotel: "bg-accent/15 text-accent",
-  activity: "bg-secondary/15 text-secondary-foreground",
-};
-
-const currencySymbols: Record<string, string> = {
-  INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥", THB: "฿", AUD: "A$", CAD: "C$", SGD: "S$", MYR: "RM", NZD: "NZ$",
-};
+const legColors: Record<string, string> = { transport: "border-l-primary", hotel: "border-l-accent", activity: "border-l-secondary" };
+const legIconBg: Record<string, string> = { transport: "bg-primary/15 text-primary", hotel: "bg-accent/15 text-accent", activity: "bg-secondary/15 text-secondary-foreground" };
+const currencySymbols: Record<string, string> = { INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥", THB: "฿", AUD: "A$", CAD: "C$", SGD: "S$", MYR: "RM", NZD: "NZ$" };
 
 function WeatherBadge({ data }: { data: WeatherData }) {
   return (
@@ -97,6 +75,43 @@ function CostBreakdown({ legs, totalCost, currency }: { legs: ItineraryLeg[]; to
   );
 }
 
+function ItinerarySkeleton() {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="flex gap-3 items-center">
+          <Skeleton className="w-12 h-12 rounded-xl flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+          <Skeleton className="h-4 w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PackingListCard({ items }: { items: string[] }) {
+  return (
+    <Card className="glass-strong gradient-border">
+      <CardHeader className="py-4 px-5">
+        <CardTitle className="text-base font-display gradient-text mb-3 flex items-center gap-1.5">
+          <Luggage className="w-4 h-4" /> Packing List
+        </CardTitle>
+        <div className="grid grid-cols-2 gap-1.5">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-center gap-2 text-sm text-foreground">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+              {item}
+            </div>
+          ))}
+        </div>
+      </CardHeader>
+    </Card>
+  );
+}
+
 export default function Itinerary() {
   const navigate = useNavigate();
   const { itinerary } = useTrip();
@@ -112,6 +127,18 @@ export default function Itinerary() {
     }
   };
 
+  // Group legs by day
+  const dayGroups: Record<number, ItineraryLeg[]> = {};
+  if (itinerary) {
+    itinerary.legs.forEach((leg) => {
+      const day = leg.day || 1;
+      if (!dayGroups[day]) dayGroups[day] = [];
+      dayGroups[day].push(leg);
+    });
+  }
+  const hasDays = itinerary && Object.keys(dayGroups).length > 1;
+  const symbol = itinerary ? (currencySymbols[itinerary.currency] || itinerary.currency || "$") : "$";
+
   return (
     <div className="min-h-screen bg-background relative travel-bg">
       <div className="particles">
@@ -126,32 +153,28 @@ export default function Itinerary() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <Logo size={36} />
-          <h1 className="text-lg font-display font-bold gradient-text">
-            {itinerary?.title || "Your Itinerary"}
-          </h1>
+          <div>
+            <h1 className="text-lg font-display font-bold gradient-text">
+              {itinerary?.title || "Your Itinerary"}
+            </h1>
+            {itinerary?.days && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                {itinerary.days} day{itinerary.days > 1 ? "s" : ""}{itinerary.nights ? `, ${itinerary.nights} night${itinerary.nights > 1 ? "s" : ""}` : ""}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {itinerary && (
             <>
               <Button
-                variant="ghost"
-                size="icon"
-                title={saved ? "Saved" : "Save trip"}
-                className="glass text-foreground"
-                onClick={handleSave}
-                disabled={saved}
+                variant="ghost" size="icon" title={saved ? "Saved" : "Save trip"}
+                className="glass text-foreground" onClick={handleSave} disabled={saved}
               >
                 {saved ? <BookmarkCheck className="w-4 h-4 text-primary" /> : <Bookmark className="w-4 h-4" />}
               </Button>
-              <Button variant="ghost" size="icon" title="Copy itinerary" className="glass text-foreground"
-                onClick={() => {
-                  const sym = currencySymbols[itinerary.currency] || itinerary.currency || "$";
-                  const text = `${itinerary.title}\n\n` + itinerary.legs.map(l => `• ${l.title} — ${l.description}${l.cost > 0 ? ` (${sym}${l.cost})` : ""}`).join("\n") + `\n\nTotal: ${sym}${itinerary.totalCost}`;
-                  navigator.clipboard.writeText(text);
-                  toast.success("Copied to clipboard!");
-                }}>
-                <Copy className="w-4 h-4" />
-              </Button>
+              <ShareButtons itinerary={itinerary} />
             </>
           )}
           <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass text-foreground">
@@ -166,9 +189,7 @@ export default function Itinerary() {
             <div className="w-20 h-20 rounded-2xl glass-strong flex items-center justify-center mx-auto mb-6 animate-slide-up-fade">
               <MapPin className="w-10 h-10 text-muted-foreground animate-bounce-subtle" />
             </div>
-            <h2 className="text-2xl font-display font-bold gradient-text mb-3 animate-slide-up-fade" style={{ animationDelay: "0.15s" }}>
-              No itinerary yet
-            </h2>
+            <h2 className="text-2xl font-display font-bold gradient-text mb-3 animate-slide-up-fade" style={{ animationDelay: "0.15s" }}>No itinerary yet</h2>
             <p className="text-muted-foreground mb-6 max-w-sm mx-auto animate-slide-up-fade" style={{ animationDelay: "0.3s" }}>
               Chat with TripMap Planner to create a travel plan. Your itinerary will appear here once generated.
             </p>
@@ -216,55 +237,81 @@ export default function Itinerary() {
 
           <div className="flex-1 overflow-y-auto px-4 pb-6">
             <div className="max-w-3xl mx-auto space-y-4 pt-2">
-              {itinerary.legs.map((leg, i) => {
-                const Icon = getIcon(leg);
-                const symbol = currencySymbols[itinerary.currency] || itinerary.currency || "$";
-                const borderColor = legColors[leg.type] || "border-l-primary";
-                const iconBg = legIconBg[leg.type] || "bg-primary/15 text-primary";
-                const legWeather = leg.to ? weather[leg.to] : undefined;
-                return (
-                  <div key={leg.id} className="relative">
-                    {i < itinerary.legs.length - 1 && (
-                      <div className="absolute left-[23px] top-[56px] bottom-[-16px] w-[2px] bg-gradient-to-b from-primary/40 to-primary/10" />
-                    )}
-                    <Card
-                      className={`glass gradient-border border-l-[3px] ${borderColor} animate-slide-up-fade hover:scale-[1.02] transition-transform duration-300`}
-                      style={{ animationDelay: `${i * 0.1}s` }}
-                    >
-                      <CardHeader className="flex flex-row items-center gap-3 py-3 px-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-sm font-sans font-semibold text-foreground">{leg.title}</CardTitle>
-                          <p className="text-xs text-muted-foreground truncate">{leg.description}</p>
-                          {leg.from && leg.to && (
-                            <p className="text-xs text-muted-foreground/70 mt-0.5">{leg.from} → {leg.to}</p>
-                          )}
-                          {legWeather && (
-                            <div className="mt-1">
-                              <WeatherBadge data={legWeather} />
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-sm font-semibold text-foreground">
-                            {leg.cost > 0 ? `${symbol}${leg.cost}` : "Free"}
-                          </p>
-                          {leg.time && <p className="text-xs text-muted-foreground">{leg.time}</p>}
-                        </div>
-                      </CardHeader>
-                    </Card>
+              {/* Day-by-day grouping */}
+              {hasDays ? (
+                Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
+                  <div key={day}>
+                    <div className="flex items-center gap-2 mb-3 mt-4 first:mt-0">
+                      <div className="w-8 h-8 rounded-full earth-gradient flex items-center justify-center text-primary-foreground text-xs font-bold">{day}</div>
+                      <span className="text-sm font-display font-semibold text-foreground">Day {day}</span>
+                      <div className="flex-1 h-px bg-border/30" />
+                    </div>
+                    {legs.map((leg, i) => (
+                      <LegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === legs.length - 1} index={i} />
+                    ))}
                   </div>
-                );
-              })}
-              <div className="animate-slide-up-fade" style={{ animationDelay: `${itinerary.legs.length * 0.1}s` }}>
+                ))
+              ) : (
+                itinerary.legs.map((leg, i) => (
+                  <LegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === itinerary.legs.length - 1} index={i} />
+                ))
+              )}
+
+              {/* Packing list */}
+              {itinerary.packingList && itinerary.packingList.length > 0 && (
+                <div className="animate-slide-up-fade" style={{ animationDelay: `${itinerary.legs.length * 0.1}s` }}>
+                  <PackingListCard items={itinerary.packingList} />
+                </div>
+              )}
+
+              {/* Cost breakdown */}
+              <div className="animate-slide-up-fade" style={{ animationDelay: `${(itinerary.legs.length + 1) * 0.1}s` }}>
                 <CostBreakdown legs={itinerary.legs} totalCost={itinerary.totalCost} currency={itinerary.currency} />
+              </div>
+
+              {/* Currency converter */}
+              <div className="animate-slide-up-fade" style={{ animationDelay: `${(itinerary.legs.length + 2) * 0.1}s` }}>
+                <CurrencyConverter baseCurrency={itinerary.currency} />
               </div>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function LegCard({ leg, symbol, weather, isLast, index }: { leg: ItineraryLeg; symbol: string; weather: Record<string, WeatherData>; isLast: boolean; index: number }) {
+  const Icon = getIcon(leg);
+  const borderColor = legColors[leg.type] || "border-l-primary";
+  const iconBg = legIconBg[leg.type] || "bg-primary/15 text-primary";
+  const legWeather = leg.to ? weather[leg.to] : undefined;
+
+  return (
+    <div className="relative mb-4">
+      {!isLast && (
+        <div className="absolute left-[23px] top-[56px] bottom-[-16px] w-[2px] bg-gradient-to-b from-primary/40 to-primary/10" />
+      )}
+      <Card
+        className={`glass gradient-border border-l-[3px] ${borderColor} animate-slide-up-fade hover:scale-[1.02] transition-transform duration-300`}
+        style={{ animationDelay: `${index * 0.1}s` }}
+      >
+        <CardHeader className="flex flex-row items-center gap-3 py-3 px-4">
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-sm font-sans font-semibold text-foreground">{leg.title}</CardTitle>
+            <p className="text-xs text-muted-foreground truncate">{leg.description}</p>
+            {leg.from && leg.to && <p className="text-xs text-muted-foreground/70 mt-0.5">{leg.from} → {leg.to}</p>}
+            {legWeather && <div className="mt-1"><WeatherBadge data={legWeather} /></div>}
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-sm font-semibold text-foreground">{leg.cost > 0 ? `${symbol}${leg.cost}` : "Free"}</p>
+            {leg.time && <p className="text-xs text-muted-foreground">{leg.time}</p>}
+          </div>
+        </CardHeader>
+      </Card>
     </div>
   );
 }

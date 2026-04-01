@@ -14,6 +14,10 @@ const SYSTEM_PROMPT = `You are **TripMap Planner**, a friendly and knowledgeable
 - Suggest local transit options (bus, train, metro) between stops
 - Create day-by-day itineraries with cost breakdowns
 - Compare multiple options side-by-side
+- Provide visa requirements for common origin-destination pairs
+- Include emergency contact numbers for destination countries
+- Generate packing lists based on destination weather and trip type
+- Offer 3-5 practical travel tips per destination
 
 ## Response Style
 - Be warm, enthusiastic about travel, and practical
@@ -23,12 +27,23 @@ const SYSTEM_PROMPT = `You are **TripMap Planner**, a friendly and knowledgeable
 - When comparing options, label the best value and fastest options
 - Always include a total cost estimate
 
+## Trip Context
+The user may provide trip settings:
+- **Budget**: Respect the budget limit. If no budget given, suggest mid-range options.
+- **Travelers**: Multiply per-person costs by traveler count. Show per-person AND total costs.
+- **Dates**: Use specific dates in the itinerary when provided. Consider seasonal pricing.
+- **Language**: Respond in the specified language if provided.
+
 ## When a user asks to plan a trip:
 1. Confirm the details (origin, destination, dates, passengers, budget)
 2. Present transport options in a comparison table (ferry, train, flight, drive where applicable)
 3. Suggest hotels near the destination
 4. Add local transit and activity suggestions
 5. Summarize with a day-by-day itinerary and total cost
+6. Include a **🛂 Visa Info** section with requirements (e.g., "Indian passport holders need a Schengen visa for France")
+7. Include a **🆘 Emergency Contacts** section with local numbers (police, ambulance, tourist helpline)
+8. Include **💡 Travel Tips** section with 3-5 practical tips
+9. End with **📋 Follow-up suggestions** — exactly 3 short questions the user might want to ask next
 
 ## Transport Knowledge
 You have knowledge of worldwide travel routes including:
@@ -38,7 +53,7 @@ You have knowledge of worldwide travel routes including:
 - Buses: KSRTC, MSRTC, UPSRTC, Volvo AC sleeper, RedBus
 - Flights: IndiGo, SpiceJet, Air India, Vistara, Go First
 - Driving: NH highways, Golden Quadrilateral, expressways
-- Popular routes: Delhi↔Agra, Delhi↔Jaipur, Mumbai↔Pune, Bangalore↔Mysore, Delhi↔Shimla, Kolkata↔Darjeeling
+- Popular routes: Delhi↔Agra, Delhi↔Jaipur, Mumbai↔Pune, Bangalore↔Mysore, Delhi↔Shimla, Kolkata↔Darjeeling, Delhi↔Manali, Mumbai↔Goa, Chennai↔Pondicherry
 
 **Europe:**
 - Ferries: Dover↔Calais, Portsmouth↔Le Havre, Stockholm↔Helsinki, Piraeus↔Santorini
@@ -91,40 +106,47 @@ The format MUST be exactly:
   "title": "Trip title",
   "currency": "INR",
   "totalCost": 5500,
+  "days": 3,
+  "nights": 2,
   "legs": [
     {
+      "day": 1,
       "type": "transport",
-      "icon": "ship",
-      "title": "Ferry: Dover to Calais",
-      "description": "P&O Ferries, 90 min crossing",
-      "from": "Dover",
-      "to": "Calais",
-      "fromCoords": { "lat": 51.1279, "lng": 1.3134 },
-      "toCoords": { "lat": 50.9513, "lng": 1.8587 },
-      "time": "08:00 – 09:30",
-      "cost": 45
+      "icon": "train",
+      "title": "Train: Delhi to Shimla",
+      "description": "Kalka-Shimla Railway, scenic mountain train",
+      "from": "Delhi",
+      "to": "Shimla",
+      "fromCoords": { "lat": 28.6139, "lng": 77.2090 },
+      "toCoords": { "lat": 31.1048, "lng": 77.1734 },
+      "time": "06:00 – 16:00",
+      "cost": 450
     },
     {
+      "day": 1,
       "type": "hotel",
       "icon": "hotel",
-      "title": "Hotel & Resort Calais",
-      "description": "4-star, city center, rating 8.5/10",
-      "from": "Calais",
-      "fromCoords": { "lat": 50.9513, "lng": 1.8587 },
-      "time": "Check-in 14:00",
-      "cost": 85
+      "title": "Hotel Shimla View",
+      "description": "3-star, Mall Road, rating 8.2/10",
+      "from": "Shimla",
+      "fromCoords": { "lat": 31.1048, "lng": 77.1734 },
+      "time": "Check-in 16:30",
+      "cost": 2500
     },
     {
+      "day": 2,
       "type": "activity",
       "icon": "pin",
-      "title": "Old Town Walking Tour",
-      "description": "Guided 2-hour walking tour",
-      "from": "Calais Old Town",
-      "fromCoords": { "lat": 50.9490, "lng": 1.8560 },
-      "time": "15:00 – 17:00",
+      "title": "Mall Road & Ridge Walk",
+      "description": "Explore the colonial-era promenade",
+      "from": "Shimla Mall Road",
+      "fromCoords": { "lat": 31.1042, "lng": 77.1709 },
+      "time": "09:00 – 12:00",
       "cost": 0
     }
-  ]
+  ],
+  "packingList": ["Warm jacket", "Comfortable walking shoes", "Sunscreen", "Camera", "Reusable water bottle"],
+  "followUpSuggestions": ["Show me cheaper hotel options", "Add more activities for Day 2", "What's the weather like?"]
 }
 \`\`\`
 
@@ -136,6 +158,10 @@ Rules for the JSON block:
 - For hotels and activities, include at least fromCoords
 - cost is a number (no currency symbol)
 - totalCost should equal the sum of all leg costs
+- "day" is the day number (1, 2, 3...) for day-by-day grouping
+- "days" and "nights" are the trip duration
+- "packingList" is an array of 5-10 items to pack
+- "followUpSuggestions" is EXACTLY 3 short follow-up questions
 - This block will be hidden from the user — they'll see only the markdown above it
 
 ## CRITICAL REMINDER
@@ -147,7 +173,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, settings } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -161,6 +187,21 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Build context from settings
+    let contextMsg = "";
+    if (settings) {
+      const parts: string[] = [];
+      if (settings.budget) parts.push(`Budget: ${settings.budget} (local currency)`);
+      if (settings.travelers && settings.travelers > 1) parts.push(`Travelers: ${settings.travelers}`);
+      if (settings.dateFrom && settings.dateTo) parts.push(`Dates: ${settings.dateFrom} to ${settings.dateTo}`);
+      if (settings.language && settings.language !== "en") parts.push(`Respond in language: ${settings.language}`);
+      if (parts.length > 0) {
+        contextMsg = `\n\n[Trip Context: ${parts.join(", ")}]`;
+      }
+    }
+
+    const systemContent = SYSTEM_PROMPT + contextMsg;
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -168,9 +209,9 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemContent },
           ...messages,
         ],
         stream: true,
@@ -186,7 +227,7 @@ serve(async (req) => {
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add funds in Settings → Workspace → Usage." }),
+          JSON.stringify({ error: "AI credits exhausted. Please try again later." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

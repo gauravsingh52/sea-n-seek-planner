@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import type { ItineraryData } from "@/types/itinerary";
 import { playMessageSound } from "@/hooks/useMessageSound";
+import type { TripSettingsData } from "@/components/TripSettings";
+import { format } from "date-fns";
 
 export type Message = {
   id: string;
@@ -10,93 +12,66 @@ export type Message = {
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
-function parseItineraryJson(text: string): ItineraryData | null {
-  // Try multiple marker formats
+function parseItineraryJson(text: string): (ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] }) | null {
   const markers = ["```itinerary-json", "```json"];
   
   for (const marker of markers) {
     const startIdx = text.indexOf(marker);
     if (startIdx === -1) continue;
-
     const jsonStart = text.indexOf("\n", startIdx) + 1;
-    // Find closing ``` after the json content
     const endIdx = text.indexOf("```", jsonStart);
     if (endIdx === -1) continue;
-
     try {
-      const jsonStr = text.slice(jsonStart, endIdx).trim();
-      const raw = JSON.parse(jsonStr);
-      if (raw && Array.isArray(raw.legs)) {
-        return {
-          legs: raw.legs.map((leg: any, i: number) => ({
-            id: leg.id || `leg-${i}`,
-            type: leg.type || "activity",
-            title: leg.title || "",
-            description: leg.description || "",
-            from: leg.from,
-            to: leg.to,
-            fromCoords: leg.fromCoords,
-            toCoords: leg.toCoords,
-            time: leg.time,
-            cost: Number(leg.cost) || 0,
-            icon: leg.icon,
-          })),
-          totalCost: Number(raw.totalCost) || 0,
-          currency: raw.currency || "",
-          title: raw.title,
-        };
-      }
-    } catch {
-      // try next marker
-    }
+      const raw = JSON.parse(text.slice(jsonStart, endIdx).trim());
+      if (raw && Array.isArray(raw.legs)) return mapItinerary(raw);
+    } catch { /* try next */ }
   }
 
-  // Last resort: try to find raw JSON with "legs" array anywhere
   try {
     const legsIdx = text.indexOf('"legs"');
     if (legsIdx !== -1) {
-      // Find the opening { before "legs"
       let braceStart = text.lastIndexOf("{", legsIdx);
       if (braceStart !== -1) {
-        let depth = 0;
-        let braceEnd = -1;
+        let depth = 0, braceEnd = -1;
         for (let i = braceStart; i < text.length; i++) {
           if (text[i] === "{") depth++;
-          else if (text[i] === "}") {
-            depth--;
-            if (depth === 0) { braceEnd = i + 1; break; }
-          }
+          else if (text[i] === "}") { depth--; if (depth === 0) { braceEnd = i + 1; break; } }
         }
         if (braceEnd !== -1) {
           const raw = JSON.parse(text.slice(braceStart, braceEnd));
-          if (raw && Array.isArray(raw.legs) && raw.legs.length > 0) {
-            return {
-              legs: raw.legs.map((leg: any, i: number) => ({
-                id: leg.id || `leg-${i}`,
-                type: leg.type || "activity",
-                title: leg.title || "",
-                description: leg.description || "",
-                from: leg.from,
-                to: leg.to,
-                fromCoords: leg.fromCoords,
-                toCoords: leg.toCoords,
-                time: leg.time,
-                cost: Number(leg.cost) || 0,
-                icon: leg.icon,
-              })),
-              totalCost: Number(raw.totalCost) || 0,
-              currency: raw.currency || "",
-              title: raw.title,
-            };
-          }
+          if (raw && Array.isArray(raw.legs) && raw.legs.length > 0) return mapItinerary(raw);
         }
       }
     }
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
   
   return null;
+}
+
+function mapItinerary(raw: any): ItineraryData & { followUpSuggestions?: string[]; packingList?: string[] } {
+  return {
+    legs: raw.legs.map((leg: any, i: number) => ({
+      id: leg.id || `leg-${i}`,
+      type: leg.type || "activity",
+      title: leg.title || "",
+      description: leg.description || "",
+      from: leg.from,
+      to: leg.to,
+      fromCoords: leg.fromCoords,
+      toCoords: leg.toCoords,
+      time: leg.time,
+      cost: Number(leg.cost) || 0,
+      icon: leg.icon,
+      day: leg.day,
+    })),
+    totalCost: Number(raw.totalCost) || 0,
+    currency: raw.currency || "",
+    title: raw.title,
+    days: raw.days,
+    nights: raw.nights,
+    packingList: Array.isArray(raw.packingList) ? raw.packingList : undefined,
+    followUpSuggestions: Array.isArray(raw.followUpSuggestions) ? raw.followUpSuggestions : undefined,
+  };
 }
 
 function stripItineraryBlock(text: string): string {
@@ -112,17 +87,28 @@ export function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [latestItinerary, setLatestItinerary] = useState<ItineraryData | null>(null);
+  const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
+  const [packingList, setPackingList] = useState<string[]>([]);
 
-  const sendMessage = useCallback(async (input: string) => {
+  const sendMessage = useCallback(async (input: string, settings?: TripSettingsData) => {
     const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: input };
     const allMessages = [...messages, userMsg];
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
+    setFollowUpSuggestions([]);
 
     let assistantContent = "";
     const assistantId = crypto.randomUUID();
 
     try {
+      const settingsPayload = settings ? {
+        budget: settings.budget,
+        travelers: settings.travelers,
+        dateFrom: settings.dateRange ? format(settings.dateRange.from, "yyyy-MM-dd") : undefined,
+        dateTo: settings.dateRange ? format(settings.dateRange.to, "yyyy-MM-dd") : undefined,
+        language: settings.language,
+      } : undefined;
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -131,6 +117,7 @@ export function useChat() {
         },
         body: JSON.stringify({
           messages: allMessages.map(m => ({ role: m.role, content: m.content })),
+          settings: settingsPayload,
         }),
       });
 
@@ -182,10 +169,11 @@ export function useChat() {
         }
       }
 
-      // Parse itinerary data from completed response
       const itineraryData = parseItineraryJson(assistantContent);
       if (itineraryData) {
         setLatestItinerary(itineraryData);
+        if (itineraryData.followUpSuggestions) setFollowUpSuggestions(itineraryData.followUpSuggestions);
+        if (itineraryData.packingList) setPackingList(itineraryData.packingList);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Something went wrong";
@@ -201,7 +189,9 @@ export function useChat() {
   const clearChat = useCallback(() => {
     setMessages([]);
     setLatestItinerary(null);
+    setFollowUpSuggestions([]);
+    setPackingList([]);
   }, []);
 
-  return { messages, isLoading, sendMessage, clearChat, latestItinerary };
+  return { messages, isLoading, sendMessage, clearChat, latestItinerary, followUpSuggestions, packingList };
 }
