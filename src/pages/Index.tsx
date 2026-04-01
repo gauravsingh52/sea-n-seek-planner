@@ -1,21 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Trash2, Map, Ship, Train, Car, Palmtree, ArrowRight, Sun, Moon } from "lucide-react";
+import { Send, Trash2, Map, ArrowRight, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ChatMessage } from "@/components/ChatMessage";
 import { WaveLoader } from "@/components/WaveLoader";
 import { Logo } from "@/components/Logo";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
-
-const QUICK_PROMPTS = [
-  { icon: Ship, text: "Plan a ferry trip from Barcelona to Ibiza with hotels" },
-  { icon: Train, text: "Compare bullet trains vs flights from Tokyo to Osaka" },
-  { icon: Car, text: "Road trip itinerary along the California coast" },
-  { icon: Palmtree, text: "Plan a budget island-hopping trip in Bali" },
-];
+import { useGeoSuggestions } from "@/hooks/useGeoSuggestions";
 
 function Particles() {
   return (
