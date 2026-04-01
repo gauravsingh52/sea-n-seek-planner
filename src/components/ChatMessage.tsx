@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import { MapPin, Navigation } from "lucide-react";
 import type { Message } from "@/hooks/useChat";
+import { useTypingEffect } from "@/hooks/useTypingEffect";
 
 export function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === "user";
