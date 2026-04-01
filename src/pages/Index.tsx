@@ -108,7 +108,7 @@ export default function Index() {
           <div className="flex flex-col items-center justify-center h-full px-4 text-center">
             {/* Hero */}
             <div
-              className="mb-8 opacity-0 animate-slide-up-fade"
+              className="mb-8 animate-slide-up-fade"
               style={{ animationDelay: "0s" }}
             >
               <Logo size={80} />
