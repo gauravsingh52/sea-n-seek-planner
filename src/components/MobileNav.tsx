@@ -7,7 +7,7 @@ interface MobileNavProps {
   onHistoryClick?: () => void;
 }
 
-export function MobileNav({ onNewChat, savedCount = 0 }: MobileNavProps) {
+export function MobileNav({ onNewChat, savedCount = 0, onHistoryClick }: MobileNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
