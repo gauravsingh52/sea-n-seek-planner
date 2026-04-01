@@ -1,43 +1,50 @@
 
+Root cause is now clear: the app code is already written for the correct map approach, but the preview is still behaving like it is running the old incompatible `react-leaflet` build. I verified:
+- `src/components/TripMap.tsx` uses normal `react-leaflet` APIs and is only mounted from the itinerary page
+- `src/pages/Itinerary.tsx` already lazy-loads the map and isolates failures with an error boundary
+- `src/App.tsx` and `TripContext` wiring are correct
+- `package.json` and `bun.lock` show `react-leaflet` `4.2.1`
+- the runtime error is still the old React-18/v5 incompatibility: `render2 is not a function`
+- `package-lock.json` is out of sync and does not reflect the same dependency state, which is the strongest sign the environment is still resolving the wrong optimized package
 
-## Fix Map, Currency & Missing Features
+Plan to fix it from root:
 
-### Problems
+1. Normalize dependency state
+- Make `package-lock.json` consistent with `package.json` so there is only one clear `react-leaflet` version path
+- Ensure no stale v5 or mixed lockfile state remains
+- Keep `react-leaflet` on `4.2.1` and matching `@react-leaflet/core`
 
-1. **Map crash**: `react-leaflet` v5 requires React 19 but this project uses React 18. The `render2 is not a function` error is a known incompatibility — v5 uses React 19's new context consumer API. The error boundary catches it, showing "Map could not be loaded."
+2. Harden the map implementation
+- Keep lazy loading, but also make `TripMap` resilient to partial itinerary data
+- Add a graceful non-crashing fallback when no valid coordinates exist
+- Use a stable map key derived from itinerary legs so a changed itinerary re-mounts cleanly
 
-2. **Currency always EUR/€**: The system prompt hardcodes `"currency": "EUR"` in its example. For Indian users (and others), prices show in euros instead of local currency. The prompt needs to instruct the AI to use the user's local currency.
+3. Remove possible browser-only import pitfalls
+- Move Leaflet CSS import to a global stylesheet instead of the component if needed
+- Delay any Leaflet-specific icon setup until client render so the module cannot fail early during import/init
 
-3. **System prompt is Europe-only**: The transport knowledge section only lists European routes. For worldwide users (especially India), the AI lacks knowledge of local routes.
+4. Improve diagnosis and fallback UX
+- Expand the map error boundary to show whether the issue is dependency/runtime vs missing coordinates
+- Keep itinerary cards visible even if the map fails
+- Add a simple route summary block under the map area so users still see trip flow even when tiles fail
 
-### Fixes
+5. Fix currency/localization at the same time
+- Audit the parsing defaults in `src/hooks/useChat.ts` so fallback currency is not always `EUR`
+- Update the chat prompt and parser so India trips reliably produce `INR`
+- Reuse one shared currency-symbol helper across itinerary cards, copy text, and map popups
 
-**1. Downgrade react-leaflet to v4** (`package.json`)
-- Change `react-leaflet` from `^5.0.0` to `^4.2.1` 
-- Change `@react-leaflet/core` (if present) accordingly
-- v4 is fully compatible with React 18
+Files to update:
+- `package-lock.json` — align dependency graph with React 18 compatible map stack
+- `src/components/TripMap.tsx` — client-safe Leaflet setup, stronger fallback handling, stable mount behavior
+- `src/pages/Itinerary.tsx` — better error-state rendering and route fallback UI
+- `src/hooks/useChat.ts` — safer currency fallback and structured itinerary normalization
+- `src/index.css` — optional global Leaflet CSS import location if needed
 
-**2. Update system prompt for worldwide coverage** (`supabase/functions/chat/index.ts`)
-- Add Indian transport routes: trains (Rajdhani, Shatabdi, Vande Bharat), buses (Volvo AC), flights (IndiGo, SpiceJet, Air India), driving routes (NH highways)
-- Add routes for US, SE Asia, Japan, Australia
-- Change the currency instruction: "Use the local currency of the trip destination. For India use INR (₹), for US use USD ($), for UK use GBP (£), for Europe use EUR (€)" etc.
-- Update the example JSON to show `"currency": "INR"` as an alternative
+Expected outcome:
+- “Map could not be loaded” stops appearing for the normal itinerary flow
+- route line and markers render reliably
+- itinerary page still works even when some legs have missing coordinates
+- costs display with the correct local currency, especially INR for India trips
 
-**3. Fix currency symbol display** (`src/pages/Itinerary.tsx`, `src/components/TripMap.tsx`)
-- Add INR (₹) to the currency symbol mapping (currently only handles EUR, GBP, USD)
-- Add a broader currency map: `{ INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥", THB: "฿", AUD: "A$" }`
-
-**4. Add missing practical features** (`src/pages/Itinerary.tsx`)
-- **Share/download button**: Export itinerary as a shareable link or copy text summary
-- **Day grouping**: Group legs by day if the AI provides day information
-- **Travel tips section**: Show destination-specific tips from the AI response
-
-### Files Modified
-
-| File | Change |
-|------|--------|
-| `package.json` | Downgrade react-leaflet to v4.2.1 |
-| `supabase/functions/chat/index.ts` | Worldwide routes, local currency instruction |
-| `src/pages/Itinerary.tsx` | Broader currency symbol map, share button |
-| `src/components/TripMap.tsx` | Use currency from itinerary data in popups |
-
+Technical note:
+Do I know what the issue is? Yes. The persistent error is not mainly in your page/component logic anymore; it is a dependency-resolution/install-state problem causing the preview to keep using the incompatible React-19-style `react-leaflet` runtime path despite code changes. The permanent fix is to cleanly realign the lockfile/dependency state, then slightly harden `TripMap` so it cannot fail on partial data.
