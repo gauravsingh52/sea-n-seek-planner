@@ -1,6 +1,6 @@
 import { lazy, Suspense, Component, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon } from "lucide-react";
+import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Share2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
@@ -60,7 +60,8 @@ function CostBreakdown({ legs, totalCost, currency }: { legs: ItineraryLeg[]; to
     const cat = leg.type === "transport" ? "Transport" : leg.type === "hotel" ? "Accommodation" : "Activities";
     categories[cat] = (categories[cat] || 0) + leg.cost;
   });
-  const symbol = currency === "GBP" ? "£" : currency === "USD" ? "$" : "€";
+  const currencySymbols: Record<string, string> = { INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥", THB: "฿", AUD: "A$", CAD: "C$", SGD: "S$", MYR: "RM", NZD: "NZ$" };
+  const symbol = currencySymbols[currency] || currency;
 
   return (
     <Card className="glass-strong gradient-border">
@@ -106,9 +107,22 @@ export default function Itinerary() {
             {itinerary?.title || "Your Itinerary"}
           </h1>
         </div>
-        <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
-          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          {itinerary && (
+            <Button variant="ghost" size="icon" title="Copy itinerary" className="glass hover:glow-primary transition-all duration-300 text-foreground"
+              onClick={() => {
+                const currencySymbols: Record<string, string> = { INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥" };
+                const sym = currencySymbols[itinerary.currency] || itinerary.currency;
+                const text = `${itinerary.title}\n\n` + itinerary.legs.map(l => `• ${l.title} — ${l.description}${l.cost > 0 ? ` (${sym}${l.cost})` : ""}`).join("\n") + `\n\nTotal: ${sym}${itinerary.totalCost}`;
+                navigator.clipboard.writeText(text);
+              }}>
+              <Copy className="w-4 h-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
+        </div>
       </header>
 
       {!itinerary ? (
@@ -150,7 +164,8 @@ export default function Itinerary() {
             <div className="max-w-3xl mx-auto space-y-4 pt-2">
               {itinerary.legs.map((leg, i) => {
                 const Icon = getIcon(leg);
-                const symbol = itinerary.currency === "GBP" ? "£" : itinerary.currency === "USD" ? "$" : "€";
+                const currencySymbols: Record<string, string> = { INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥", THB: "฿", AUD: "A$" };
+                const symbol = currencySymbols[itinerary.currency] || itinerary.currency;
                 const borderColor = legColors[leg.type] || "border-l-primary";
                 const iconBg = legIconBg[leg.type] || "bg-primary/15 text-primary";
                 return (

@@ -84,7 +84,7 @@ export function TripMap({ itinerary }: { itinerary: ItineraryData }) {
                     <br />
                     {leg.description}
                     {leg.time && <><br />{leg.time}</>}
-                    {leg.cost > 0 && <><br />€{leg.cost}</>}
+                    {leg.cost > 0 && <><br />{leg.cost}</>}
                   </div>
                 </Popup>
               </Marker>
