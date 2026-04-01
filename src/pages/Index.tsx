@@ -114,7 +114,7 @@ export default function Index() {
               <Logo size={80} />
             </div>
             <h2
-              className="text-4xl md:text-6xl font-display font-bold gradient-text mb-4 opacity-0 animate-slide-up-fade drop-shadow-lg"
+              className="text-4xl md:text-6xl font-display font-bold gradient-text mb-4 animate-slide-up-fade drop-shadow-lg"
               style={{ animationDelay: "0.15s" }}
             >
               Where to next?
