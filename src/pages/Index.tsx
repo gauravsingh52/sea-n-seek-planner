@@ -119,10 +119,10 @@ export default function Index() {
               Where to next?
             </h2>
             <p
-              className="text-muted-foreground mb-12 max-w-md text-base opacity-0 animate-slide-up-fade"
+              className="text-foreground/70 mb-12 max-w-md text-base opacity-0 animate-slide-up-fade"
               style={{ animationDelay: "0.3s" }}
             >
-              Plan trips across Europe — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
+              Plan trips anywhere in the world — compare ferries, trains &amp; flights, find hotels, and build complete travel itineraries.
             </p>
 
             {/* Prompt cards */}
