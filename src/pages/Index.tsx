@@ -16,6 +16,7 @@ import { MobileNav } from "@/components/MobileNav";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { ChatHistory } from "@/components/ChatHistory";
 import { TripComparison } from "@/components/TripComparison";
+import { TripTemplates } from "@/components/TripTemplates";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
 import { useTheme } from "@/hooks/useTheme";
