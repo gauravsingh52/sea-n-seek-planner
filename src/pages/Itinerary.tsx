@@ -240,6 +240,19 @@ export default function Itinerary() {
 
           <div className="flex-1 overflow-y-auto px-4 pb-6">
             <div className="max-w-3xl mx-auto space-y-4 pt-2">
+              {/* Route chain for multi-city */}
+              {routeChain && (
+                <div className="text-center py-2">
+                  <span className="text-sm font-display font-semibold gradient-text">{routeChain}</span>
+                </div>
+              )}
+
+              {/* Trip duration stats */}
+              <TripDuration itinerary={itinerary} />
+
+              {/* Destination photos */}
+              <DestinationPhotos itinerary={itinerary} />
+
               {hasDays ? (
                 Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
                   <div key={day}>
@@ -261,6 +274,9 @@ export default function Itinerary() {
 
               {/* Add custom stop */}
               <CustomStop onAdd={addCustomLeg} maxDay={maxDay} />
+
+              {/* Emergency info */}
+              <EmergencyInfo itinerary={itinerary} />
 
               {/* Packing list */}
               {itinerary.packingList && itinerary.packingList.length > 0 && (
