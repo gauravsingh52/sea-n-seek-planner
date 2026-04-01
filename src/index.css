@@ -50,6 +50,10 @@
     --earth-light: 35 45% 72%;
     --sand: 42 50% 86%;
     --sunset: 12 75% 52%;
+
+    --glass-bg: 40 25% 96% / 0.6;
+    --glass-border: 40 25% 96% / 0.3;
+    --glow-primary: 25 65% 48% / 0.25;
   }
 
   .dark {
@@ -95,6 +99,10 @@
     --earth-light: 35 30% 35%;
     --sand: 42 30% 28%;
     --sunset: 12 60% 50%;
+
+    --glass-bg: 30 22% 12% / 0.6;
+    --glass-border: 40 18% 92% / 0.1;
+    --glow-primary: 25 60% 55% / 0.3;
   }
 }
 
@@ -106,6 +114,11 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'DM Sans', sans-serif;
+    background:
+      radial-gradient(ellipse at 20% 50%, hsl(25 65% 48% / 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(152 40% 36% / 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, hsl(42 50% 86% / 0.08) 0%, transparent 50%),
+      hsl(var(--background));
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -117,4 +130,164 @@
   .earth-gradient {
     background: linear-gradient(135deg, hsl(var(--earth-deep)), hsl(var(--primary)), hsl(var(--accent)));
   }
+
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+
+  .glass-strong {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: 0 8px 32px hsl(var(--glow-primary));
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--glow-primary)), 0 0 60px hsl(var(--glow-primary));
+  }
+
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--earth-deep)),
+      hsl(var(--primary)),
+      hsl(var(--sunset)),
+      hsl(var(--accent)),
+      hsl(var(--primary))
+    );
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 6s ease-in-out infinite;
+  }
+
+  .gradient-border {
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--accent) / 0.4), hsl(var(--sunset) / 0.4));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .gradient-border:hover::before {
+    opacity: 1;
+  }
+}
+
+/* Floating particles background */
+.particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: hsl(var(--primary) / 0.15);
+  animation: float-particle linear infinite;
+}
+
+.particle:nth-child(odd) {
+  background: hsl(var(--accent) / 0.12);
+}
+
+.particle:nth-child(3n) {
+  width: 2px;
+  height: 2px;
+  background: hsl(var(--sunset) / 0.1);
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-10vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes slide-up-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px hsl(var(--glow-primary)); }
+  50% { box-shadow: 0 0 20px hsl(var(--glow-primary)), 0 0 40px hsl(var(--glow-primary)); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
