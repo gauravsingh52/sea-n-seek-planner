@@ -1,4 +1,4 @@
-import { lazy, Suspense, Component, ReactNode } from "react";
+import { lazy, Suspense, Component, ReactNode, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, CloudSun, Clock, Luggage } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,10 @@ import { ExportPDF } from "@/components/ExportPDF";
 import { CopyItinerary } from "@/components/CopyItinerary";
 import { TravelChecklist } from "@/components/TravelChecklist";
 import { CustomStop } from "@/components/CustomStop";
+import { BookingLinks } from "@/components/BookingLinks";
+import { DestinationPhotos } from "@/components/DestinationPhotos";
+import { TripDuration } from "@/components/TripDuration";
+import { EmergencyInfo } from "@/components/EmergencyInfo";
 import { useTrip } from "@/contexts/TripContext";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useWeather } from "@/hooks/useWeather";
@@ -127,6 +131,16 @@ export default function Itinerary() {
   const symbol = itinerary ? (currencySymbols[itinerary.currency] || itinerary.currency || "$") : "$";
   const maxDay = itinerary?.days || Math.max(...Object.keys(dayGroups).map(Number), 1);
 
+  // Build route chain for multi-city trips
+  const routeChain = useMemo(() => {
+    if (!itinerary) return "";
+    const transportLegs = itinerary.legs.filter((l) => l.type === "transport" && l.from && l.to);
+    if (transportLegs.length < 2) return "";
+    const chain: string[] = [transportLegs[0].from!];
+    transportLegs.forEach((l) => { if (l.to && chain[chain.length - 1] !== l.to) chain.push(l.to); });
+    return chain.length >= 3 ? chain.join(" → ") : "";
+  }, [itinerary]);
+
   return (
     <div className="min-h-screen bg-background relative travel-bg">
       <div className="particles">
@@ -226,6 +240,19 @@ export default function Itinerary() {
 
           <div className="flex-1 overflow-y-auto px-4 pb-6">
             <div className="max-w-3xl mx-auto space-y-4 pt-2">
+              {/* Route chain for multi-city */}
+              {routeChain && (
+                <div className="text-center py-2">
+                  <span className="text-sm font-display font-semibold gradient-text">{routeChain}</span>
+                </div>
+              )}
+
+              {/* Trip duration stats */}
+              <TripDuration itinerary={itinerary} />
+
+              {/* Destination photos */}
+              <DestinationPhotos itinerary={itinerary} />
+
               {hasDays ? (
                 Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
                   <div key={day}>
@@ -247,6 +274,9 @@ export default function Itinerary() {
 
               {/* Add custom stop */}
               <CustomStop onAdd={addCustomLeg} maxDay={maxDay} />
+
+              {/* Emergency info */}
+              <EmergencyInfo itinerary={itinerary} />
 
               {/* Packing list */}
               {itinerary.packingList && itinerary.packingList.length > 0 && (
@@ -297,6 +327,7 @@ function LegCard({ leg, symbol, weather, isLast, index }: { leg: ItineraryLeg; s
           <div className="text-right flex-shrink-0">
             <p className="text-sm font-semibold text-foreground">{leg.cost > 0 ? `${symbol}${leg.cost}` : "Free"}</p>
             {leg.time && <p className="text-xs text-muted-foreground">{leg.time}</p>}
+            <BookingLinks leg={leg} />
           </div>
         </CardHeader>
       </Card>

@@ -146,7 +146,13 @@ The format MUST be exactly:
     }
   ],
   "packingList": ["Warm jacket", "Comfortable walking shoes", "Sunscreen", "Camera", "Reusable water bottle"],
-  "followUpSuggestions": ["Show me cheaper hotel options", "Add more activities for Day 2", "What's the weather like?"]
+  "followUpSuggestions": ["Show me cheaper hotel options", "Add more activities for Day 2", "What's the weather like?"],
+  "emergencyInfo": {
+    "police": "100",
+    "ambulance": "102",
+    "fire": "101",
+    "tourist": "1363"
+  }
 }
 \`\`\`
 
@@ -162,7 +168,11 @@ Rules for the JSON block:
 - "days" and "nights" are the trip duration
 - "packingList" is an array of 5-10 items to pack
 - "followUpSuggestions" is EXACTLY 3 short follow-up questions
+- "emergencyInfo" must include "police" and "ambulance" numbers for the destination country, plus optional "fire" and "tourist" helpline
 - This block will be hidden from the user — they'll see only the markdown above it
+
+## MULTI-CITY TRIPS
+When the user mentions 3+ cities (e.g., "Delhi to Agra to Jaipur"), treat it as a multi-city trip. Optimize the route order for minimum travel time and cost. Include connecting transport between each city pair. Show a clear route chain in the title (e.g., "Delhi → Agra → Jaipur").
 
 ## COMPARISON MODE
 When the user asks to compare options, alternatives, or says "compare":

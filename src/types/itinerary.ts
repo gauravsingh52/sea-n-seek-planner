@@ -22,6 +22,13 @@ export interface WeatherData {
   icon: string;
 }
 
+export interface EmergencyInfo {
+  police: string;
+  ambulance: string;
+  fire?: string;
+  tourist?: string;
+}
+
 export interface ItineraryData {
   legs: ItineraryLeg[];
   totalCost: number;
@@ -31,4 +38,5 @@ export interface ItineraryData {
   nights?: number;
   packingList?: string[];
   followUpSuggestions?: string[];
+  emergencyInfo?: EmergencyInfo;
 }
