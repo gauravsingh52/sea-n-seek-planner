@@ -1,40 +1,29 @@
 
 
-## Smart Suggestions: Learn from User's Chat History
+## Fix Geo-Detection: ipapi.co is Failing
 
-### Problem
-The landing page shows generic/fallback suggestions (Barcelona, Tokyo, California, Bali) that aren't relevant to the user. The geo-IP detection often fails or returns a country without mapped prompts.
+### Root Cause
+The network logs show `ipapi.co/json/` returns "Failed to fetch" — the API is blocked/rate-limited in the preview environment. The 2-second timeout also causes silent failures. Since detection never succeeds, the user in Jalandhar (India) sees generic global fallback suggestions instead of India-specific ones.
 
 ### Solution
-Make suggestions **adaptive** by analyzing the user's past chat history to extract destinations/themes they've searched for, then blend those with geo-based suggestions. This way, returning users see personalized prompts based on their actual travel interests.
-
-### How It Works
-
-1. **Extract travel patterns from history** — scan saved chat session titles/messages for destination names, travel styles (budget, luxury, backpacking), and transport preferences
-2. **Generate personalized suggestion cards** — create prompts like "Another trip near [previous destination]", "Explore more of [country they searched]", "Similar to your [past trip title]"
-3. **Fallback chain**: Personalized (from history) → Geo-based (from IP) → Global defaults
-4. **Improve geo fallback** — add more countries to `COUNTRY_PROMPTS` so fewer users hit the generic fallback
+Replace the single unreliable API with a **multi-provider fallback chain**. Try 3 free geo-IP APIs in sequence — if one fails, try the next. Also increase timeout and add better error recovery.
 
 ### Changes
 
-**`src/hooks/useSmartSuggestions.ts`** — New hook
-- Takes `sessions` from chat history and `geoSuggestions` from geo hook
-- Parses session titles/first messages to extract destination keywords
-- Returns blended suggestions: 2 history-based + 2 geo-based (or 4 geo if no history)
-- Uses a simple keyword extraction approach (city/country names from past queries)
+**`src/hooks/useGeoSuggestions.ts`** — Replace single API call with fallback chain
 
-**`src/hooks/useGeoSuggestions.ts`** — Add more countries
-- Add IT, ES, CA, BR, MX, KR, NZ, EG, TR, ZA to `COUNTRY_PROMPTS` so more users get localized suggestions instead of fallback
+1. Try `https://api.ipapi.is/` first (no key needed, reliable, returns `country_code`, `city`, `continent`)
+2. If that fails, try `https://ip-api.com/json/?fields=status,country,countryCode,city,continentCode` (free, no CORS issues)
+3. If that fails, try `https://ipwho.is/` (another free alternative)
+4. Increase timeout from 2s to 4s
+5. Normalize response fields across providers (each API uses slightly different field names)
+6. If ALL providers fail, attempt to use `navigator.language` to guess the country (e.g., `hi` → IN, `ja` → JP, `de` → DE) as a last resort before showing global fallback
 
-**`src/pages/Index.tsx`** — Use smart suggestions
-- Import `useSmartSuggestions`, pass it `sessions` + geo data
-- Replace raw `suggestions` with the blended output on the landing page
+This way even if one API is blocked, the others will work. The language-based fallback ensures users at minimum get their country's suggestions.
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/hooks/useSmartSuggestions.ts` | Create — blends history-based + geo-based suggestions |
-| `src/hooks/useGeoSuggestions.ts` | Add 10 more countries to COUNTRY_PROMPTS |
-| `src/pages/Index.tsx` | Use smart suggestions instead of raw geo suggestions |
+| `src/hooks/useGeoSuggestions.ts` | Multi-provider geo API fallback chain + language-based country guess |
 
