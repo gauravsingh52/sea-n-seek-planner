@@ -35,7 +35,7 @@ const emergencyNumbers: Record<string, EmergencyData> = {
   switzerland: { police: "117", ambulance: "144", fire: "118" },
   portugal: { police: "112", ambulance: "112", fire: "112" },
   netherlands: { police: "112", ambulance: "112", fire: "112" },
-  south korea: { police: "112", ambulance: "119", fire: "119" },
+  "south korea": { police: "112", ambulance: "119", fire: "119" },
   china: { police: "110", ambulance: "120", fire: "119" },
   nepal: { police: "100", ambulance: "102", fire: "101" },
   "sri lanka": { police: "119", ambulance: "110", fire: "111" },
