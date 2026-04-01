@@ -1,10 +1,61 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Ship, Hotel, Bus, MapPin, Globe } from "lucide-react";
+import { ArrowLeft, Ship, Hotel, Bus, MapPin, Globe, Train, Car, Plane } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTrip } from "@/contexts/TripContext";
+import { TripMap } from "@/components/TripMap";
+import type { ItineraryLeg } from "@/types/itinerary";
+
+const iconMap: Record<string, any> = {
+  ship: Ship,
+  train: Train,
+  car: Car,
+  plane: Plane,
+  bus: Bus,
+  hotel: Hotel,
+  pin: MapPin,
+};
+
+function getIcon(leg: ItineraryLeg) {
+  if (leg.icon && iconMap[leg.icon]) return iconMap[leg.icon];
+  if (leg.type === "transport") return Ship;
+  if (leg.type === "hotel") return Hotel;
+  return MapPin;
+}
+
+function CostBreakdown({ legs, totalCost, currency }: { legs: ItineraryLeg[]; totalCost: number; currency: string }) {
+  const categories: Record<string, number> = {};
+  legs.forEach((leg) => {
+    const cat = leg.type === "transport" ? "Transport" : leg.type === "hotel" ? "Accommodation" : "Activities";
+    categories[cat] = (categories[cat] || 0) + leg.cost;
+  });
+
+  const symbol = currency === "GBP" ? "£" : currency === "USD" ? "$" : "€";
+
+  return (
+    <Card className="glass-strong gradient-border">
+      <CardHeader className="py-4 px-5">
+        <CardTitle className="text-base font-display gradient-text mb-3">💰 Cost Breakdown</CardTitle>
+        <div className="space-y-2">
+          {Object.entries(categories).map(([cat, cost]) => (
+            <div key={cat} className="flex justify-between text-sm">
+              <span className="text-muted-foreground">{cat}</span>
+              <span className="font-semibold text-foreground">{symbol}{cost.toFixed(0)}</span>
+            </div>
+          ))}
+          <div className="border-t border-border/30 pt-2 flex justify-between text-base font-bold">
+            <span className="gradient-text">Total</span>
+            <span className="gradient-text">{symbol}{totalCost.toFixed(0)}</span>
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  );
+}
 
 export default function Itinerary() {
   const navigate = useNavigate();
+  const { itinerary } = useTrip();
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -31,61 +82,86 @@ export default function Itinerary() {
           <div className="w-9 h-9 rounded-xl earth-gradient flex items-center justify-center shadow-lg">
             <Globe className="w-4 h-4 text-primary-foreground" />
           </div>
-          <h1 className="text-lg font-display font-bold gradient-text">Your Itinerary</h1>
+          <h1 className="text-lg font-display font-bold gradient-text">
+            {itinerary?.title || "Your Itinerary"}
+          </h1>
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 py-8 relative z-10">
-        <div className="text-center py-16">
-          <div
-            className="w-20 h-20 rounded-2xl glass-strong flex items-center justify-center mx-auto mb-6 animate-slide-up-fade animate-pulse-glow"
-          >
-            <MapPin className="w-10 h-10 text-muted-foreground animate-bounce-subtle" />
-          </div>
-          <h2 className="text-2xl font-display font-bold gradient-text mb-3 opacity-0 animate-slide-up-fade" style={{ animationDelay: "0.15s" }}>
-            No itinerary yet
-          </h2>
-          <p className="text-muted-foreground mb-6 max-w-sm mx-auto opacity-0 animate-slide-up-fade" style={{ animationDelay: "0.3s" }}>
-            Chat with TripMap Planner to create a travel plan. Your itinerary will appear here once generated.
-          </p>
-          <Button
-            onClick={() => navigate("/")}
-            className="rounded-2xl earth-gradient shadow-lg hover:scale-105 transition-transform duration-300 opacity-0 animate-slide-up-fade"
-            style={{ animationDelay: "0.45s" }}
-          >
-            <Globe className="w-4 h-4 mr-2" /> Start Planning
-          </Button>
-        </div>
-
-        <div className="space-y-4 hidden">
-          {[
-            { icon: Ship, title: "Ferry", desc: "Dover → Calais", time: "08:00 – 09:30", cost: "€45" },
-            { icon: Bus, title: "Transit", desc: "Calais Port → Hotel", time: "09:45 – 10:15", cost: "€3" },
-            { icon: Hotel, title: "Hotel", desc: "Hotel & Resort Calais", time: "Check-in 14:00", cost: "€85" },
-            { icon: MapPin, title: "Activity", desc: "Old Town Walking Tour", time: "15:00 – 17:00", cost: "Free" },
-          ].map((item, i) => (
-            <Card
-              key={i}
-              className="glass gradient-border opacity-0 animate-slide-up-fade hover:scale-[1.02] transition-transform duration-300"
-              style={{ animationDelay: `${i * 0.1}s` }}
+      {!itinerary ? (
+        <div className="max-w-3xl mx-auto px-4 py-8 relative z-10">
+          <div className="text-center py-16">
+            <div className="w-20 h-20 rounded-2xl glass-strong flex items-center justify-center mx-auto mb-6 animate-slide-up-fade animate-pulse-glow">
+              <MapPin className="w-10 h-10 text-muted-foreground animate-bounce-subtle" />
+            </div>
+            <h2 className="text-2xl font-display font-bold gradient-text mb-3 opacity-0 animate-slide-up-fade" style={{ animationDelay: "0.15s" }}>
+              No itinerary yet
+            </h2>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto opacity-0 animate-slide-up-fade" style={{ animationDelay: "0.3s" }}>
+              Chat with TripMap Planner to create a travel plan. Your itinerary will appear here once generated.
+            </p>
+            <Button
+              onClick={() => navigate("/")}
+              className="rounded-2xl earth-gradient shadow-lg hover:scale-105 transition-transform duration-300 opacity-0 animate-slide-up-fade"
+              style={{ animationDelay: "0.45s" }}
             >
-              <CardHeader className="flex flex-row items-center gap-3 py-3 px-4">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <item.icon className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-sans font-semibold">{item.title}</CardTitle>
-                  <p className="text-xs text-muted-foreground">{item.desc}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-foreground">{item.cost}</p>
-                  <p className="text-xs text-muted-foreground">{item.time}</p>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+              <Globe className="w-4 h-4 mr-2" /> Start Planning
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="relative z-10 flex flex-col h-[calc(100vh-60px)]">
+          {/* Map */}
+          <div className="h-[40vh] min-h-[250px] p-4 pb-2">
+            <TripMap itinerary={itinerary} />
+          </div>
+
+          {/* Timeline */}
+          <div className="flex-1 overflow-y-auto px-4 pb-6">
+            <div className="max-w-3xl mx-auto space-y-4 pt-2">
+              {itinerary.legs.map((leg, i) => {
+                const Icon = getIcon(leg);
+                const symbol = itinerary.currency === "GBP" ? "£" : itinerary.currency === "USD" ? "$" : "€";
+                return (
+                  <div key={leg.id} className="relative">
+                    {/* Timeline connector */}
+                    {i < itinerary.legs.length - 1 && (
+                      <div className="absolute left-[23px] top-[56px] bottom-[-16px] w-[2px] bg-gradient-to-b from-primary/40 to-primary/10" />
+                    )}
+                    <Card
+                      className="glass gradient-border opacity-0 animate-slide-up-fade hover:scale-[1.02] transition-transform duration-300"
+                      style={{ animationDelay: `${i * 0.1}s` }}
+                    >
+                      <CardHeader className="flex flex-row items-center gap-3 py-3 px-4">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-sm font-sans font-semibold">{leg.title}</CardTitle>
+                          <p className="text-xs text-muted-foreground truncate">{leg.description}</p>
+                          {leg.from && leg.to && (
+                            <p className="text-xs text-muted-foreground/70 mt-0.5">{leg.from} → {leg.to}</p>
+                          )}
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-semibold text-foreground">
+                            {leg.cost > 0 ? `${symbol}${leg.cost}` : "Free"}
+                          </p>
+                          {leg.time && <p className="text-xs text-muted-foreground">{leg.time}</p>}
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  </div>
+                );
+              })}
+
+              <div className="opacity-0 animate-slide-up-fade" style={{ animationDelay: `${itinerary.legs.length * 0.1}s` }}>
+                <CostBreakdown legs={itinerary.legs} totalCost={itinerary.totalCost} currency={itinerary.currency} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
