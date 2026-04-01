@@ -4,6 +4,7 @@ import { Home, Map, Bookmark, Plus, MessageSquare } from "lucide-react";
 interface MobileNavProps {
   onNewChat?: () => void;
   savedCount?: number;
+  onHistoryClick?: () => void;
 }
 
 export function MobileNav({ onNewChat, savedCount = 0 }: MobileNavProps) {
