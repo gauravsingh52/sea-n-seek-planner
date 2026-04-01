@@ -54,7 +54,7 @@ export default function Index() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions } = useChat();
   const { setItinerary } = useTrip();
-  const { suggestions, locationLabel, isLoading: geoLoading } = useGeoSuggestions();
+  const { suggestions, locationLabel, isLoading: geoLoading, countryCode } = useGeoSuggestions();
   const { count: savedCount } = useSavedTrips();
   const { sessions, saveSession, renameSession, deleteSession, clearAll: clearHistory } = useChatHistory();
   const { theme, toggleTheme } = useTheme();
@@ -244,6 +244,7 @@ export default function Index() {
                       suggestions={followUpSuggestions}
                       onSelect={(text) => sendMessage(text, tripSettings)}
                       disabled={isLoading}
+                      regionCode={countryCode}
                     />
                   </>
                 )}

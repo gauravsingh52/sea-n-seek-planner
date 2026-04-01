@@ -11,6 +11,7 @@ interface GeoResult {
   suggestions: GeoSuggestion[];
   locationLabel: string;
   isLoading: boolean;
+  countryCode: string;
 }
 
 const FALLBACK: GeoSuggestion[] = [
@@ -114,6 +115,7 @@ export function useGeoSuggestions(): GeoResult {
   const [suggestions, setSuggestions] = useState<GeoSuggestion[]>(FALLBACK);
   const [locationLabel, setLocationLabel] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [countryCode, setCountryCode] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -125,11 +127,12 @@ export function useGeoSuggestions(): GeoResult {
         const continent = data.continent_code as string;
         const city = data.city as string;
         const country = data.country_name as string;
-        const countryCode = data.country_code as string;
+        const cc = data.country_code as string;
+        setCountryCode(cc);
 
         // Priority: country → continent → fallback
-        if (countryCode && COUNTRY_PROMPTS[countryCode]) {
-          const prompts = COUNTRY_PROMPTS[countryCode].map((p) => ({
+        if (cc && COUNTRY_PROMPTS[cc]) {
+          const prompts = COUNTRY_PROMPTS[cc].map((p) => ({
             ...p,
             text: city ? p.text.replace("{city}", city) : p.text.replace(/from \{city\} /g, ""),
           }));
@@ -158,5 +161,5 @@ export function useGeoSuggestions(): GeoResult {
     };
   }, []);
 
-  return { suggestions, locationLabel, isLoading };
+  return { suggestions, locationLabel, isLoading, countryCode };
 }
