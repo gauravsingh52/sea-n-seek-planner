@@ -126,7 +126,8 @@ export function useGeoSuggestions(): GeoResult {
         const continent = data.continent_code as string;
         const city = data.city as string;
         const country = data.country_name as string;
-        const countryCode = data.country_code as string;
+        const cc = data.country_code as string;
+        setCountryCode(cc);
 
         // Priority: country → continent → fallback
         if (countryCode && COUNTRY_PROMPTS[countryCode]) {
