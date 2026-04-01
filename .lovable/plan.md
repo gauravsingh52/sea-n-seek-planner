@@ -1,74 +1,56 @@
 
 
-## Itinerary Page + Map Visualization
+## Major Visual Upgrade: Colors, Background, and Logo
 
-### Overview
-Two major features: (1) parse structured itinerary data from AI chat responses and display them as rich cards with cost breakdown on the Itinerary page, and (2) add an interactive map showing the planned route.
-
-### Architecture
-
-The AI currently returns free-form markdown. To get structured data, we'll update the system prompt to also emit a hidden JSON block (fenced with a special marker like `~~~itinerary-json`) at the end of each itinerary response. The frontend will parse this out and store it in shared state.
-
-```text
-Chat (Index.tsx)
-  ↓ AI response contains ```itinerary-json block
-  ↓ useChat parses it out → stores in itineraryData state
-  ↓ passed via URL state or context
-Itinerary Page
-  ├─ Timeline cards (transport, hotel, activity)
-  ├─ Cost breakdown summary
-  └─ Interactive map (Leaflet)
-```
+### Problems Identified
+The current UI looks washed out — pale beige tones with low contrast, no visual background imagery, no real logo, and the prompt cards are missing from the landing page (they appear to not be rendering). The overall feel is bland and empty.
 
 ### Changes
 
-**1. Update system prompt** (`supabase/functions/chat/index.ts`)
-- Add instruction: when generating an itinerary, append a fenced JSON block with structured data containing `legs[]` (each with type, title, description, from, to, lat/lng, time, cost) and a `totalCost` field.
+**1. New Color Palette** (`src/index.css`)
+- Shift from pale beige to a richer, more vibrant scheme: deep navy/slate as base, with vivid teal, coral/orange accents, and warm gold highlights
+- Higher contrast between background and foreground
+- Dark mode as the default aesthetic (dark backgrounds make travel imagery pop)
 
-**2. Create itinerary types** (`src/types/itinerary.ts`)
-- Define `ItineraryLeg` (type: transport/hotel/activity, title, desc, from/to coords, time, cost) and `ItineraryData` (legs[], totalCost, currency).
+**2. Travel-Themed Background** (`src/index.css`, `src/pages/Index.tsx`)
+- Add a full-screen background using a high-quality travel/map image (world map illustration or aerial landscape) with a dark overlay for readability
+- Use CSS `background-image` with a free Unsplash travel photo or an SVG world map pattern
+- Layered gradient overlay on top for depth and brand colors bleeding through
+- Replace the plain particle animation with a more subtle, atmospheric effect
 
-**3. Update useChat hook** (`src/hooks/useChat.ts`)
-- After streaming completes, scan the final assistant message for the JSON marker, parse it, and expose `itineraryData` state alongside messages.
+**3. Custom SVG Logo** (`src/components/Logo.tsx`)
+- Create a custom inline SVG logo combining a compass rose with a map pin or route line
+- Stylized "TM" monogram integrated into the compass design
+- Uses brand gradient colors
+- Replace the plain Globe icon in the header and hero section
 
-**4. Create shared state** (`src/contexts/TripContext.tsx`)
-- React context to share `itineraryData` between Index and Itinerary pages without losing data on navigation.
+**4. Landing Page Overhaul** (`src/pages/Index.tsx`)
+- Hero section with the new logo prominently displayed over the map background
+- Prompt cards with semi-transparent dark glass effect and colored icon accents
+- More impactful typography with larger heading and a subtle text shadow
+- Animate the logo with a slow pulse/glow effect
 
-**5. Rebuild Itinerary page** (`src/pages/Itinerary.tsx`)
-- Consume `itineraryData` from context
-- Render a vertical timeline with icon-coded cards (Ship/Train/Hotel/MapPin) per leg
-- Each card shows title, description, time, and cost with glass styling
-- Bottom summary card with total cost breakdown by category
-- Keep the current empty state when no data exists
+**5. Chat Message Polish** (`src/components/ChatMessage.tsx`)
+- User messages: vibrant gradient (teal to coral)
+- Assistant messages: dark glass card with colored left border accent
+- Better avatar styling with gradient rings
 
-**6. Add interactive map** (`src/components/TripMap.tsx`)
-- Install `react-leaflet` + `leaflet` packages
-- Render a Leaflet map with markers at each leg's coordinates
-- Draw polyline connecting the route stops
-- Custom marker popups showing leg details
-- Auto-fit bounds to show all markers
+**6. Itinerary Page Background** (`src/pages/Itinerary.tsx`)
+- Same map background treatment as Index for visual consistency
+- Timeline cards with colored left borders matching leg type (blue for transport, green for hotel, amber for activity)
 
-**7. Integrate map into Itinerary page** (`src/pages/Itinerary.tsx`)
-- Place the map above the timeline, taking ~40% of the viewport height
-- Map and timeline scroll independently
-
-**8. Wire up navigation** (`src/pages/Index.tsx`)
-- The "Itinerary" button in the header already navigates to `/itinerary`; wrap App with TripContext so data flows through
-
-### Dependencies
-- `leaflet` + `react-leaflet` (+ `@types/leaflet`) for the map
-- Leaflet CSS import in index.css or the map component
+**7. Header & Input Upgrades** (`src/pages/Index.tsx`)
+- Header with stronger glass blur over the map background
+- Input bar with a glowing border animation on focus
+- Send button with a more vivid gradient
 
 ### Files Modified/Created
 | File | Action |
 |------|--------|
-| `supabase/functions/chat/index.ts` | Edit system prompt |
-| `src/types/itinerary.ts` | Create |
-| `src/hooks/useChat.ts` | Edit — parse JSON block |
-| `src/contexts/TripContext.tsx` | Create |
-| `src/components/TripMap.tsx` | Create |
-| `src/pages/Itinerary.tsx` | Rebuild |
-| `src/pages/Index.tsx` | Minor — consume context |
-| `src/App.tsx` | Wrap with TripContext |
-| `src/index.css` | Leaflet CSS import |
+| `src/index.css` | New color palette, background image, stronger glass effects |
+| `src/components/Logo.tsx` | Create — custom SVG compass/route logo |
+| `src/pages/Index.tsx` | Map background, new logo, enhanced prompt cards |
+| `src/components/ChatMessage.tsx` | Richer message styling |
+| `src/pages/Itinerary.tsx` | Consistent background, colored leg cards |
+| `tailwind.config.ts` | Updated color tokens |
 
