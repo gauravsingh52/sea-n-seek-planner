@@ -1,25 +1,26 @@
 
 
-## Fix Language Switching — Root Cause & Plan
+## Fix Trip Comparison: Response Too Long for JSON Blocks
 
-### Problem
-The language selector changes to Hindi but content stays English. Two separate issues:
+### Root Cause
+The AI generates extremely detailed markdown for all 3 options (transport tables, accommodation tables, day-by-day itineraries, activities, visa info, tips) BEFORE appending the `itinerary-json` blocks. This exceeds the model's output token limit, so the response gets cut off before any JSON data is emitted. Without JSON blocks, `parseAllItineraryBlocks` finds nothing, so comparison cards never appear.
 
-**Issue 1: AI responses ignore language setting**
-The language instruction is appended at the **end** of a very long system prompt (~4000 tokens). The AI model prioritizes earlier instructions. By the time it reaches the language override, it has already "decided" to respond in English based on the English system prompt and English user messages.
+### Solution: Two-Pronged Fix
 
-**Fix**: Move the language instruction to the **very beginning** of the system prompt, before all other instructions. Prefix it as the first line: `"CRITICAL INSTRUCTION: You MUST respond ENTIRELY in हिन्दी (Hindi)..."`. Also add a reminder at the end for reinforcement.
+**1. Set higher `max_tokens` in edge function (`supabase/functions/chat/index.ts`)**
+- Add `max_tokens: 16000` to the API request body to allow enough room for full comparison responses.
 
-**Issue 2: Static UI text stays English**
-The landing page heading ("Where to next?"), subtitle, suggestion cards, and labels ("Popular trips near...") are hardcoded English strings. The language selector only affects AI chat responses, not the app UI.
+**2. Shorten comparison prompt to prioritize JSON output (`supabase/functions/chat/index.ts`)**
+- Update the COMPARISON MODE instruction: tell the AI to keep markdown summaries brief when comparing (short paragraph per option, no full day-by-day for each), and output the JSON blocks immediately after the summaries.
+- Change instruction to: "When comparing, write a SHORT summary paragraph for each option (3-4 sentences max per option, no full day-by-day breakdown). Then immediately output the itinerary-json blocks. The comparison cards in the UI will show the detailed data — the markdown is just an overview."
 
-**Fix**: Add a simple translation map for key UI strings (heading, subtitle, location label prefix) keyed by language code. The geo suggestion prompts will also get translated versions for the top languages (Hindi, Spanish, French).
+**3. Add `~~~itinerary-json` as additional marker (`src/hooks/useChat.ts`)**
+- The memory note mentions `~~~itinerary-json` fencing. Add this as a third marker in `parseAllItineraryBlocks` and `stripItineraryBlocks` for robustness.
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `supabase/functions/chat/index.ts` | Move language instruction to START of system prompt instead of end |
-| `src/pages/Index.tsx` | Add UI string translations for heading, subtitle, placeholder text |
-| `src/hooks/useGeoSuggestions.ts` | Add translated suggestion text for top languages |
+| `supabase/functions/chat/index.ts` | Add `max_tokens: 16000`, shorten comparison mode instructions to prioritize JSON output |
+| `src/hooks/useChat.ts` | Add `~~~itinerary-json` as additional parsing marker |
 
