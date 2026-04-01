@@ -1,87 +1,69 @@
 
 
-## Market Research: Features Missing from TripMap Planner
+## Sub-batch C: Booking Links, Destination Photos, Trip Duration, Emergency Info, Multi-City
 
-### Current State
-The app has: AI chat itinerary generation, map view, weather badges, currency converter, trip comparison, save/load trips (localStorage), voice input, language selector, dark mode, share buttons, chat history, follow-up chips, onboarding tour, trip settings (budget/travelers/dates).
+### 1. Booking Links on Leg Cards
 
-### What Top Competitors Offer (Wanderlog, Layla, Travo, Voyaiger)
+Add clickable "Book" links to transport and hotel legs that deep-link to relevant booking platforms.
 
-After researching the 2026 travel planner market, here are the **high-impact features we're missing**, grouped by priority:
+**`src/components/BookingLinks.tsx`** — New component
+- Transport legs: Generate links to Google Flights (plane), Google Maps directions (car/bus), or rail booking sites based on `icon` type
+- Hotel legs: Link to Google Hotels search with destination pre-filled
+- Renders as small external-link buttons on each leg card
 
----
+**`src/pages/Itinerary.tsx`** — Add `<BookingLinks>` inside `LegCard`
 
-### Batch 1: Essential (implement now — 15 features)
+### 2. Destination Photos via Unsplash
 
-| # | Feature | What it does |
-|---|---------|-------------|
-| 1 | **Export itinerary as PDF** | Download a clean, printable PDF of the trip plan |
-| 2 | **Drag-and-drop itinerary reorder** | Let users rearrange legs/activities within a day |
-| 3 | **Add custom stops/notes** | Users manually add their own activities or notes to the generated itinerary |
-| 4 | **Collaborative trip sharing via link** | Generate a shareable URL so friends can view the same itinerary |
-| 5 | **Offline access** | PWA with service worker — cache the itinerary for offline viewing |
-| 6 | **Travel checklist / to-do list** | Editable checklist (visa, insurance, packing) attached to each trip |
-| 7 | **Budget tracker** | Track actual spending vs planned budget with a progress bar |
-| 8 | **Flight/hotel booking links** | Deep links to Kayak/Google Flights/Booking.com for each transport/hotel leg |
-| 9 | **Photo gallery per destination** | Show destination photos (Unsplash API) in itinerary cards |
-| 10 | **Trip duration calculator** | Show total travel time, idle time, activity time breakdown |
-| 11 | **Emergency info card** | Always-visible card with local emergency numbers, embassy info |
-| 12 | **User authentication** | Sign up/login so trips persist across devices (using Lovable Cloud) |
-| 13 | **Cloud-synced saved trips** | Store trips in database instead of localStorage |
-| 14 | **Multi-city / multi-stop planner** | Explicit support for complex routes (A→B→C→D) with optimized ordering |
-| 15 | **Copy itinerary as text** | One-click copy the full itinerary as formatted text for WhatsApp/email |
+**`supabase/functions/destination-photos/index.ts`** — New edge function
+- Accepts `{ query: "Shimla" }`, calls Unsplash API (`/search/photos`) using a free API key
+- Returns 3-4 photo URLs (small size)
+- Uses `LOVABLE_API_KEY` — actually we'll use the free Unsplash source URL pattern (`source.unsplash.com`) which requires no API key, just construct URLs
 
-### Batch 2: Differentiators (implement next — 10 features)
+**Simpler approach**: Skip edge function entirely. Use `https://source.unsplash.com/featured/?{destination},travel` URLs directly in the frontend — no API key needed.
 
-| # | Feature | What it does |
-|---|---------|-------------|
-| 16 | **Real-time price estimates** | Use web search to show current flight/hotel prices (via Perplexity API) |
-| 17 | **Travel document checklist** | Auto-generate visa/passport/insurance requirements based on nationality + destination |
-| 18 | **Trip countdown timer** | Dashboard showing days until departure |
-| 19 | **Expense splitter** | Split costs among travelers with per-person breakdown |
-| 20 | **Alternative route suggestions** | "Show me a scenic route" or "fastest route" toggle |
-| 21 | **Attraction ratings & reviews** | Show Google/TripAdvisor-style ratings for suggested activities |
-| 22 | **Time zone awareness** | Show local time at each destination, jet lag calculator |
-| 23 | **Travel insurance comparison** | Suggest travel insurance options based on destination |
-| 24 | **Seasonal travel advice** | "Best time to visit" badges based on weather/crowd data |
-| 25 | **Trip templates** | Pre-built itinerary templates ("Weekend in Paris", "Backpacking SEA") users can start from |
+**`src/components/DestinationPhotos.tsx`** — New component
+- Takes destination names from itinerary legs (unique `to`/`from` values)
+- Shows a horizontal scrollable gallery of Unsplash photos
+- Renders as a card above the cost breakdown
 
----
+### 3. Trip Duration Calculator
 
-### Implementation Plan (Batch 1 — 15 features)
+**`src/components/TripDuration.tsx`** — New component
+- Calculates from itinerary legs:
+  - Total travel time (sum of transport leg durations parsed from `time` field like "06:00 – 16:00")
+  - Number of activities, hotels, transport segments
+  - Breakdown: "X hours transit, Y activities, Z nights accommodation"
+- Renders as a compact stats card
 
-Since implementing all 15 at once risks breaking things, I recommend doing them in **3 sub-batches**:
+### 4. Emergency Info Card
 
-**Sub-batch A (Core UX — 5 features):**
-- Export PDF, Copy as text, Add custom stops, Drag-and-drop reorder, Travel checklist
+**`src/components/EmergencyInfo.tsx`** — New component
+- Hardcoded emergency numbers for ~20 common countries, keyed by destination name/country detection
+- Shows: Police, Ambulance, Tourist helpline, nearest embassy info placeholder
+- Also ask the AI to include emergency info in the JSON response
 
-**Sub-batch B (Auth + Cloud — 4 features):**
-- User authentication, Cloud-synced trips, Collaborative sharing via link, Budget tracker
+**`src/types/itinerary.ts`** — Add optional `emergencyInfo` field to `ItineraryData`
 
-**Sub-batch C (Content enrichment — 6 features):**
-- Booking links, Destination photos, Trip duration calculator, Emergency info card, Multi-city planner, Offline PWA
+**`supabase/functions/chat/index.ts`** — Add `emergencyInfo` to JSON schema instruction so AI provides it
 
-### Files to Create/Modify
+### 5. Multi-City Planner Enhancement
+
+The AI already supports multi-stop routes, but we need explicit UI support.
+
+**`supabase/functions/chat/index.ts`** — Add instruction: "When the user mentions 3+ cities, treat it as a multi-city trip. Optimize the route order for minimum travel time and include connecting transport between each city pair."
+
+**`src/pages/Itinerary.tsx`** — Add a route summary header showing the full route chain (e.g., "Delhi → Agra → Jaipur → Udaipur") extracted from leg `from`/`to` fields
+
+### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/ExportPDF.tsx` | Create — PDF generation using html2canvas + jsPDF |
-| `src/components/CopyItinerary.tsx` | Create — copy formatted text to clipboard |
-| `src/components/CustomStop.tsx` | Create — form to add user-defined stops |
-| `src/components/DraggableItinerary.tsx` | Create — drag-and-drop day planner using dnd-kit |
-| `src/components/TravelChecklist.tsx` | Create — editable checklist component |
-| `src/components/BudgetTracker.tsx` | Create — spending vs budget progress |
-| `src/components/BookingLinks.tsx` | Create — deep links to booking sites |
-| `src/components/DestinationPhotos.tsx` | Create — Unsplash photos for destinations |
-| `src/components/EmergencyInfo.tsx` | Create — emergency contacts card |
-| `src/components/TripCountdown.tsx` | Create — days until departure |
-| `src/pages/Itinerary.tsx` | Integrate all new components |
-| `src/pages/Index.tsx` | Add auth UI, trip templates |
-| `src/pages/Auth.tsx` | Create — login/signup page |
-| `supabase/functions/destination-photos/index.ts` | Create — Unsplash proxy |
-| Database migration | `saved_trips` table, `user_profiles` table |
-
-### Recommendation
-
-Start with **Sub-batch A** (5 features: PDF export, copy text, custom stops, drag-drop, checklist). These are purely frontend, no auth needed, and give the most immediate user value. Should I proceed with Sub-batch A?
+| `src/components/BookingLinks.tsx` | Create — deep links to booking platforms per leg type |
+| `src/components/DestinationPhotos.tsx` | Create — Unsplash photo gallery for destinations |
+| `src/components/TripDuration.tsx` | Create — travel time/activity stats breakdown |
+| `src/components/EmergencyInfo.tsx` | Create — emergency numbers by country |
+| `src/types/itinerary.ts` | Add `emergencyInfo` optional field |
+| `src/pages/Itinerary.tsx` | Integrate all 4 new components + route summary header |
+| `supabase/functions/chat/index.ts` | Add emergencyInfo to JSON schema, multi-city optimization instruction |
 
