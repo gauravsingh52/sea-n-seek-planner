@@ -1,29 +1,33 @@
 
 
-## Upgrade Chat History Storage: localStorage → IndexedDB
+## Three Features: Rename Sessions, Fix History Data, Trip Templates
 
-### Problem
-The current chat history uses `localStorage` which has a ~5MB limit. Long AI conversations with itinerary data quickly fill this up, causing sessions to silently fail to save or lose data. The user reports only prompts are saved, not full conversations — this is the localStorage quota being exceeded.
+### 1. Rename Chat Sessions
 
-### Solution
-Switch to **IndexedDB** via the lightweight `idb-keyval` library. IndexedDB supports hundreds of MB, enough to store full conversation histories with all message content and itinerary data.
+**`src/hooks/useChatHistory.ts`** — Add `renameSession(id, newTitle)` callback that updates the title of a session by ID.
 
-### Changes
+**`src/components/ChatHistory.tsx`** — Fix duplicate interface declaration (lines 8-24). Add inline rename: clicking a pencil icon on a session row enters edit mode with an `<Input>` field. On Enter/blur, call `renameSession`. Import `Pencil` from lucide-react and `Input` from ui.
 
-**1. `src/hooks/useChatHistory.ts`** — Rewrite storage layer
-- Replace `localStorage.getItem/setItem` with IndexedDB using `idb-keyval` (get/set)
-- Load sessions asynchronously on mount
-- Save sessions to IndexedDB on every update
-- Keep the same `ChatSession` interface and hook API
-- Add a one-time migration: on first load, check localStorage for old data, move it to IndexedDB, then clear localStorage
+**`src/pages/Index.tsx`** — Pass `renameSession` to both `<ChatHistory>` instances as `onRename` prop.
 
-**2. `src/pages/Index.tsx`** — Minor adjustment
-- The auto-save effect already calls `saveSession(messages, latestItinerary)` — no change needed, just ensure the full `messages` array (not truncated) is passed
+### 2. Verify Full Chat Saves (Bug Fix)
 
-**3. `package.json`** — Add `idb-keyval` dependency (~1KB gzipped)
+The `saveSession` in `useChatHistory.ts` already receives the full `messages` array. However, the `saveSession` call in `Index.tsx` runs on every render where the last message is from the assistant — the `useCallback` has no deps issue. The save function preserves custom titles set by rename by checking if a session already exists and keeping its title if it was manually renamed.
 
-### Technical Detail
-- `idb-keyval` provides simple `get(key)` / `set(key, value)` that wraps IndexedDB
-- Sessions are stored as a single array under key `"tripmap-chat-history"`
-- Async loading means sessions start as `[]` and populate after mount (no visible delay since the history panel is closed by default)
+**`src/hooks/useChatHistory.ts`** — Add `customTitle?: boolean` flag to `ChatSession` interface. In `saveSession`, preserve the existing title if `customTitle` is true (so auto-save doesn't overwrite renamed sessions).
+
+### 3. Trip Templates
+
+**`src/components/TripTemplates.tsx`** — New component. A grid of 6-8 pre-built template cards (e.g., "Weekend in Paris", "Backpacking Southeast Asia", "Golden Triangle India", "Japan Rail Pass Tour"). Each card shows title, duration, estimated cost, and a thumbnail emoji. Clicking sends the template as a chat message like "Plan a weekend trip to Paris with 3 days, budget €500".
+
+**`src/pages/Index.tsx`** — Show `<TripTemplates>` on the landing page below the geo-suggestion cards when no messages exist. Import and render conditionally.
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `src/hooks/useChatHistory.ts` | Add `renameSession`, `customTitle` flag on ChatSession |
+| `src/components/ChatHistory.tsx` | Fix duplicate interface, add inline rename UI with pencil icon + input |
+| `src/components/TripTemplates.tsx` | Create — pre-built trip template cards |
+| `src/pages/Index.tsx` | Pass `onRename` to ChatHistory, add TripTemplates to landing page |
 
