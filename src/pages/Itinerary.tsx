@@ -107,9 +107,22 @@ export default function Itinerary() {
             {itinerary?.title || "Your Itinerary"}
           </h1>
         </div>
-        <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
-          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          {itinerary && (
+            <Button variant="ghost" size="icon" title="Copy itinerary" className="glass hover:glow-primary transition-all duration-300 text-foreground"
+              onClick={() => {
+                const currencySymbols: Record<string, string> = { INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥" };
+                const sym = currencySymbols[itinerary.currency] || itinerary.currency;
+                const text = `${itinerary.title}\n\n` + itinerary.legs.map(l => `• ${l.title} — ${l.description}${l.cost > 0 ? ` (${sym}${l.cost})` : ""}`).join("\n") + `\n\nTotal: ${sym}${itinerary.totalCost}`;
+                navigator.clipboard.writeText(text);
+              }}>
+              <Copy className="w-4 h-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass hover:glow-primary transition-all duration-300 text-foreground">
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
+        </div>
       </header>
 
       {!itinerary ? (
