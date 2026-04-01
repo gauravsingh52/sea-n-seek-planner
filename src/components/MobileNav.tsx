@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Map, Bookmark, Plus } from "lucide-react";
+import { Home, Map, Bookmark, Plus, MessageSquare } from "lucide-react";
 
 interface MobileNavProps {
   onNewChat?: () => void;
