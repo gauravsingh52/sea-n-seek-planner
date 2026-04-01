@@ -1,32 +1,40 @@
 
 
-## Add Region-Based Follow-Up Suggestions
+## Smart Suggestions: Learn from User's Chat History
 
 ### Problem
-The `FollowUpChips` component shows static defaults ("Show cheaper alternatives", "Compare 3 different options", "What should I pack?") when the AI doesn't return custom suggestions. These should be personalized based on the user's detected region.
+The landing page shows generic/fallback suggestions (Barcelona, Tokyo, California, Bali) that aren't relevant to the user. The geo-IP detection often fails or returns a country without mapped prompts.
 
 ### Solution
-Use the existing `useGeoSuggestions` hook's geo data to provide region-aware default follow-up chips. Pass the detected country code to `FollowUpChips` so it can pick relevant defaults.
+Make suggestions **adaptive** by analyzing the user's past chat history to extract destinations/themes they've searched for, then blend those with geo-based suggestions. This way, returning users see personalized prompts based on their actual travel interests.
+
+### How It Works
+
+1. **Extract travel patterns from history** — scan saved chat session titles/messages for destination names, travel styles (budget, luxury, backpacking), and transport preferences
+2. **Generate personalized suggestion cards** — create prompts like "Another trip near [previous destination]", "Explore more of [country they searched]", "Similar to your [past trip title]"
+3. **Fallback chain**: Personalized (from history) → Geo-based (from IP) → Global defaults
+4. **Improve geo fallback** — add more countries to `COUNTRY_PROMPTS` so fewer users hit the generic fallback
 
 ### Changes
 
-**`src/components/FollowUpChips.tsx`**
-- Add region-specific default suggestions keyed by country code (e.g., IN: "Best train routes nearby", "Local street food guide", "Monsoon travel tips"; US: "National parks road trip", "Best airline deals"; JP: "JR Pass worth it?", etc.)
-- Add a `regionCode?: string` prop; use it to pick the right defaults when `suggestions` array is empty
-- Keep current generic defaults as fallback when no region detected
+**`src/hooks/useSmartSuggestions.ts`** — New hook
+- Takes `sessions` from chat history and `geoSuggestions` from geo hook
+- Parses session titles/first messages to extract destination keywords
+- Returns blended suggestions: 2 history-based + 2 geo-based (or 4 geo if no history)
+- Uses a simple keyword extraction approach (city/country names from past queries)
 
-**`src/pages/Index.tsx`**
-- Extract `regionCode` from `useGeoSuggestions` (need to expose it from the hook)
-- Pass `regionCode` to `<FollowUpChips>`
+**`src/hooks/useGeoSuggestions.ts`** — Add more countries
+- Add IT, ES, CA, BR, MX, KR, NZ, EG, TR, ZA to `COUNTRY_PROMPTS` so more users get localized suggestions instead of fallback
 
-**`src/hooks/useGeoSuggestions.ts`**
-- Expose `countryCode` in the return value so Index.tsx can pass it to FollowUpChips
+**`src/pages/Index.tsx`** — Use smart suggestions
+- Import `useSmartSuggestions`, pass it `sessions` + geo data
+- Replace raw `suggestions` with the blended output on the landing page
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/hooks/useGeoSuggestions.ts` | Add `countryCode` to return object |
-| `src/components/FollowUpChips.tsx` | Add region-keyed default suggestions, accept `regionCode` prop |
-| `src/pages/Index.tsx` | Destructure `countryCode`, pass to FollowUpChips |
+| `src/hooks/useSmartSuggestions.ts` | Create — blends history-based + geo-based suggestions |
+| `src/hooks/useGeoSuggestions.ts` | Add 10 more countries to COUNTRY_PROMPTS |
+| `src/pages/Index.tsx` | Use smart suggestions instead of raw geo suggestions |
 
