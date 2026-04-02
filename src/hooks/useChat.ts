@@ -129,6 +129,14 @@ export function useChat() {
         language: settings.language,
       } : undefined;
 
+      // Auto-detect comparison intent and add hint
+      const compareKeywords = /\b(compare|alternatives|options|vs|versus|which is better|budget vs|side.by.side)\b/i;
+      const apiMessages = allMessages.map(m => ({ role: m.role, content: m.content }));
+      if (compareKeywords.test(input)) {
+        const lastMsg = apiMessages[apiMessages.length - 1];
+        lastMsg.content += "\n\n[SYSTEM HINT: User wants comparison — output 2-3 SEPARATE itinerary-json blocks, one per option]";
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -136,7 +144,7 @@ export function useChat() {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          messages: allMessages.map(m => ({ role: m.role, content: m.content })),
+          messages: apiMessages,
           settings: settingsPayload,
         }),
       });

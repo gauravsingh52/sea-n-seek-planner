@@ -182,7 +182,10 @@ When the user asks to compare options, alternatives, says "compare", "vs", "vers
 4. CRITICAL: Do NOT combine multiple options into a single JSON block. Each option MUST be a SEPARATE \`\`\`itinerary-json block. The frontend CANNOT display comparisons from a single block.
 
 ## CRITICAL REMINDER
-You MUST ALWAYS include the \`\`\`itinerary-json block at the end of EVERY response that contains any trip plan, itinerary, route suggestion, or travel recommendation with specific locations. This is NOT optional. The app CANNOT display the itinerary without this data block. Even for simple single-route suggestions, include the JSON block. NEVER skip it.`;
+You MUST ALWAYS include the \`\`\`itinerary-json block at the end of EVERY response that contains any trip plan, itinerary, route suggestion, or travel recommendation with specific locations. This is NOT optional. The app CANNOT display the itinerary without this data block. Even for simple single-route suggestions, include the JSON block. NEVER skip it.
+
+## FINAL COMPARISON REMINDER
+If the user's message contains ANY comparison intent (compare, vs, options, alternatives, which is better, budget vs comfort), you MUST output 2-3 SEPARATE \`\`\`itinerary-json blocks — one per option. NEVER merge them into one block.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
