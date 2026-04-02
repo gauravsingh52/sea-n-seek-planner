@@ -286,6 +286,15 @@
   font-weight: bold;
 }
 
+/* Logo hover: plane shifts forward */
+.group:hover .logo-plane-inner {
+  transform: translateX(2px) translateY(-1px);
+  transition: transform 0.4s ease;
+}
+.logo-plane-inner {
+  transition: transform 0.4s ease;
+}
+
 /* Light mode prose overrides */
 .prose-invert {
   --tw-prose-body: hsl(var(--foreground) / 0.9);
