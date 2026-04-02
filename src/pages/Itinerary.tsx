@@ -184,6 +184,28 @@ export default function Itinerary() {
               <ShareButtons itinerary={itinerary} />
             </>
           )}
+          {itinerary && (
+            <div className="flex items-center glass rounded-lg p-0.5 mr-1">
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setViewMode("list")}
+                title="List view"
+              >
+                <List className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant={viewMode === "calendar" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setViewMode("calendar")}
+                title="Calendar view"
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          )}
           <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass text-foreground">
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
