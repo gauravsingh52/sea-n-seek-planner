@@ -108,6 +108,7 @@ function PackingListCard({ items }: { items: string[] }) {
 export default function Itinerary() {
   const navigate = useNavigate();
   const { itinerary, addCustomLeg } = useTrip();
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const { theme, toggleTheme } = useTheme();
   const { saveTrip, isSaved } = useSavedTrips();
   const { weather } = useWeather(itinerary);
