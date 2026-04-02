@@ -61,10 +61,12 @@ export function ExportPDF({ itinerary }: { itinerary: ItineraryData }) {
 
       for (const [day, legs] of Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b))) {
         checkPage(20);
+        doc.setFillColor(240, 240, 240);
+        doc.roundedRect(14, y - 5, 182, 10, 2, 2, "F");
         doc.setFontSize(14);
         doc.setTextColor(40, 40, 40);
-        doc.text(`Day ${day}`, 15, y);
-        y += 8;
+        doc.text(`Day ${day}`, 17, y + 2);
+        y += 12;
 
         for (const leg of legs) {
           checkPage(25);
@@ -81,7 +83,7 @@ export function ExportPDF({ itinerary }: { itinerary: ItineraryData }) {
           doc.setTextColor(100, 100, 100);
 
           if (leg.description) {
-            const descLines = doc.splitTextToSize(safe(leg.description), 145);
+            const descLines = doc.splitTextToSize(safe(leg.description), 155);
             doc.text(descLines, 22, y);
             y += descLines.length * 4;
           }

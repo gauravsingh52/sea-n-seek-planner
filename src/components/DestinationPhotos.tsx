@@ -87,7 +87,6 @@ function DestinationCard({
               className="w-full h-full object-cover"
               loading="lazy"
               referrerPolicy="no-referrer"
-              crossOrigin="anonymous"
               onError={() => setImgError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -173,7 +172,7 @@ export function DestinationPhotos({ itinerary }: { itinerary: ItineraryData }) {
               alt={selectedDest || ""}
               className="w-full max-h-[70vh] object-contain bg-black"
               referrerPolicy="no-referrer"
-              crossOrigin="anonymous"
+              
             />
           ) : (
             <div className="w-full h-64 bg-muted flex items-center justify-center">
