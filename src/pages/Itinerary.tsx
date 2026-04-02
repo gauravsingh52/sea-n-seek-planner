@@ -1,6 +1,9 @@
 import { lazy, Suspense, Component, ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, CloudSun, Clock, Luggage, List, CalendarDays } from "lucide-react";
+import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, CloudSun, Clock, Luggage, List, CalendarDays, GripVertical } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -107,7 +110,12 @@ function PackingListCard({ items }: { items: string[] }) {
 
 export default function Itinerary() {
   const navigate = useNavigate();
-  const { itinerary, addCustomLeg } = useTrip();
+  const { itinerary, addCustomLeg, reorderLegs } = useTrip();
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const { theme, toggleTheme } = useTheme();
   const { saveTrip, isSaved } = useSavedTrips();
@@ -133,6 +141,24 @@ export default function Itinerary() {
   const hasDays = itinerary && Object.keys(dayGroups).length > 1;
   const symbol = itinerary ? (currencySymbols[itinerary.currency] || itinerary.currency || "$") : "$";
   const maxDay = itinerary?.days || Math.max(...Object.keys(dayGroups).map(Number), 1);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDragId(null);
+    const { active, over } = event;
+    if (!over || active.id === over.id || !itinerary) return;
+    const oldIndex = itinerary.legs.findIndex((l) => l.id === active.id);
+    const newIndex = itinerary.legs.findIndex((l) => l.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorderLegs(oldIndex, newIndex);
+      toast.success("Itinerary reordered");
+    }
+  };
+
+  const activeLeg = activeDragId ? itinerary?.legs.find((l) => l.id === activeDragId) : null;
 
   // Build route chain for multi-city trips
   const routeChain = useMemo(() => {
@@ -280,23 +306,36 @@ export default function Itinerary() {
 
               {viewMode === "calendar" ? (
                 <ItineraryCalendar itinerary={itinerary} currencySymbol={symbol} />
-              ) : hasDays ? (
-                Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
-                  <div key={day}>
-                    <div className="flex items-center gap-2 mb-3 mt-4 first:mt-0">
-                      <div className="w-8 h-8 rounded-full earth-gradient flex items-center justify-center text-primary-foreground text-xs font-bold">{day}</div>
-                      <span className="text-sm font-display font-semibold text-foreground">Day {day}</span>
-                      <div className="flex-1 h-px bg-border/30" />
-                    </div>
-                    {legs.map((leg, i) => (
-                      <LegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === legs.length - 1} index={i} />
-                    ))}
-                  </div>
-                ))
               ) : (
-                itinerary.legs.map((leg, i) => (
-                  <LegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === itinerary.legs.length - 1} index={i} />
-                ))
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                  <SortableContext items={itinerary.legs.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+                    {hasDays ? (
+                      Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
+                        <div key={day}>
+                          <div className="flex items-center gap-2 mb-3 mt-4 first:mt-0">
+                            <div className="w-8 h-8 rounded-full earth-gradient flex items-center justify-center text-primary-foreground text-xs font-bold">{day}</div>
+                            <span className="text-sm font-display font-semibold text-foreground">Day {day}</span>
+                            <div className="flex-1 h-px bg-border/30" />
+                          </div>
+                          {legs.map((leg, i) => (
+                            <SortableLegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === legs.length - 1} index={i} />
+                          ))}
+                        </div>
+                      ))
+                    ) : (
+                      itinerary.legs.map((leg, i) => (
+                        <SortableLegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === itinerary.legs.length - 1} index={i} />
+                      ))
+                    )}
+                  </SortableContext>
+                  <DragOverlay>
+                    {activeLeg ? (
+                      <div className="opacity-90 scale-105">
+                        <LegCard leg={activeLeg} symbol={symbol} weather={weather} isLast index={0} />
+                      </div>
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
               )}
 
               {/* Add custom stop */}
@@ -325,6 +364,58 @@ export default function Itinerary() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function SortableLegCard({ leg, symbol, weather, isLast, index }: { leg: ItineraryLeg; symbol: string; weather: Record<string, WeatherData>; isLast: boolean; index: number }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: leg.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  const Icon = getIcon(leg);
+  const borderColor = legColors[leg.type] || "border-l-primary";
+  const iconBg = legIconBg[leg.type] || "bg-primary/15 text-primary";
+  const legWeather = leg.to ? weather[leg.to] : undefined;
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative mb-4">
+      {!isLast && (
+        <div className="absolute left-[23px] top-[56px] bottom-[-16px] w-[2px] bg-gradient-to-b from-primary/40 to-primary/10" />
+      )}
+      <Card
+        className={`glass gradient-border border-l-[3px] ${borderColor} animate-slide-up-fade hover:scale-[1.02] transition-transform duration-300`}
+        style={{ animationDelay: `${index * 0.1}s` }}
+      >
+        <CardHeader className="flex flex-row items-center gap-3 py-3 px-4">
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors touch-none flex-shrink-0 opacity-50 hover:opacity-100"
+            aria-label="Drag to reorder"
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-sm font-sans font-semibold text-foreground">{leg.title}</CardTitle>
+            <p className="text-xs text-muted-foreground truncate">{leg.description}</p>
+            {leg.from && leg.to && <p className="text-xs text-muted-foreground/70 mt-0.5">{leg.from} → {leg.to}</p>}
+            {legWeather && <div className="mt-1"><WeatherBadge data={legWeather} /></div>}
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-sm font-semibold text-foreground">{leg.cost > 0 ? `${symbol}${leg.cost}` : "Free"}</p>
+            {leg.time && <p className="text-xs text-muted-foreground">{leg.time}</p>}
+            <BookingLinks leg={leg} />
+          </div>
+        </CardHeader>
+      </Card>
     </div>
   );
 }
