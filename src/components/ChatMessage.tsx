@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { MapPin, Navigation, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Message } from "@/hooks/useChat";
@@ -8,7 +9,7 @@ function AssistantContent({ content }: { content: string }) {
   const { displayed, isTyping } = useTypingEffect(content);
   return (
     <div className="prose prose-sm max-w-none prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-td:text-foreground prose-th:text-foreground prose-a:text-primary">
-      <ReactMarkdown>{displayed}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayed}</ReactMarkdown>
       {isTyping && <span className="typing-cursor">▍</span>}
     </div>
   );
