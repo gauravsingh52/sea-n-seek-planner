@@ -238,5 +238,11 @@ export function useChat() {
     setPackingList([]);
   }, []);
 
-  return { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions, packingList };
+  const triggerComparison = useCallback((settings?: TripSettingsData) => {
+    const title = latestItinerary?.title || "this trip";
+    const prompt = `Compare 3 different options for "${title}" — show budget, mid-range, and premium alternatives`;
+    sendMessage(prompt, settings);
+  }, [latestItinerary, sendMessage]);
+
+  return { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions, packingList, triggerComparison };
 }
