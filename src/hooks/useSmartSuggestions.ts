@@ -54,11 +54,10 @@ export function useSmartSuggestions(
       return { suggestions: geoSuggestions, label: "" };
     }
 
-    const historyCards: GeoSuggestion[] = destinations.slice(0, 2).map((dest, i) => ({
-      icon: i === 0 ? Repeat : Compass,
-      text: i === 0
-        ? `Plan another trip to ${dest} with a different vibe`
-        : `Explore destinations similar to ${dest}`,
+    // Limit to 1 history card so location-based suggestions stay dominant
+    const historyCards: GeoSuggestion[] = destinations.slice(0, 1).map((dest) => ({
+      icon: Repeat,
+      text: `Explore ${dest} again with a different vibe`,
     }));
 
     const geoCards = geoSuggestions
