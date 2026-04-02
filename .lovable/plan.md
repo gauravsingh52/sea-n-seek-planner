@@ -1,30 +1,32 @@
 
 
-## Add Clickable Links: Destination Photos + Better Booking Links
+## Add Lightbox/Fullscreen View for Destination Photos
 
-### 1. Destination Photos — Add Google Maps Link
+### Approach
+Add a Dialog-based lightbox that opens when clicking a destination photo. The Google Maps link moves to a button inside the lightbox instead of wrapping the card.
 
-Each destination photo card will become clickable, opening Google Maps for that location in a new tab.
+### Changes in `src/components/DestinationPhotos.tsx`
 
-**Changes in `src/components/DestinationPhotos.tsx`**:
-- Wrap the card content in an `<a>` tag linking to `https://www.google.com/maps/search/{placeName}`
-- Add hover effect (scale, cursor pointer) for visual feedback
-- Use `extractPlaceName(dest)` for the search query (cleaner results)
+1. **Import `Dialog` components** from `@/components/ui/dialog` and add `ExternalLink` icon from lucide
+2. **Add lightbox state** to `DestinationPhotos` parent — track which destination is open (`selectedDest: string | null`) and pass an `onOpen` callback to each card
+3. **Change `DestinationCard`** — replace the `<a>` wrapper with a `<button>` that calls `onOpen(dest)`. Keep the same visual card layout
+4. **Add a `Dialog`** in `DestinationPhotos` that shows:
+   - Large image (fetched from Wikipedia `originalimage.source` for higher resolution, falling back to `thumbnail.source`)
+   - Destination name as title
+   - "Open in Google Maps" link button at the bottom
+   - Close button (built into Dialog)
+5. **Use `imageCache`** to get the URL for the selected destination without re-fetching
+6. **Also cache `originalimage`** URL separately for the fullscreen view (higher resolution than thumbnail)
 
-### 2. Bus/Transport Booking Links — Use Real Booking Sites
-
-Currently the "Bus" link goes to Google Maps transit directions, which isn't useful for booking. Replace with actual Indian bus booking sites.
-
-**Changes in `src/components/BookingLinks.tsx`**:
-- Bus: Link to `https://www.redbus.in/bus-tickets/{from}-to-{to}` (India's main bus booking platform)
-- Train: Link to `https://www.irctc.co.in` or Google search for train tickets
-- Flights: Keep Google Flights (works well)
-- Hotels: Keep Google Hotels (works well)
+### UX Details
+- Click photo → fullscreen dialog with large image + place name + Maps link
+- Escape or X to close
+- Smooth fade-in animation (Dialog default)
+- Fallback cards (no photo) still open the lightbox showing just the name + Maps link
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/DestinationPhotos.tsx` | Wrap each photo card in a Google Maps link |
-| `src/components/BookingLinks.tsx` | Change bus link to RedBus, improve train link |
+| `src/components/DestinationPhotos.tsx` | Add Dialog lightbox, split click from Maps link, cache hi-res URLs |
 
