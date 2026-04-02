@@ -15,6 +15,8 @@ import { BookingLinks } from "@/components/BookingLinks";
 import { DestinationPhotos } from "@/components/DestinationPhotos";
 import { TripDuration } from "@/components/TripDuration";
 import { EmergencyInfo } from "@/components/EmergencyInfo";
+import { ItineraryCalendar } from "@/components/ItineraryCalendar";
+import { BudgetTracker } from "@/components/BudgetTracker";
 import { useTrip } from "@/contexts/TripContext";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useWeather } from "@/hooks/useWeather";
