@@ -93,5 +93,32 @@ export function useChatHistory() {
     setSessions([]);
   }, []);
 
-  return { sessions, saveSession, renameSession, deleteSession, clearAll };
+  // Direct IndexedDB write for beforeunload (bypasses React state)
+  const saveSessionDirect = useCallback(async (messages: Message[], itinerary?: ItineraryData | null) => {
+    if (messages.length === 0) return;
+    try {
+      const firstUserMsg = messages.find(m => m.role === "user");
+      const autoTitle = firstUserMsg?.content.slice(0, 60) || "Untitled chat";
+      const sessionId = messages[0].id;
+      const existing = (await get<ChatSession[]>(STORAGE_KEY)) || [];
+      const existingSession = existing.find(s => s.id === sessionId);
+      const session: ChatSession = {
+        id: sessionId,
+        title: existingSession?.customTitle ? existingSession.title : autoTitle,
+        customTitle: existingSession?.customTitle,
+        messages,
+        createdAt: existingSession?.createdAt || new Date().toISOString(),
+        itinerary,
+      };
+      const idx = existing.findIndex(s => s.id === sessionId);
+      if (idx >= 0) {
+        existing[idx] = session;
+      } else {
+        existing.unshift(session);
+      }
+      await set(STORAGE_KEY, existing.slice(0, MAX_SESSIONS));
+    } catch {}
+  }, []);
+
+  return { sessions, saveSession, saveSessionDirect, renameSession, deleteSession, clearAll };
 }
