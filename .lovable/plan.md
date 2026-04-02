@@ -1,32 +1,28 @@
 
 
-## Add Drag-and-Drop Reordering of Itinerary Stops
+## Fix: Make Suggestions Truly Personalized to User's Location (Punjab/Jalandhar)
 
-### Approach
-Use `@dnd-kit/core` + `@dnd-kit/sortable` (lightweight, React 18 compatible, actively maintained) to make `LegCard` items draggable within the list view. When a leg is dropped in a new position, the itinerary updates in context.
+### Root Cause
+The geo API (ipapi.is) works correctly and detects India (IN), state "Punjab", city "Basi" (a village near Jalandhar). But the code only uses **country-level** prompts — so the user sees generic India suggestions like "Kerala backwater cruise" and "Rajasthan palace tour" which aren't relevant to someone in Punjab. The city "Basi" is also obscure, making the location label feel wrong.
 
-### Changes
+### Fix
 
-**Install**: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`
+**`src/hooks/useGeoSuggestions.ts`**:
+1. Expose `state` and `city` in the return value from the geo API response
+2. Add **Indian state-level prompts** — at minimum for Punjab, Rajasthan, Kerala, Goa, HP, J&K, UP, Maharashtra, Karnataka, Tamil Nadu
+3. Prioritize state prompts over country prompts: if `STATE_PROMPTS[state]` exists, use those instead of `COUNTRY_PROMPTS[countryCode]`
+4. Add a `CITY_ALIASES` map for small/obscure cities → nearest major city (e.g., "Basi" → "Jalandhar", "Mohali" → "Chandigarh") so the `{city}` placeholder and location label show a recognizable name
+5. Fix location label: if city is aliased, show "Popular trips near Jalandhar" instead of "Popular trips near Basi"
 
-**`src/contexts/TripContext.tsx`**
-- Add `reorderLegs(fromIndex: number, toIndex: number)` to context
-- Splices the legs array and updates itinerary state
+**Example Punjab prompts**:
+- "Golden Temple & Jallianwala Bagh heritage walk in Amritsar"
+- "Weekend getaway from {city} to Shimla via Chandigarh"  
+- "Wagah Border ceremony & Amritsar food trail day trip"
+- "Dharamshala & McLeodganj hill station trip from {city}"
 
-**`src/pages/Itinerary.tsx`**
-- Wrap the leg list (both flat and day-grouped views) with `DndContext` + `SortableContext`
-- Add `handleDragEnd` that calls `reorderLegs`
-- Add a `DragOverlay` for a visual preview while dragging
+### Files Modified
 
-**`src/pages/Itinerary.tsx` — `LegCard` component**
-- Wrap with `useSortable` hook from dnd-kit
-- Add a drag handle icon (`GripVertical` from lucide) on the left side
-- Apply transform/transition styles from the sortable hook
-- Add visual feedback (opacity, scale) when actively dragging
-
-### UX Details
-- Drag handle appears on hover (desktop) or always visible (mobile)
-- Smooth animation on reorder
-- Only active in **list view** (not calendar view)
-- Toast notification: "Itinerary reordered" after drop
+| File | Change |
+|------|--------|
+| `src/hooks/useGeoSuggestions.ts` | Add state-level prompts, city alias map, prioritize state over country |
 
