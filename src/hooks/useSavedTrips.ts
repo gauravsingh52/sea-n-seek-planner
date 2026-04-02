@@ -26,12 +26,9 @@ function writeTrips(trips: SavedTrip[]) {
 }
 
 export function useSavedTrips() {
-  const [trips, setTrips] = useState<SavedTrip[]>(readTrips);
-
-  // Sync on mount
-  useEffect(() => {
-    setTrips(readTrips());
-  }, []);
+  const [trips, setTrips] = useState<SavedTrip[]>(() => {
+    try { return readTrips(); } catch { return []; }
+  });
 
   const saveTrip = useCallback((itinerary: ItineraryData): string => {
     const id = crypto.randomUUID();
