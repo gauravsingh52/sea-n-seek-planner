@@ -313,6 +313,9 @@ export default function Itinerary() {
               {/* Travel checklist */}
               <TravelChecklist tripId={itinerary.title} />
 
+              {/* Budget tracker */}
+              <BudgetTracker itinerary={itinerary} />
+
               {/* Cost breakdown */}
               <CostBreakdown legs={itinerary.legs} totalCost={itinerary.totalCost} currency={itinerary.currency} />
 
