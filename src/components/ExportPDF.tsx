@@ -4,7 +4,18 @@ import { Button } from "@/components/ui/button";
 import type { ItineraryData } from "@/types/itinerary";
 import { toast } from "sonner";
 
-const currencySymbols: Record<string, string> = { INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥", THB: "฿", AUD: "A$", CAD: "C$", SGD: "S$", MYR: "RM", NZD: "NZ$" };
+const safeSymbols: Record<string, string> = {
+  INR: "INR ", EUR: "EUR ", USD: "$", GBP: "GBP ", JPY: "JPY ", THB: "THB ",
+  AUD: "A$", CAD: "C$", SGD: "S$", MYR: "MYR ", NZD: "NZ$",
+};
+
+function safe(text: string): string {
+  return text
+    .replace(/→/g, "->")
+    .replace(/←/g, "<-")
+    .replace(/₹/g, "INR ")
+    .replace(/[^\x00-\x7F]/g, "");
+}
 
 export function ExportPDF({ itinerary }: { itinerary: ItineraryData }) {
   const [loading, setLoading] = useState(false);
@@ -13,26 +24,34 @@ export function ExportPDF({ itinerary }: { itinerary: ItineraryData }) {
     setLoading(true);
     try {
       const { default: jsPDF } = await import("jspdf");
-      const symbol = currencySymbols[itinerary.currency] || itinerary.currency || "$";
+      const symbol = safeSymbols[itinerary.currency] || itinerary.currency || "$";
       const doc = new jsPDF();
       let y = 20;
 
-      doc.setFontSize(20);
+      const checkPage = (needed: number) => {
+        if (y + needed > 270) { doc.addPage(); y = 20; }
+      };
+
+      // Title
+      doc.setFontSize(22);
       doc.setTextColor(33, 33, 33);
-      doc.text(itinerary.title || "Trip Itinerary", 15, y);
+      doc.text(safe(itinerary.title || "Trip Itinerary"), 15, y);
       y += 10;
 
+      // Duration
       if (itinerary.days) {
         doc.setFontSize(11);
         doc.setTextColor(100, 100, 100);
-        doc.text(`${itinerary.days} day${itinerary.days > 1 ? "s" : ""}${itinerary.nights ? `, ${itinerary.nights} night${itinerary.nights > 1 ? "s" : ""}` : ""}`, 15, y);
+        const dur = `${itinerary.days} day${itinerary.days > 1 ? "s" : ""}${itinerary.nights ? `, ${itinerary.nights} night${itinerary.nights > 1 ? "s" : ""}` : ""}`;
+        doc.text(dur, 15, y);
         y += 8;
       }
 
-      doc.setDrawColor(200);
+      doc.setDrawColor(180);
       doc.line(15, y, 195, y);
-      y += 8;
+      y += 10;
 
+      // Group by day
       const dayGroups: Record<number, typeof itinerary.legs> = {};
       itinerary.legs.forEach((leg) => {
         const day = leg.day || 1;
@@ -41,49 +60,73 @@ export function ExportPDF({ itinerary }: { itinerary: ItineraryData }) {
       });
 
       for (const [day, legs] of Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b))) {
-        if (y > 260) { doc.addPage(); y = 20; }
+        checkPage(20);
         doc.setFontSize(14);
-        doc.setTextColor(50, 50, 50);
+        doc.setTextColor(40, 40, 40);
         doc.text(`Day ${day}`, 15, y);
-        y += 7;
+        y += 8;
 
         for (const leg of legs) {
-          if (y > 260) { doc.addPage(); y = 20; }
+          checkPage(25);
+          // Title + cost
           doc.setFontSize(11);
           doc.setTextColor(33, 33, 33);
-          doc.text(`• ${leg.title}`, 20, y);
+          const title = safe(leg.title);
+          doc.text(`  ${title}`, 18, y);
           const costText = leg.cost > 0 ? `${symbol}${leg.cost}` : "Free";
-          doc.text(costText, 175, y, { align: "right" });
+          doc.text(costText, 190, y, { align: "right" });
           y += 5;
 
           doc.setFontSize(9);
-          doc.setTextColor(120, 120, 120);
+          doc.setTextColor(100, 100, 100);
+
           if (leg.description) {
-            const descLines = doc.splitTextToSize(leg.description, 140);
-            doc.text(descLines, 25, y);
+            const descLines = doc.splitTextToSize(safe(leg.description), 145);
+            doc.text(descLines, 22, y);
             y += descLines.length * 4;
           }
           if (leg.from && leg.to) {
-            doc.text(`${leg.from} → ${leg.to}`, 25, y);
+            doc.text(safe(`${leg.from} -> ${leg.to}`), 22, y);
             y += 4;
           }
           if (leg.time) {
-            doc.text(leg.time, 25, y);
+            doc.text(safe(leg.time), 22, y);
             y += 4;
           }
-          y += 3;
+          y += 4;
         }
         y += 4;
       }
 
-      if (y > 240) { doc.addPage(); y = 20; }
-      doc.setDrawColor(200);
+      // Packing list
+      if (itinerary.packingList && itinerary.packingList.length > 0) {
+        checkPage(20);
+        doc.setDrawColor(180);
+        doc.line(15, y, 195, y);
+        y += 8;
+        doc.setFontSize(13);
+        doc.setTextColor(40, 40, 40);
+        doc.text("Packing List", 15, y);
+        y += 7;
+        doc.setFontSize(10);
+        doc.setTextColor(60, 60, 60);
+        for (const item of itinerary.packingList) {
+          checkPage(6);
+          doc.text(`- ${safe(item)}`, 20, y);
+          y += 5;
+        }
+        y += 4;
+      }
+
+      // Total
+      checkPage(20);
+      doc.setDrawColor(180);
       doc.line(15, y, 195, y);
       y += 8;
       doc.setFontSize(14);
       doc.setTextColor(33, 33, 33);
       doc.text("Total Cost", 15, y);
-      doc.text(`${symbol}${itinerary.totalCost}`, 175, y, { align: "right" });
+      doc.text(`${symbol}${itinerary.totalCost}`, 190, y, { align: "right" });
 
       doc.save(`${(itinerary.title || "itinerary").replace(/\s+/g, "_")}.pdf`);
       toast.success("PDF downloaded!");
