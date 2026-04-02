@@ -171,11 +171,87 @@ const REGION_PROMPTS: Record<string, GeoSuggestion[]> = {
   ],
 };
 
+// City alias map for obscure/small detected cities → nearest major city
+const CITY_ALIASES: Record<string, string> = {
+  "Basi": "Jalandhar", "Phillaur": "Jalandhar", "Nakodar": "Jalandhar",
+  "Mohali": "Chandigarh", "Zirakpur": "Chandigarh", "Panchkula": "Chandigarh",
+  "Kharar": "Chandigarh", "Dera Bassi": "Chandigarh",
+  "Khanna": "Ludhiana", "Samrala": "Ludhiana", "Doraha": "Ludhiana",
+  "Rajpura": "Patiala", "Nabha": "Patiala",
+  "Batala": "Amritsar", "Ajnala": "Amritsar",
+  "Moga": "Ludhiana", "Abohar": "Bathinda", "Fazilka": "Bathinda",
+};
+
+// Indian state-level prompts
+const STATE_PROMPTS: Record<string, GeoSuggestion[]> = {
+  "Punjab": [
+    { icon: Car, text: "Golden Temple & Jallianwala Bagh heritage walk in Amritsar" },
+    { icon: Car, text: "Weekend getaway from {city} to Shimla via Chandigarh" },
+    { icon: Palmtree, text: "Wagah Border ceremony & Amritsar food trail day trip" },
+    { icon: Train, text: "Dharamshala & McLeodganj hill station trip from {city}" },
+  ],
+  "Himachal Pradesh": [
+    { icon: Car, text: "Manali to Leh road trip via Rohtang Pass" },
+    { icon: Palmtree, text: "Kasol & Kheerganga trek with riverside camping" },
+    { icon: Train, text: "Kalka-Shimla toy train heritage ride" },
+    { icon: Car, text: "Spiti Valley circuit: Shimla → Kaza → Manali" },
+  ],
+  "Rajasthan": [
+    { icon: Car, text: "Royal Rajasthan road trip: Jaipur → Udaipur → Jodhpur → Jaisalmer" },
+    { icon: Train, text: "Palace on Wheels luxury train experience" },
+    { icon: Palmtree, text: "Desert safari and camping in Jaisalmer sand dunes" },
+    { icon: Car, text: "Pushkar camel fair & Ajmer Sharif day trip from {city}" },
+  ],
+  "Kerala": [
+    { icon: Ship, text: "Alleppey houseboat cruise through Kerala backwaters" },
+    { icon: Car, text: "Munnar tea plantations & Thekkady wildlife trip" },
+    { icon: Palmtree, text: "Varkala cliff beach & Kovalam surfing getaway" },
+    { icon: Car, text: "Wayanad treehouse stay & Edakkal caves trek" },
+  ],
+  "Goa": [
+    { icon: Palmtree, text: "North Goa beach hopping: Baga, Anjuna & Vagator" },
+    { icon: Ship, text: "Dudhsagar Falls & spice plantation day trip" },
+    { icon: Car, text: "South Goa hidden beaches & Portuguese heritage trail" },
+    { icon: Palmtree, text: "Goa food trail: seafood shacks & feni tasting" },
+  ],
+  "Jammu and Kashmir": [
+    { icon: Car, text: "Srinagar to Leh road trip via Sonamarg & Zoji La" },
+    { icon: Palmtree, text: "Dal Lake shikara ride & Mughal Gardens walk in Srinagar" },
+    { icon: Car, text: "Gulmarg skiing & gondola ride weekend trip" },
+    { icon: Train, text: "Pahalgam valley trek & Betaab Valley day trip" },
+  ],
+  "Uttar Pradesh": [
+    { icon: Car, text: "Taj Mahal sunrise & Agra Fort heritage day trip" },
+    { icon: Train, text: "Varanasi ghats & spiritual Ganga Aarti experience" },
+    { icon: Car, text: "Lucknow food trail: kebabs, biryanis & chaat" },
+    { icon: Palmtree, text: "Vrindavan & Mathura temple circuit from {city}" },
+  ],
+  "Maharashtra": [
+    { icon: Car, text: "Mumbai to Lonavala & Khandala hill station drive" },
+    { icon: Ship, text: "Alibaug beach getaway with Kolaba Fort ferry" },
+    { icon: Car, text: "Ajanta & Ellora caves heritage road trip" },
+    { icon: Palmtree, text: "Mahabaleshwar & Panchgani strawberry farm trip" },
+  ],
+  "Karnataka": [
+    { icon: Car, text: "Coorg coffee estate stay & Abbey Falls trek" },
+    { icon: Train, text: "Hampi ancient ruins & boulder landscape trip" },
+    { icon: Palmtree, text: "Gokarna beach trek: Om Beach to Half Moon Beach" },
+    { icon: Car, text: "Mysore Palace & Chamundi Hills day trip from Bangalore" },
+  ],
+  "Tamil Nadu": [
+    { icon: Car, text: "Pondicherry French Quarter & Auroville day trip" },
+    { icon: Train, text: "Nilgiri Mountain Railway to Ooty from Mettupalayam" },
+    { icon: Palmtree, text: "Rameswaram temple island & Dhanushkodi ghost town" },
+    { icon: Car, text: "Kodaikanal hill station & Berijam Lake trek" },
+  ],
+};
+
 interface GeoData {
   city: string;
   country: string;
   countryCode: string;
   continent: string;
+  state: string;
 }
 
 async function tryProvider(url: string, normalize: (d: any) => GeoData | null, signal: AbortSignal): Promise<GeoData | null> {
@@ -197,15 +273,17 @@ const PROVIDERS: { url: string; normalize: (d: any) => GeoData | null }[] = [
       country: d.country || "",
       countryCode: d.country_code || "",
       continent: d.continent_code || "",
+      state: d.region || "",
     }),
   },
   {
-    url: "https://ip-api.com/json/?fields=status,country,countryCode,city,continentCode",
+    url: "https://ip-api.com/json/?fields=status,country,countryCode,city,continentCode,regionName",
     normalize: (d) => d.status !== "success" ? null : ({
       city: d.city || "",
       country: d.country || "",
       countryCode: d.countryCode || "",
       continent: d.continentCode || "",
+      state: d.regionName || "",
     }),
   },
   {
@@ -215,6 +293,7 @@ const PROVIDERS: { url: string; normalize: (d: any) => GeoData | null }[] = [
       country: d.location?.country || "",
       countryCode: d.location?.country_code || "",
       continent: d.location?.continent || "",
+      state: d.location?.state || d.location?.region || "",
     })),
   },
 ];
@@ -253,7 +332,7 @@ export function useGeoSuggestions(): GeoResult {
       if (!geo || !geo.countryCode) {
         const cc = guessCountryFromLanguage();
         if (cc) {
-          geo = { city: "", country: "", countryCode: cc, continent: "" };
+          geo = { city: "", country: "", countryCode: cc, continent: "", state: "" };
         }
       }
 
@@ -261,18 +340,33 @@ export function useGeoSuggestions(): GeoResult {
         const cc = geo.countryCode;
         setCountryCode(cc);
 
-        if (COUNTRY_PROMPTS[cc]) {
-          const prompts = COUNTRY_PROMPTS[cc].map((p) => ({
+        // Resolve city alias for obscure locations
+        const resolvedCity = geo.city && CITY_ALIASES[geo.city] ? CITY_ALIASES[geo.city] : geo.city;
+
+        // Prioritize state-level prompts (India), then country, then region
+        const stateKey = geo.state;
+        let selectedPrompts: GeoSuggestion[] | null = null;
+
+        if (stateKey && STATE_PROMPTS[stateKey]) {
+          selectedPrompts = STATE_PROMPTS[stateKey];
+        } else if (COUNTRY_PROMPTS[cc]) {
+          selectedPrompts = COUNTRY_PROMPTS[cc];
+        }
+
+        if (selectedPrompts) {
+          const prompts = selectedPrompts.map((p) => ({
             ...p,
-            text: geo!.city ? p.text.replace("{city}", geo!.city) : p.text.replace(/from \{city\} /g, ""),
+            text: resolvedCity ? p.text.replace("{city}", resolvedCity) : p.text.replace(/from \{city\} /g, ""),
           }));
           setSuggestions(prompts);
         } else if (geo.continent && REGION_PROMPTS[geo.continent]) {
           setSuggestions(REGION_PROMPTS[geo.continent]);
         }
 
-        if (geo.city) {
-          setLocationLabel(`Popular trips near ${geo.city}`);
+        if (resolvedCity) {
+          setLocationLabel(`Popular trips near ${resolvedCity}`);
+        } else if (geo.state) {
+          setLocationLabel(`Suggested trips in ${geo.state}`);
         } else if (geo.country) {
           setLocationLabel(`Suggested for travelers in ${geo.country}`);
         }
