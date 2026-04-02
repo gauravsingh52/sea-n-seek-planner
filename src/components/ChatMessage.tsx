@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { MapPin, Navigation, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Message } from "@/hooks/useChat";
