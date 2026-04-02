@@ -1,26 +1,56 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Camera, MapPin } from "lucide-react";
 import type { ItineraryData } from "@/types/itinerary";
 
-function cleanSeed(dest: string): string {
+const imageCache = new Map<string, string | null>();
+
+function extractPlaceName(dest: string): string {
   return dest
     .replace(/\(.*?\)/g, "")
-    .replace(/[^a-zA-Z\s]/g, "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-");
+    .replace(/\b(bus stand|railway station|airport|junction|terminal|station|stop)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function DestinationCard({ dest }: { dest: string }) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
-  const imageUrl = `https://picsum.photos/seed/${cleanSeed(dest)}/288/192`;
+
+  useEffect(() => {
+    const name = extractPlaceName(dest);
+    const cacheKey = name.toLowerCase();
+
+    if (imageCache.has(cacheKey)) {
+      const cached = imageCache.get(cacheKey);
+      if (cached) setImageUrl(cached);
+      else setImgError(true);
+      return;
+    }
+
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const src = data.thumbnail?.source || data.originalimage?.source;
+        if (src) {
+          imageCache.set(cacheKey, src);
+          setImageUrl(src);
+        } else {
+          imageCache.set(cacheKey, null);
+          setImgError(true);
+        }
+      })
+      .catch(() => {
+        imageCache.set(cacheKey, null);
+        setImgError(true);
+      });
+  }, [dest]);
 
   return (
     <div className="flex-shrink-0 w-36">
       <div className="relative w-36 h-24 rounded-xl overflow-hidden">
-        {!imgError ? (
+        {imageUrl && !imgError ? (
           <>
             <img
               src={imageUrl}
@@ -37,13 +67,15 @@ function DestinationCard({ dest }: { dest: string }) {
               </span>
             </div>
           </>
-        ) : (
+        ) : imgError ? (
           <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
             <MapPin className="w-5 h-5 text-muted-foreground mb-1" />
             <span className="text-muted-foreground text-xs font-semibold text-center px-2 leading-tight">
               {dest}
             </span>
           </div>
+        ) : (
+          <div className="w-full h-full bg-muted animate-pulse" />
         )}
       </div>
     </div>
