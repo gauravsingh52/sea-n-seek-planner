@@ -8,8 +8,8 @@ interface FollowUpChipsProps {
 }
 
 const DEFAULT_FOLLOW_UPS = [
-  "Show cheaper alternatives",
   "Compare 3 different options",
+  "Show cheaper alternatives",
   "What should I pack?",
 ];
 
