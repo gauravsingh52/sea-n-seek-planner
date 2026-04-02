@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Camera, MapPin } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Camera, MapPin, ExternalLink } from "lucide-react";
 import type { ItineraryData } from "@/types/itinerary";
 
-const imageCache = new Map<string, string | null>();
+const imageCache = new Map<string, { thumb: string; full: string } | null>();
 
 function extractPlaceName(dest: string): string {
   return dest
@@ -14,7 +16,13 @@ function extractPlaceName(dest: string): string {
     .trim();
 }
 
-function DestinationCard({ dest }: { dest: string }) {
+function DestinationCard({
+  dest,
+  onOpen,
+}: {
+  dest: string;
+  onOpen: (dest: string) => void;
+}) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
 
@@ -24,7 +32,7 @@ function DestinationCard({ dest }: { dest: string }) {
 
     if (imageCache.has(cacheKey)) {
       const cached = imageCache.get(cacheKey);
-      if (cached) setImageUrl(cached);
+      if (cached) setImageUrl(cached.thumb);
       else setImgError(true);
       return;
     }
@@ -32,10 +40,11 @@ function DestinationCard({ dest }: { dest: string }) {
     fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`)
       .then((r) => r.json())
       .then((data) => {
-        const src = data.thumbnail?.source || data.originalimage?.source;
-        if (src) {
-          imageCache.set(cacheKey, src);
-          setImageUrl(src);
+        const thumb = data.thumbnail?.source;
+        const full = data.originalimage?.source || thumb;
+        if (thumb) {
+          imageCache.set(cacheKey, { thumb, full: full || thumb });
+          setImageUrl(thumb);
         } else {
           imageCache.set(cacheKey, null);
           setImgError(true);
@@ -47,14 +56,10 @@ function DestinationCard({ dest }: { dest: string }) {
       });
   }, [dest]);
 
-  const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(extractPlaceName(dest))}`;
-
   return (
-    <a
-      href={mapsUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex-shrink-0 w-36 group"
+    <button
+      onClick={() => onOpen(dest)}
+      className="flex-shrink-0 w-36 group text-left cursor-pointer"
     >
       <div className="relative w-36 h-24 rounded-xl overflow-hidden transition-transform duration-200 group-hover:scale-105">
         {imageUrl && !imgError ? (
@@ -85,11 +90,13 @@ function DestinationCard({ dest }: { dest: string }) {
           <div className="w-full h-full bg-muted animate-pulse" />
         )}
       </div>
-    </a>
+    </button>
   );
 }
 
 export function DestinationPhotos({ itinerary }: { itinerary: ItineraryData }) {
+  const [selectedDest, setSelectedDest] = useState<string | null>(null);
+
   const destinations = useMemo(() => {
     const seen = new Set<string>();
     const result: string[] = [];
@@ -104,23 +111,65 @@ export function DestinationPhotos({ itinerary }: { itinerary: ItineraryData }) {
     return result.slice(0, 6);
   }, [itinerary.legs]);
 
+  const selectedImage = useMemo(() => {
+    if (!selectedDest) return null;
+    const name = extractPlaceName(selectedDest).toLowerCase();
+    return imageCache.get(name) || null;
+  }, [selectedDest]);
+
+  const mapsUrl = selectedDest
+    ? `https://www.google.com/maps/search/${encodeURIComponent(extractPlaceName(selectedDest))}`
+    : "";
+
   if (destinations.length === 0) return null;
 
   return (
-    <Card className="glass-strong gradient-border">
-      <CardHeader className="py-3 px-5">
-        <CardTitle className="text-sm font-display gradient-text mb-2 flex items-center gap-1.5">
-          <Camera className="w-4 h-4" /> Destination Photos
-        </CardTitle>
-        <ScrollArea className="w-full">
-          <div className="flex gap-3 pb-2">
-            {destinations.map((dest) => (
-              <DestinationCard key={dest} dest={dest} />
-            ))}
+    <>
+      <Card className="glass-strong gradient-border">
+        <CardHeader className="py-3 px-5">
+          <CardTitle className="text-sm font-display gradient-text mb-2 flex items-center gap-1.5">
+            <Camera className="w-4 h-4" /> Destination Photos
+          </CardTitle>
+          <ScrollArea className="w-full">
+            <div className="flex gap-3 pb-2">
+              {destinations.map((dest) => (
+                <DestinationCard
+                  key={dest}
+                  dest={dest}
+                  onOpen={setSelectedDest}
+                />
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </CardHeader>
+      </Card>
+
+      <Dialog open={!!selectedDest} onOpenChange={(open) => !open && setSelectedDest(null)}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden bg-background">
+          <DialogTitle className="sr-only">{selectedDest || "Destination"}</DialogTitle>
+          {selectedImage?.full ? (
+            <img
+              src={selectedImage.full}
+              alt={selectedDest || ""}
+              className="w-full max-h-[70vh] object-contain bg-black"
+            />
+          ) : (
+            <div className="w-full h-64 bg-muted flex items-center justify-center">
+              <MapPin className="w-10 h-10 text-muted-foreground" />
+            </div>
+          )}
+          <div className="p-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">{selectedDest}</h3>
+            <Button variant="outline" size="sm" asChild>
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="w-4 h-4 mr-1" />
+                Open in Google Maps
+              </a>
+            </Button>
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      </CardHeader>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
