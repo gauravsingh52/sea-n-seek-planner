@@ -251,9 +251,19 @@ export default function Index() {
           <div className="relative h-full">
             <ScrollArea className="h-full" ref={scrollRef}>
               <div className="max-w-3xl mx-auto px-4 py-6 space-y-6 pb-4">
-                {messages.map((msg) => (
-                  <ChatMessage key={msg.id} message={msg} />
-                ))}
+                {messages.map((msg, idx) => {
+                  // An assistant message "has itinerary" if it's followed by itinerary data
+                  const hasItinerary = msg.role === "assistant" && !!latestItinerary && 
+                    (idx === messages.length - 1 || messages.slice(idx + 1).every(m => m.role === "user"));
+                  return (
+                    <ChatMessage
+                      key={msg.id}
+                      message={msg}
+                      hasItinerary={hasItinerary}
+                      onCompare={() => triggerComparison(tripSettings)}
+                    />
+                  );
+                })}
                 {isLoading && messages[messages.length - 1]?.role !== "assistant" && <WaveLoader />}
                 {showFollowUps && (
                   <>

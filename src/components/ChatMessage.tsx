@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
-import { MapPin, Navigation } from "lucide-react";
+import { MapPin, Navigation, ArrowRightLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Message } from "@/hooks/useChat";
 import { useTypingEffect } from "@/hooks/useTypingEffect";
 
@@ -13,7 +14,13 @@ function AssistantContent({ content }: { content: string }) {
   );
 }
 
-export function ChatMessage({ message }: { message: Message }) {
+interface ChatMessageProps {
+  message: Message;
+  hasItinerary?: boolean;
+  onCompare?: () => void;
+}
+
+export function ChatMessage({ message, hasItinerary, onCompare }: ChatMessageProps) {
   const isUser = message.role === "user";
 
   return (
@@ -38,17 +45,30 @@ export function ChatMessage({ message }: { message: Message }) {
           <Navigation className="w-4 h-4 text-primary-foreground" />
         )}
       </div>
-      <div
-        className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-          isUser
-            ? "earth-gradient text-primary-foreground rounded-br-md shadow-lg shadow-primary/20"
-            : "glass-strong rounded-bl-md border-l-2 border-primary/40"
-        }`}
-      >
-        {isUser ? (
-          <p>{message.content}</p>
-        ) : (
-          <AssistantContent content={message.content} />
+      <div className="max-w-[75%] flex flex-col gap-1.5">
+        <div
+          className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+            isUser
+              ? "earth-gradient text-primary-foreground rounded-br-md shadow-lg shadow-primary/20"
+              : "glass-strong rounded-bl-md border-l-2 border-primary/40"
+          }`}
+        >
+          {isUser ? (
+            <p>{message.content}</p>
+          ) : (
+            <AssistantContent content={message.content} />
+          )}
+        </div>
+        {!isUser && hasItinerary && onCompare && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCompare}
+            className="self-start glass text-xs text-primary hover:text-primary-foreground hover:bg-primary/80 transition-all duration-300 gap-1.5 rounded-xl"
+          >
+            <ArrowRightLeft className="w-3.5 h-3.5" />
+            Compare 3 options
+          </Button>
         )}
       </div>
     </div>
