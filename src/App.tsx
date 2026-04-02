@@ -7,6 +7,7 @@ import { TripProvider } from "@/contexts/TripContext";
 import Index from "./pages/Index";
 import Itinerary from "./pages/Itinerary";
 import SavedTrips from "./pages/SavedTrips";
+import SharedTrip from "./pages/SharedTrip";
 import NotFound from "./pages/NotFound";
 
 
