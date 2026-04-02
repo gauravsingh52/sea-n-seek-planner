@@ -295,6 +295,11 @@
   transition: transform 0.4s ease;
 }
 
+@keyframes logo-entrance {
+  0% { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
 /* Light mode prose overrides */
 .prose-invert {
   --tw-prose-body: hsl(var(--foreground) / 0.9);
