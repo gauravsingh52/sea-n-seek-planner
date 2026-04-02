@@ -47,9 +47,16 @@ function DestinationCard({ dest }: { dest: string }) {
       });
   }, [dest]);
 
+  const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(extractPlaceName(dest))}`;
+
   return (
-    <div className="flex-shrink-0 w-36">
-      <div className="relative w-36 h-24 rounded-xl overflow-hidden">
+    <a
+      href={mapsUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex-shrink-0 w-36 group"
+    >
+      <div className="relative w-36 h-24 rounded-xl overflow-hidden transition-transform duration-200 group-hover:scale-105">
         {imageUrl && !imgError ? (
           <>
             <img
@@ -78,7 +85,7 @@ function DestinationCard({ dest }: { dest: string }) {
           <div className="w-full h-full bg-muted animate-pulse" />
         )}
       </div>
-    </div>
+    </a>
   );
 }
 

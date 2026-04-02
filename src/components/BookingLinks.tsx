@@ -7,13 +7,15 @@ function getBookingUrl(leg: ItineraryLeg): { url: string; label: string } | null
   const to = encodeURIComponent(leg.to || "");
 
   if (leg.type === "transport") {
+    const fromClean = (leg.from || "").replace(/\(.*?\)/g, "").replace(/\b(bus stand|railway station|airport|junction|terminal|station|stop)\b/gi, "").trim();
+    const toClean = (leg.to || "").replace(/\(.*?\)/g, "").replace(/\b(bus stand|railway station|airport|junction|terminal|station|stop)\b/gi, "").trim();
     switch (leg.icon) {
       case "plane":
         return { url: `https://www.google.com/travel/flights?q=flights+from+${from}+to+${to}`, label: "Flights" };
       case "train":
-        return { url: `https://www.google.com/maps/dir/${from}/${to}/?travelmode=transit`, label: "Trains" };
+        return { url: `https://www.google.com/search?q=${encodeURIComponent(fromClean)}+to+${encodeURIComponent(toClean)}+train+tickets+IRCTC`, label: "Trains" };
       case "bus":
-        return { url: `https://www.google.com/maps/dir/${from}/${to}/?travelmode=transit`, label: "Bus" };
+        return { url: `https://www.redbus.in/bus-tickets/${encodeURIComponent(fromClean.toLowerCase())}-to-${encodeURIComponent(toClean.toLowerCase())}`, label: "Book Bus" };
       case "car":
         return { url: `https://www.google.com/maps/dir/${from}/${to}/?travelmode=driving`, label: "Drive" };
       case "ship":
