@@ -1,32 +1,49 @@
 
 
-## Fix: First Destination Photo Not Loading (Special Characters in Name)
+## Fix: Use Real Destination Photos via Wikipedia API
 
 ### Problem
-The screenshot shows "Chandigarh Bus Stand (Sector 43/17)" falling back to the no-photo state while other cards load fine. The issue is that `encodeURIComponent` encodes parentheses and slashes, but Lorem Picsum's seed parameter may not handle complex encoded strings well — or the resulting URL is too long/malformed for that specific seed.
+Lorem Picsum shows random stock photos (wheat fields, deserts, night skies) that have nothing to do with the actual destinations. "Chandigarh" shows a random photo, "Shimla" shows sand dunes — completely misleading.
 
-### Fix in `src/components/DestinationPhotos.tsx`
+### Solution
+Use the **Wikipedia REST API** to fetch the real main image for each destination. The endpoint `https://en.wikipedia.org/api/rest_v1/page/summary/{place_name}` returns a `thumbnail.source` URL — the actual Wikipedia photo for that location (e.g., the real Chandigarh skyline, actual Shimla hills).
 
-**Sanitize the seed** — strip parentheses, slashes, numbers, and extra details before creating the picsum URL. Use only the core place name (e.g., "Chandigarh Bus Stand" instead of "Chandigarh Bus Stand (Sector 43/17)"):
+- Free, no API key, reliable, CORS-friendly
+- Returns the most recognizable photo for each place
+
+### Changes in `src/components/DestinationPhotos.tsx`
+
+1. **Extract core place name** — strip parenthesized details like "(Sector 43/17)" and suffixes like "Bus Stand" to get the Wikipedia article name (e.g., "Chandigarh" from "Chandigarh Bus Stand (Sector 43/17)")
+2. **Fetch from Wikipedia** — each `DestinationCard` calls `https://en.wikipedia.org/api/rest_v1/page/summary/{placeName}` on mount and extracts `thumbnail.source`
+3. **Fallback chain** — if Wikipedia has no image → show the gradient/icon fallback (existing behavior)
+4. **Cache results** — store fetched URLs in a `useRef` map to avoid re-fetching on re-renders
+
+### Technical Detail
 
 ```typescript
-function cleanSeed(dest: string): string {
+function extractPlaceName(dest: string): string {
   return dest
-    .replace(/\(.*?\)/g, "")   // remove parenthesized details
-    .replace(/[^a-zA-Z\s]/g, "") // keep only letters and spaces
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-");      // spaces to hyphens
+    .replace(/\(.*?\)/g, "")
+    .replace(/\b(bus stand|railway station|airport|junction|terminal)\b/gi, "")
+    .trim();
 }
 
-const imageUrl = `https://picsum.photos/seed/${cleanSeed(dest)}/288/192`;
+// In DestinationCard:
+useEffect(() => {
+  const name = extractPlaceName(dest);
+  fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.thumbnail?.source) setImageUrl(data.thumbnail.source);
+      else setImgError(true);
+    })
+    .catch(() => setImgError(true));
+}, [dest]);
 ```
-
-This ensures every destination gets a clean, short seed that picsum can reliably resolve, while the display name stays unchanged.
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/DestinationPhotos.tsx` | Add `cleanSeed()` to strip special chars from picsum URL seed |
+| `src/components/DestinationPhotos.tsx` | Replace picsum with Wikipedia API for real destination photos |
 
