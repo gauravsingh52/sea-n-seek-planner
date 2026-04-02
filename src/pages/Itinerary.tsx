@@ -289,7 +289,7 @@ export default function Itinerary() {
             </div>
           )}
 
-          <div className="flex-1 px-4 pb-6">
+          <div className="px-4 pb-6">
             <div className="max-w-3xl mx-auto space-y-4 pt-2">
               {/* Route chain for multi-city */}
               {routeChain && (

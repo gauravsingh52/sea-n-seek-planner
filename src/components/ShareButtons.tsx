@@ -45,16 +45,44 @@ export function ShareButtons({ itinerary }: ShareButtonsProps) {
   const shareWhatsApp = () => window.open(`https://wa.me/?text=${encoded}`, "_blank");
   const shareTelegram = () => window.open(`https://t.me/share/url?text=${encoded}`, "_blank");
 
+  const fallbackCopy = (value: string) => {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = value;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const copyLink = async () => {
     setSharing(true);
     try {
       const url = await createShareLink(itinerary);
-      await navigator.clipboard.writeText(url);
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        if (!fallbackCopy(url)) {
+          toast.success(`Share link: ${url}`, { duration: 8000 });
+          setSharing(false);
+          return;
+        }
+      }
       toast.success("Share link copied!");
     } catch {
-      // Fallback: copy text
-      await navigator.clipboard.writeText(text);
-      toast.success("Itinerary text copied (link creation failed)");
+      // Link creation failed — copy plain text
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        fallbackCopy(text);
+      }
+      toast.success("Itinerary text copied!");
     } finally {
       setSharing(false);
     }
