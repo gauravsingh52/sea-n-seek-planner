@@ -306,23 +306,36 @@ export default function Itinerary() {
 
               {viewMode === "calendar" ? (
                 <ItineraryCalendar itinerary={itinerary} currencySymbol={symbol} />
-              ) : hasDays ? (
-                Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
-                  <div key={day}>
-                    <div className="flex items-center gap-2 mb-3 mt-4 first:mt-0">
-                      <div className="w-8 h-8 rounded-full earth-gradient flex items-center justify-center text-primary-foreground text-xs font-bold">{day}</div>
-                      <span className="text-sm font-display font-semibold text-foreground">Day {day}</span>
-                      <div className="flex-1 h-px bg-border/30" />
-                    </div>
-                    {legs.map((leg, i) => (
-                      <LegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === legs.length - 1} index={i} />
-                    ))}
-                  </div>
-                ))
               ) : (
-                itinerary.legs.map((leg, i) => (
-                  <LegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === itinerary.legs.length - 1} index={i} />
-                ))
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                  <SortableContext items={itinerary.legs.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+                    {hasDays ? (
+                      Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
+                        <div key={day}>
+                          <div className="flex items-center gap-2 mb-3 mt-4 first:mt-0">
+                            <div className="w-8 h-8 rounded-full earth-gradient flex items-center justify-center text-primary-foreground text-xs font-bold">{day}</div>
+                            <span className="text-sm font-display font-semibold text-foreground">Day {day}</span>
+                            <div className="flex-1 h-px bg-border/30" />
+                          </div>
+                          {legs.map((leg, i) => (
+                            <SortableLegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === legs.length - 1} index={i} />
+                          ))}
+                        </div>
+                      ))
+                    ) : (
+                      itinerary.legs.map((leg, i) => (
+                        <SortableLegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === itinerary.legs.length - 1} index={i} />
+                      ))
+                    )}
+                  </SortableContext>
+                  <DragOverlay>
+                    {activeLeg ? (
+                      <div className="opacity-90 scale-105">
+                        <LegCard leg={activeLeg} symbol={symbol} weather={weather} isLast index={0} />
+                      </div>
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
               )}
 
               {/* Add custom stop */}
