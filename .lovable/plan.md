@@ -1,75 +1,32 @@
 
 
-## Add 3 Major Features: Calendar View, Budget Tracker, Collaborative Trips
+## Add Drag-and-Drop Reordering of Itinerary Stops
 
-Based on your selections, here's the plan to add these three features to TripMap Planner.
+### Approach
+Use `@dnd-kit/core` + `@dnd-kit/sortable` (lightweight, React 18 compatible, actively maintained) to make `LegCard` items draggable within the list view. When a leg is dropped in a new position, the itinerary updates in context.
 
----
+### Changes
 
-### 1. Multi-Day Calendar View
+**Install**: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`
 
-**What it does**: A visual timeline/calendar that shows each day of the itinerary as a column or row, with transport, hotels, and activities placed in time slots — instead of just a flat list.
+**`src/contexts/TripContext.tsx`**
+- Add `reorderLegs(fromIndex: number, toIndex: number)` to context
+- Splices the legs array and updates itinerary state
 
-**Implementation**:
-- Create `src/components/ItineraryCalendar.tsx` — a day-by-day grid view component
-  - Each column = one day, with time slots showing legs (transport, hotel, activity)
-  - Color-coded cards by leg type (blue for transport, green for hotel, orange for activity)
-  - Clickable cards that expand to show details
-- Add a toggle button on the Itinerary page to switch between "List view" (current) and "Calendar view"
-- Uses existing `ItineraryData.legs` with the `day` and `time` fields already present
+**`src/pages/Itinerary.tsx`**
+- Wrap the leg list (both flat and day-grouped views) with `DndContext` + `SortableContext`
+- Add `handleDragEnd` that calls `reorderLegs`
+- Add a `DragOverlay` for a visual preview while dragging
 
-**Files**: `src/components/ItineraryCalendar.tsx` (new), `src/pages/Itinerary.tsx` (add toggle)
+**`src/pages/Itinerary.tsx` — `LegCard` component**
+- Wrap with `useSortable` hook from dnd-kit
+- Add a drag handle icon (`GripVertical` from lucide) on the left side
+- Apply transform/transition styles from the sortable hook
+- Add visual feedback (opacity, scale) when actively dragging
 
----
-
-### 2. Budget Tracker
-
-**What it does**: Track spending vs budget with a visual breakdown by category (transport, hotels, activities) and a progress bar showing how much budget is used.
-
-**Implementation**:
-- Create `src/components/BudgetTracker.tsx` — a collapsible panel showing:
-  - Total budget (from TripSettings) vs total itinerary cost
-  - Progress bar with color (green/yellow/red based on %)
-  - Pie or bar chart breakdown by category (transport/hotel/activity) using simple CSS or a lightweight chart
-  - Per-person cost when travelers > 1
-- Add to the Itinerary page below the cost summary
-- Uses existing `legs[].cost`, `legs[].type`, `totalCost`, and `currency` from ItineraryData
-- Uses `tripSettings.budget` for the budget limit
-
-**Files**: `src/components/BudgetTracker.tsx` (new), `src/pages/Itinerary.tsx` (integrate)
-
----
-
-### 3. Collaborative Trips (Share & Co-Edit)
-
-**What it does**: Generate a shareable link for a trip. Anyone with the link can view the itinerary, and authenticated users can add comments or suggest changes.
-
-**Implementation**:
-
-**Database** (requires migrations):
-- Create `shared_trips` table: `id`, `share_code` (unique), `title`, `itinerary_data` (jsonb), `created_by` (uuid, nullable), `created_at`
-- Create `trip_comments` table: `id`, `shared_trip_id` (FK), `author_name`, `content`, `created_at`
-- RLS: Anyone can SELECT shared_trips by share_code; only creator can UPDATE/DELETE; anyone can INSERT comments
-
-**Backend**:
-- Edge function `share-trip` — accepts itinerary JSON, generates a unique share code, stores in `shared_trips`, returns the shareable URL
-
-**Frontend**:
-- Create `src/pages/SharedTrip.tsx` — a public page at `/trip/:shareCode` that loads the shared itinerary and displays it read-only with a comments section
-- Update `src/components/ShareButtons.tsx` — add a "Copy share link" button that calls the edge function and copies the URL
-- Add route in `App.tsx`
-
-**Files**: `shared_trips` + `trip_comments` tables (migration), `supabase/functions/share-trip/index.ts` (new), `src/pages/SharedTrip.tsx` (new), `src/components/ShareButtons.tsx` (update), `src/App.tsx` (add route)
-
----
-
-### Summary
-
-| Feature | New Files | Modified Files |
-|---------|-----------|----------------|
-| Calendar View | `ItineraryCalendar.tsx` | `Itinerary.tsx` |
-| Budget Tracker | `BudgetTracker.tsx` | `Itinerary.tsx` |
-| Collaborative Trips | `SharedTrip.tsx`, `share-trip/index.ts` | `ShareButtons.tsx`, `App.tsx` + DB migration |
-
-These are large features — I recommend implementing them one at a time, starting with Calendar View (simplest, no backend needed), then Budget Tracker, then Collaborative Trips.
+### UX Details
+- Drag handle appears on hover (desktop) or always visible (mobile)
+- Smooth animation on reorder
+- Only active in **list view** (not calendar view)
+- Toast notification: "Itinerary reordered" after drop
 
