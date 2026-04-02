@@ -110,7 +110,12 @@ function PackingListCard({ items }: { items: string[] }) {
 
 export default function Itinerary() {
   const navigate = useNavigate();
-  const { itinerary, addCustomLeg } = useTrip();
+  const { itinerary, addCustomLeg, reorderLegs } = useTrip();
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const { theme, toggleTheme } = useTheme();
   const { saveTrip, isSaved } = useSavedTrips();
