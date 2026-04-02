@@ -4,9 +4,18 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Camera, MapPin } from "lucide-react";
 import type { ItineraryData } from "@/types/itinerary";
 
+function cleanSeed(dest: string): string {
+  return dest
+    .replace(/\(.*?\)/g, "")
+    .replace(/[^a-zA-Z\s]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+}
+
 function DestinationCard({ dest }: { dest: string }) {
   const [imgError, setImgError] = useState(false);
-  const imageUrl = `https://picsum.photos/seed/${encodeURIComponent(dest.toLowerCase())}/288/192`;
+  const imageUrl = `https://picsum.photos/seed/${cleanSeed(dest)}/288/192`;
 
   return (
     <div className="flex-shrink-0 w-36">
