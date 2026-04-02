@@ -273,15 +273,17 @@ const PROVIDERS: { url: string; normalize: (d: any) => GeoData | null }[] = [
       country: d.country || "",
       countryCode: d.country_code || "",
       continent: d.continent_code || "",
+      state: d.region || "",
     }),
   },
   {
-    url: "https://ip-api.com/json/?fields=status,country,countryCode,city,continentCode",
+    url: "https://ip-api.com/json/?fields=status,country,countryCode,city,continentCode,regionName",
     normalize: (d) => d.status !== "success" ? null : ({
       city: d.city || "",
       country: d.country || "",
       countryCode: d.countryCode || "",
       continent: d.continentCode || "",
+      state: d.regionName || "",
     }),
   },
   {
@@ -291,6 +293,7 @@ const PROVIDERS: { url: string; normalize: (d: any) => GeoData | null }[] = [
       country: d.location?.country || "",
       countryCode: d.location?.country_code || "",
       continent: d.location?.continent || "",
+      state: d.location?.state || d.location?.region || "",
     })),
   },
 ];
