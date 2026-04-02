@@ -24,6 +24,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/itinerary" element={<Itinerary />} />
             <Route path="/saved" element={<SavedTrips />} />
+            <Route path="/trip/:shareCode" element={<SharedTrip />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

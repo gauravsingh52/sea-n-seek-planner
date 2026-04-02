@@ -97,6 +97,10 @@ export function ShareButtons({ itinerary }: ShareButtonsProps) {
           <button onClick={copyLink} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
             <Link2 className="w-4 h-4 text-primary" /> Copy Link
           </button>
+          <div className="border-t border-border/30 my-1" />
+          <button onClick={shareCollaborative} disabled={sharing} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors disabled:opacity-50">
+            <Globe className="w-4 h-4 text-purple-500" /> {sharing ? "Creating..." : "Collaborative Link"}
+          </button>
         </div>
       </PopoverContent>
     </Popover>
