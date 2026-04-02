@@ -30,6 +30,7 @@ interface ShareButtonsProps {
 }
 
 export function ShareButtons({ itinerary }: ShareButtonsProps) {
+  const [sharing, setSharing] = useState(false);
   const text = formatItineraryText(itinerary);
   const encoded = encodeURIComponent(text);
 
@@ -55,6 +56,23 @@ export function ShareButtons({ itinerary }: ShareButtonsProps) {
     } catch {
       navigator.clipboard.writeText(text);
       toast.success("Itinerary text copied!");
+    }
+  };
+
+  const shareCollaborative = async () => {
+    setSharing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("share-trip", {
+        body: { itinerary, title: itinerary.title },
+      });
+      if (error) throw error;
+      const url = `${window.location.origin}/trip/${data.shareCode}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Collaborative share link copied! Anyone can view & comment.");
+    } catch (e: any) {
+      toast.error("Failed to create share link");
+    } finally {
+      setSharing(false);
     }
   };
 
