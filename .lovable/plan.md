@@ -1,27 +1,29 @@
 
 
-## Redesign Logo — Extraordinary / Bold
+## Redesign Logo — Bold & Animated
 
-### Current State
-The logo is a simple compass circle with north/south arrows and a dashed route arc. It's generic and forgettable.
+### Problem
+The current logo is too faint and abstract — the thin arcs, tiny plane, and small pin blend together into an indistinct shape, especially in dark mode. It doesn't read as a clear "travel" icon at small sizes (navbar) or large sizes (hero).
 
-### New Design Concept: **Abstract Globe + Pin + Swoosh**
-A bold, modern travel logo that stands out — combining a stylized globe wireframe, a prominent location pin, and a dynamic flight arc trail. Uses gradient fills and layered geometric shapes for depth.
+### New Design: **Stylized Paper Plane + Globe Ring**
+A clean, instantly recognizable travel icon with strong visual weight:
 
-**Visual elements:**
-- **Outer ring**: Thick gradient-stroked circle with a gap (open ring) — feels modern, not closed
-- **Globe wireframe**: Two curved latitude/longitude lines crossing inside — suggests global travel
-- **Location pin**: Bold teardrop pin shape offset to upper-right, with glowing dot center — the focal point
-- **Flight arc**: Smooth curved trail from bottom-left sweeping up to the pin, with a tiny plane silhouette at the tip
-- **Gradient**: Primary → accent gradient for depth; sunset color for the pin glow
+- **Thick gradient ring** — bold 4px stroke, full circle with a dash gap at top-right for dynamism
+- **Large paper plane** — centered, geometric, filled with primary-to-accent gradient. Universally recognized as "travel/journey"
+- **Motion trail** — 3 small dots trailing behind the plane suggesting movement
+- **Warm accent glow** — subtle radial glow behind the plane for depth
+
+### Hover Animation
+- **CSS transition on the wrapper**: `transition: transform 0.4s ease`
+- On hover: `rotate(8deg) scale(1.1)` — subtle tilt + scale for playful interaction
+- The plane inside gets a separate `translateX(2px)` shift to feel like it's taking off
 
 ### Changes
 
-**`src/components/Logo.tsx`** — Complete SVG replacement with the new bold design:
-- Open gradient ring (270° arc, not full circle)
-- Two curved globe lines (latitude + longitude arcs)
-- Teardrop pin shape at ~(42, 18) with inner glow circle
-- Bezier flight trail from (12, 52) sweeping to the pin
-- Tiny plane triangle at trail tip
-- Drop shadow filter for the pin
+**`src/components/Logo.tsx`** — Complete SVG redesign + hover class
+- Replace all paths with new paper plane geometry + bold ring
+- Add `group` class and `transition-transform duration-400 hover:rotate-6 hover:scale-110` to the outer wrapper
+- Keep the same props interface (`size`, `className`)
+
+**`src/index.css`** — Add `@keyframes logo-hover-plane` for the inner plane shift on hover (CSS-only, no JS state needed)
 
