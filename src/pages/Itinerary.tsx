@@ -254,7 +254,7 @@ export default function Itinerary() {
           </div>
         </div>
       ) : (
-        <div className="relative z-10 flex flex-col min-h-[calc(100vh-60px)]">
+        <div className="relative z-10">
           <div className="h-[40vh] min-h-[250px] p-4 pb-2">
             <MapErrorBoundary>
               <Suspense fallback={
