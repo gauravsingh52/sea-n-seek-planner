@@ -327,6 +327,11 @@
 .prose th {
   background: hsl(var(--muted));
   font-weight: 600;
+  white-space: nowrap;
+  min-width: 80px;
+}
+.prose td {
+  min-width: 60px;
 }
 .prose tr:nth-child(even) td {
   background: hsl(var(--muted) / 0.4);

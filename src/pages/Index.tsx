@@ -85,16 +85,16 @@ export default function Index() {
     wasLoading.current = isLoading;
   }, [isLoading, messages, latestItinerary, saveSession]);
 
-  // Save on browser close to catch mid-chat exits
+  // Save on browser close to catch mid-chat exits (direct IndexedDB write)
   useEffect(() => {
     const handleUnload = () => {
       if (messages.length > 0) {
-        saveSession(messages, latestItinerary);
+        saveSessionDirect(messages, latestItinerary);
       }
     };
     window.addEventListener("beforeunload", handleUnload);
     return () => window.removeEventListener("beforeunload", handleUnload);
-  }, [messages, latestItinerary, saveSession]);
+  }, [messages, latestItinerary, saveSessionDirect]);
 
   useEffect(() => {
     if (scrollRef.current) {

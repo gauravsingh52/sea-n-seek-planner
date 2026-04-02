@@ -46,7 +46,7 @@ export function ChatMessage({ message, hasItinerary, onCompare }: ChatMessagePro
           <Navigation className="w-4 h-4 text-primary-foreground" />
         )}
       </div>
-      <div className="max-w-[75%] flex flex-col gap-1.5">
+      <div className={`flex flex-col gap-1.5 ${isUser ? "max-w-[75%]" : "max-w-[85%]"}`}>
         <div
           className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
             isUser
