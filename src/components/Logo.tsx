@@ -1,7 +1,7 @@
 export function Logo({ size = 40, className = "" }: { size?: number; className?: string }) {
   return (
     <div
-      className={`inline-flex items-center justify-center transition-transform duration-400 hover:rotate-6 hover:scale-110 group ${className}`}
+      className={`inline-flex items-center justify-center transition-transform duration-400 hover:rotate-6 hover:scale-110 group animate-[logo-entrance_0.8s_cubic-bezier(0.34,1.56,0.64,1)_forwards] ${className}`}
       style={{ width: size, height: size }}
     >
       <svg
