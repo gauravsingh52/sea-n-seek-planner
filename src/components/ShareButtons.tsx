@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Share2, MessageCircle, Send, FileDown, Link2, Globe } from "lucide-react";
+import { Share2, MessageCircle, Send, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,14 @@ function formatItineraryText(it: ItineraryData): string {
   return text;
 }
 
+async function createShareLink(itinerary: ItineraryData): Promise<string> {
+  const { data, error } = await supabase.functions.invoke("share-trip", {
+    body: { itinerary, title: itinerary.title },
+  });
+  if (error) throw error;
+  return `${window.location.origin}/trip/${data.shareCode}`;
+}
+
 interface ShareButtonsProps {
   itinerary: ItineraryData;
 }
@@ -37,40 +45,16 @@ export function ShareButtons({ itinerary }: ShareButtonsProps) {
   const shareWhatsApp = () => window.open(`https://wa.me/?text=${encoded}`, "_blank");
   const shareTelegram = () => window.open(`https://t.me/share/url?text=${encoded}`, "_blank");
 
-  const downloadPDF = () => {
-    window.print();
-    toast.success("Print dialog opened!");
-  };
-
-  const copyLink = () => {
-    try {
-      const compressed = btoa(unescape(encodeURIComponent(JSON.stringify(itinerary))));
-      const url = `${window.location.origin}/itinerary?data=${compressed}`;
-      if (url.length > 2000) {
-        navigator.clipboard.writeText(text);
-        toast.success("Itinerary text copied (too large for URL)");
-      } else {
-        navigator.clipboard.writeText(url);
-        toast.success("Share link copied!");
-      }
-    } catch {
-      navigator.clipboard.writeText(text);
-      toast.success("Itinerary text copied!");
-    }
-  };
-
-  const shareCollaborative = async () => {
+  const copyLink = async () => {
     setSharing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("share-trip", {
-        body: { itinerary, title: itinerary.title },
-      });
-      if (error) throw error;
-      const url = `${window.location.origin}/trip/${data.shareCode}`;
+      const url = await createShareLink(itinerary);
       await navigator.clipboard.writeText(url);
-      toast.success("Collaborative share link copied! Anyone can view & comment.");
-    } catch (e: any) {
-      toast.error("Failed to create share link");
+      toast.success("Share link copied!");
+    } catch {
+      // Fallback: copy text
+      await navigator.clipboard.writeText(text);
+      toast.success("Itinerary text copied (link creation failed)");
     } finally {
       setSharing(false);
     }
@@ -91,15 +75,8 @@ export function ShareButtons({ itinerary }: ShareButtonsProps) {
           <button onClick={shareTelegram} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
             <Send className="w-4 h-4 text-blue-500" /> Telegram
           </button>
-          <button onClick={downloadPDF} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
-            <FileDown className="w-4 h-4 text-red-500" /> Print / PDF
-          </button>
-          <button onClick={copyLink} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
-            <Link2 className="w-4 h-4 text-primary" /> Copy Link
-          </button>
-          <div className="border-t border-border/30 my-1" />
-          <button onClick={shareCollaborative} disabled={sharing} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors disabled:opacity-50">
-            <Globe className="w-4 h-4 text-purple-500" /> {sharing ? "Creating..." : "Collaborative Link"}
+          <button onClick={copyLink} disabled={sharing} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors disabled:opacity-50">
+            <Link2 className="w-4 h-4 text-primary" /> {sharing ? "Creating..." : "Copy Link"}
           </button>
         </div>
       </PopoverContent>

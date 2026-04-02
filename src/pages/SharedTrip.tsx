@@ -138,8 +138,10 @@ export default function SharedTrip() {
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Calendar view of itinerary */}
-        <Card className="glass-strong gradient-border p-4">
-          <ItineraryCalendar itinerary={itinerary} currencySymbol={symbol} />
+        <Card className="glass-strong gradient-border p-4 overflow-x-auto">
+          <div className="min-w-[600px]">
+            <ItineraryCalendar itinerary={itinerary} currencySymbol={symbol} />
+          </div>
         </Card>
 
         {/* Total cost */}

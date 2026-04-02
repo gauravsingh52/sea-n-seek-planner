@@ -254,7 +254,7 @@ export default function Itinerary() {
           </div>
         </div>
       ) : (
-        <div className="relative z-10 flex flex-col h-[calc(100vh-60px)]">
+        <div className="relative z-10 flex flex-col min-h-[calc(100vh-60px)]">
           <div className="h-[40vh] min-h-[250px] p-4 pb-2">
             <MapErrorBoundary>
               <Suspense fallback={
@@ -289,7 +289,7 @@ export default function Itinerary() {
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto px-4 pb-6">
+          <div className="flex-1 px-4 pb-6">
             <div className="max-w-3xl mx-auto space-y-4 pt-2">
               {/* Route chain for multi-city */}
               {routeChain && (
