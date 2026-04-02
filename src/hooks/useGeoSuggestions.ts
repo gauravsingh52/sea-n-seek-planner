@@ -332,7 +332,7 @@ export function useGeoSuggestions(): GeoResult {
       if (!geo || !geo.countryCode) {
         const cc = guessCountryFromLanguage();
         if (cc) {
-          geo = { city: "", country: "", countryCode: cc, continent: "" };
+          geo = { city: "", country: "", countryCode: cc, continent: "", state: "" };
         }
       }
 
