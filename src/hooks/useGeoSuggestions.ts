@@ -347,14 +347,19 @@ export function useGeoSuggestions(): GeoResult {
       }
 
       if (geo && geo.countryCode) {
-        const cc = geo.countryCode;
+        const cc = geo.countryCode.toUpperCase();
         setCountryCode(cc);
+
+        // Cache for instant next load
+        try {
+          sessionStorage.setItem("geo_cache", JSON.stringify({ ...geo, countryCode: cc }));
+        } catch {}
 
         // Resolve city alias for obscure locations
         const resolvedCity = geo.city && CITY_ALIASES[geo.city] ? CITY_ALIASES[geo.city] : geo.city;
 
         // Prioritize state-level prompts (India), then country, then region
-        const stateKey = geo.state;
+        const stateKey = (geo.state || "").trim();
         let selectedPrompts: GeoSuggestion[] | null = null;
 
         if (stateKey && STATE_PROMPTS[stateKey]) {
