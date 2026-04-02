@@ -1,40 +1,39 @@
 
+## Fix: Table Misalignment + History Not Saving Full Chat
 
-## Fix: Destination Photos Not Loading + Scroll-to-Top on Route Change
+### Problem 1: Table Misalignment
+The table renders inside a `max-w-[75%]` chat bubble with no horizontal overflow handling. Wide tables (7-8 columns) get squished, causing misaligned columns. Need to add `overflow-x: auto` on the table wrapper and ensure minimum column widths.
 
-### Problem 1: Destination Photos Broken
-The `source.unsplash.com` API has been **deprecated and shut down** (since early 2025). All requests return broken image responses. The screenshots confirm this — alt text shows but no photos load.
+### Problem 2: History Only Saves User Prompt, Not Full Chat
+Two bugs:
 
-**Fix**: Switch to the **Unsplash Image API** direct URL format which still works without an API key:
-```
-https://images.unsplash.com/photo-random?w=288&h=192&q=80&fit=crop
-```
+1. **`beforeunload` save is useless** — `saveSession` calls `setSessions` (React state), which triggers a debounced `useEffect` to write to IndexedDB (500ms timeout). But on page unload, neither the effect nor the timeout ever fires. So if a user closes the tab mid-chat or after one exchange, nothing persists.
 
-However, this also doesn't support keyword search without an API key. The best free alternative is to use **Pixabay** or simply generate a gradient placeholder with the destination name. The cleanest solution that works reliably without any API key is to use **Lorem Picsum** (`https://picsum.photos/288/192`) with a seed based on the destination name, giving consistent photos per destination. While not destination-specific, they always load.
+2. **Save timing race** — The save fires when `isLoading` transitions false→true, but if the user sends multiple messages quickly or navigates away, the intermediate states may never trigger the save.
 
-Alternatively, we can remove the external dependency entirely and show styled gradient cards with destination initials/icons — which is more reliable and looks clean.
+### Fix
 
-**Recommended approach**: Use gradient cards with destination names as the visual element (no external API dependency), keeping the component useful and always working.
+**`src/components/ChatMessage.tsx`**:
+- Add `overflow-x-auto` to the prose wrapper div so wide tables scroll horizontally instead of squishing
+- Ensure the chat bubble can expand for tables by using `max-w-[85%]` instead of `max-w-[75%]` on assistant messages
 
-### Problem 2: No Scroll-to-Top on Route Navigation
-The existing `ScrollToTop` component is designed for in-page scroll (a floating button within a ScrollArea). There's no route-level scroll reset — when navigating from `/` to `/itinerary`, the page may retain its scroll position.
+**`src/index.css`**:
+- Add `table-layout: auto` and `white-space: nowrap` on `th` elements to prevent header text wrapping that causes misalignment
+- Add `min-width` on `td`/`th` to prevent column collapse
 
-**Fix**: Add a simple route-change `ScrollToTop` component in `App.tsx` that calls `window.scrollTo(0, 0)` on pathname change.
+**`src/hooks/useChatHistory.ts`**:
+- Add a `saveSessionDirect` method that writes to IndexedDB **synchronously** (no debounce) for use in `beforeunload`
+- Export both `saveSession` (debounced, for normal use) and `saveSessionDirect` (immediate, for unload)
 
-### Changes
-
-**`src/components/DestinationPhotos.tsx`**:
-- Remove the broken `source.unsplash.com` URL
-- Replace with styled gradient cards — each destination gets a unique gradient based on a simple hash of its name, with a map pin icon and the destination name prominently displayed
-- Still horizontally scrollable, visually appealing, zero external dependencies
-
-**`src/App.tsx`**:
-- Add a `ScrollToTop` component (using `useLocation` + `useEffect`) inside `BrowserRouter` that scrolls to top on every route change
+**`src/pages/Index.tsx`**:
+- In the `beforeunload` handler, use direct IndexedDB write (`set()` from idb-keyval) instead of going through React state, since React state updates don't survive page unload
+- Also save after each completed exchange (current `wasLoading` pattern), keeping it as a backup
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/DestinationPhotos.tsx` | Replace broken Unsplash URLs with gradient destination cards |
-| `src/App.tsx` | Add route-level scroll-to-top on navigation |
-
+| `src/components/ChatMessage.tsx` | Add `overflow-x-auto`, widen assistant max-width |
+| `src/index.css` | Fix table cell sizing with `nowrap` headers, min-width |
+| `src/hooks/useChatHistory.ts` | Add direct IndexedDB write method for reliable persistence |
+| `src/pages/Index.tsx` | Use direct IndexedDB write in `beforeunload` handler |
