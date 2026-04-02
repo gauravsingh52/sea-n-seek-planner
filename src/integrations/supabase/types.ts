@@ -14,7 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      shared_trips: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          itinerary_data: Json
+          share_code: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          itinerary_data: Json
+          share_code: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          itinerary_data?: Json
+          share_code?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
+      trip_comments: {
+        Row: {
+          author_name: string
+          content: string
+          created_at: string
+          id: string
+          shared_trip_id: string
+        }
+        Insert: {
+          author_name?: string
+          content: string
+          created_at?: string
+          id?: string
+          shared_trip_id: string
+        }
+        Update: {
+          author_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          shared_trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_comments_shared_trip_id_fkey"
+            columns: ["shared_trip_id"]
+            isOneToOne: false
+            referencedRelation: "shared_trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
