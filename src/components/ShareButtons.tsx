@@ -65,24 +65,27 @@ export function ShareButtons({ itinerary }: ShareButtonsProps) {
     setSharing(true);
     try {
       const url = await createShareLink(itinerary);
+      let copied = false;
       try {
         await navigator.clipboard.writeText(url);
+        copied = true;
       } catch {
-        if (!fallbackCopy(url)) {
-          toast.success(`Share link: ${url}`, { duration: 8000 });
-          setSharing(false);
-          return;
-        }
+        copied = fallbackCopy(url);
       }
-      toast.success("Share link copied!");
+      if (copied) {
+        toast.success("Share link copied!");
+      } else {
+        toast.success(`Share link: ${url}`, { description: "Copy this link manually", duration: 10000 });
+      }
     } catch {
-      // Link creation failed — copy plain text
+      let copied = false;
       try {
         await navigator.clipboard.writeText(text);
+        copied = true;
       } catch {
-        fallbackCopy(text);
+        copied = fallbackCopy(text);
       }
-      toast.success("Itinerary text copied!");
+      toast.info(copied ? "Itinerary text copied (share link unavailable)" : "Could not copy — please try again");
     } finally {
       setSharing(false);
     }

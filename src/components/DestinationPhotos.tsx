@@ -172,7 +172,7 @@ export function DestinationPhotos({ itinerary }: { itinerary: ItineraryData }) {
               alt={selectedDest || ""}
               className="w-full max-h-[70vh] object-contain bg-black"
               referrerPolicy="no-referrer"
-              crossOrigin="anonymous"
+              
             />
           ) : (
             <div className="w-full h-64 bg-muted flex items-center justify-center">

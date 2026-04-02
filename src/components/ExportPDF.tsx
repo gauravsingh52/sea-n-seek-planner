@@ -83,7 +83,7 @@ export function ExportPDF({ itinerary }: { itinerary: ItineraryData }) {
           doc.setTextColor(100, 100, 100);
 
           if (leg.description) {
-            const descLines = doc.splitTextToSize(safe(leg.description), 145);
+            const descLines = doc.splitTextToSize(safe(leg.description), 155);
             doc.text(descLines, 22, y);
             y += descLines.length * 4;
           }
