@@ -1,32 +1,46 @@
 
 
-## Add Lightbox/Fullscreen View for Destination Photos
+## Fix: Destination Photos Still Showing Fake/No Images
 
-### Approach
-Add a Dialog-based lightbox that opens when clicking a destination photo. The Google Maps link moves to a button inside the lightbox instead of wrapping the card.
+### Root Cause Analysis
+The current code in `DestinationPhotos.tsx` already uses the Wikipedia REST API — this is correct. However, there are two remaining issues:
 
-### Changes in `src/components/DestinationPhotos.tsx`
+1. **`extractPlaceName` doesn't strip enough noise** — Indian destinations often come from the AI as "Jalandhar City Railway Station" or "Shimla ISBT Bus Stand" — after stripping, residual words like "City" or "ISBT" can cause Wikipedia mismatches (e.g., "Jalandhar City" matches a disambiguation page with no image instead of "Jalandhar")
+2. **No retry with simpler name** — if the first Wikipedia lookup returns no thumbnail, the code immediately falls back to the icon placeholder. It should retry with just the first word (city name) as a second attempt.
 
-1. **Import `Dialog` components** from `@/components/ui/dialog` and add `ExternalLink` icon from lucide
-2. **Add lightbox state** to `DestinationPhotos` parent — track which destination is open (`selectedDest: string | null`) and pass an `onOpen` callback to each card
-3. **Change `DestinationCard`** — replace the `<a>` wrapper with a `<button>` that calls `onOpen(dest)`. Keep the same visual card layout
-4. **Add a `Dialog`** in `DestinationPhotos` that shows:
-   - Large image (fetched from Wikipedia `originalimage.source` for higher resolution, falling back to `thumbnail.source`)
-   - Destination name as title
-   - "Open in Google Maps" link button at the bottom
-   - Close button (built into Dialog)
-5. **Use `imageCache`** to get the URL for the selected destination without re-fetching
-6. **Also cache `originalimage`** URL separately for the fullscreen view (higher resolution than thumbnail)
+### Fix in `src/components/DestinationPhotos.tsx`
 
-### UX Details
-- Click photo → fullscreen dialog with large image + place name + Maps link
-- Escape or X to close
-- Smooth fade-in animation (Dialog default)
-- Fallback cards (no photo) still open the lightbox showing just the name + Maps link
+1. **Improve `extractPlaceName`** — also strip: "city", "ISBT", "cantonment", "cantt", "depot", "stand", "main", "central", numbers, and extra whitespace
+2. **Add fallback fetch** — if the first Wikipedia call returns no `thumbnail`, extract just the first significant word (e.g., "Jalandhar" from "Jalandhar City") and retry once
+3. **Better cache key normalization** — lowercase and trim before caching to avoid duplicate fetches
+
+### Technical Detail
+
+```typescript
+function extractPlaceName(dest: string): string {
+  return dest
+    .replace(/\(.*?\)/g, "")
+    .replace(/\b(bus stand|railway station|airport|junction|terminal|station|stop|city|isbt|cantonment|cantt|depot|main|central)\b/gi, "")
+    .replace(/\d+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// In fetch logic — add fallback:
+const name = extractPlaceName(dest);
+fetchWikipedia(name).then(result => {
+  if (!result) {
+    // Retry with just the first word (core city name)
+    const simpler = name.split(" ")[0];
+    if (simpler !== name) return fetchWikipedia(simpler);
+  }
+  return result;
+});
+```
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/DestinationPhotos.tsx` | Add Dialog lightbox, split click from Maps link, cache hi-res URLs |
+| `src/components/DestinationPhotos.tsx` | Improve place name extraction, add fallback retry with simpler name |
 
