@@ -22,8 +22,16 @@ export function TripProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const reorderLegs = (fromIndex: number, toIndex: number) => {
+    if (!itinerary) return;
+    const newLegs = [...itinerary.legs];
+    const [moved] = newLegs.splice(fromIndex, 1);
+    newLegs.splice(toIndex, 0, moved);
+    setItinerary({ ...itinerary, legs: newLegs });
+  };
+
   return (
-    <TripContext.Provider value={{ itinerary, setItinerary, addCustomLeg }}>
+    <TripContext.Provider value={{ itinerary, setItinerary, addCustomLeg, reorderLegs }}>
       {children}
     </TripContext.Provider>
   );

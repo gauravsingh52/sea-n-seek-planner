@@ -142,6 +142,24 @@ export default function Itinerary() {
   const symbol = itinerary ? (currencySymbols[itinerary.currency] || itinerary.currency || "$") : "$";
   const maxDay = itinerary?.days || Math.max(...Object.keys(dayGroups).map(Number), 1);
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDragId(null);
+    const { active, over } = event;
+    if (!over || active.id === over.id || !itinerary) return;
+    const oldIndex = itinerary.legs.findIndex((l) => l.id === active.id);
+    const newIndex = itinerary.legs.findIndex((l) => l.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorderLegs(oldIndex, newIndex);
+      toast.success("Itinerary reordered");
+    }
+  };
+
+  const activeLeg = activeDragId ? itinerary?.legs.find((l) => l.id === activeDragId) : null;
+
   // Build route chain for multi-city trips
   const routeChain = useMemo(() => {
     if (!itinerary) return "";
