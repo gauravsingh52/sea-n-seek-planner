@@ -5,6 +5,7 @@ interface TripContextType {
   itinerary: ItineraryData | null;
   setItinerary: (data: ItineraryData | null) => void;
   addCustomLeg: (leg: ItineraryLeg) => void;
+  reorderLegs: (fromIndex: number, toIndex: number) => void;
 }
 
 const TripContext = createContext<TripContextType | undefined>(undefined);
