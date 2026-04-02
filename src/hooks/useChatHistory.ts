@@ -46,10 +46,13 @@ export function useChatHistory() {
     })();
   }, []);
 
-  // Persist to IndexedDB whenever sessions change (skip initial empty state)
+  // Persist to IndexedDB whenever sessions change (debounced to avoid write races)
   useEffect(() => {
     if (!initialized.current) return;
-    set(STORAGE_KEY, sessions.slice(0, MAX_SESSIONS)).catch(() => {});
+    const timer = setTimeout(() => {
+      set(STORAGE_KEY, sessions.slice(0, MAX_SESSIONS)).catch(() => {});
+    }, 500);
+    return () => clearTimeout(timer);
   }, [sessions]);
 
   const saveSession = useCallback((messages: Message[], itinerary?: ItineraryData | null) => {
