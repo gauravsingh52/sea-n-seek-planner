@@ -1,49 +1,30 @@
 
 
-## Fix: Use Real Destination Photos via Wikipedia API
+## Add Clickable Links: Destination Photos + Better Booking Links
 
-### Problem
-Lorem Picsum shows random stock photos (wheat fields, deserts, night skies) that have nothing to do with the actual destinations. "Chandigarh" shows a random photo, "Shimla" shows sand dunes — completely misleading.
+### 1. Destination Photos — Add Google Maps Link
 
-### Solution
-Use the **Wikipedia REST API** to fetch the real main image for each destination. The endpoint `https://en.wikipedia.org/api/rest_v1/page/summary/{place_name}` returns a `thumbnail.source` URL — the actual Wikipedia photo for that location (e.g., the real Chandigarh skyline, actual Shimla hills).
+Each destination photo card will become clickable, opening Google Maps for that location in a new tab.
 
-- Free, no API key, reliable, CORS-friendly
-- Returns the most recognizable photo for each place
+**Changes in `src/components/DestinationPhotos.tsx`**:
+- Wrap the card content in an `<a>` tag linking to `https://www.google.com/maps/search/{placeName}`
+- Add hover effect (scale, cursor pointer) for visual feedback
+- Use `extractPlaceName(dest)` for the search query (cleaner results)
 
-### Changes in `src/components/DestinationPhotos.tsx`
+### 2. Bus/Transport Booking Links — Use Real Booking Sites
 
-1. **Extract core place name** — strip parenthesized details like "(Sector 43/17)" and suffixes like "Bus Stand" to get the Wikipedia article name (e.g., "Chandigarh" from "Chandigarh Bus Stand (Sector 43/17)")
-2. **Fetch from Wikipedia** — each `DestinationCard` calls `https://en.wikipedia.org/api/rest_v1/page/summary/{placeName}` on mount and extracts `thumbnail.source`
-3. **Fallback chain** — if Wikipedia has no image → show the gradient/icon fallback (existing behavior)
-4. **Cache results** — store fetched URLs in a `useRef` map to avoid re-fetching on re-renders
+Currently the "Bus" link goes to Google Maps transit directions, which isn't useful for booking. Replace with actual Indian bus booking sites.
 
-### Technical Detail
-
-```typescript
-function extractPlaceName(dest: string): string {
-  return dest
-    .replace(/\(.*?\)/g, "")
-    .replace(/\b(bus stand|railway station|airport|junction|terminal)\b/gi, "")
-    .trim();
-}
-
-// In DestinationCard:
-useEffect(() => {
-  const name = extractPlaceName(dest);
-  fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`)
-    .then(r => r.json())
-    .then(data => {
-      if (data.thumbnail?.source) setImageUrl(data.thumbnail.source);
-      else setImgError(true);
-    })
-    .catch(() => setImgError(true));
-}, [dest]);
-```
+**Changes in `src/components/BookingLinks.tsx`**:
+- Bus: Link to `https://www.redbus.in/bus-tickets/{from}-to-{to}` (India's main bus booking platform)
+- Train: Link to `https://www.irctc.co.in` or Google search for train tickets
+- Flights: Keep Google Flights (works well)
+- Hotels: Keep Google Hotels (works well)
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/DestinationPhotos.tsx` | Replace picsum with Wikipedia API for real destination photos |
+| `src/components/DestinationPhotos.tsx` | Wrap each photo card in a Google Maps link |
+| `src/components/BookingLinks.tsx` | Change bus link to RedBus, improve train link |
 
