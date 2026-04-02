@@ -1,31 +1,75 @@
 
 
-## Add "Compare" Button to Trigger Comparisons from Any Itinerary Result
+## Add 3 Major Features: Calendar View, Budget Tracker, Collaborative Trips
 
-### Approach
-When the AI returns an itinerary and the assistant message is displayed, add a "Compare options" button below the message. Clicking it sends a pre-built comparison prompt referencing the current trip, triggering the existing comparison flow.
+Based on your selections, here's the plan to add these three features to TripMap Planner.
 
-### Changes
+---
 
-**`src/components/ChatMessage.tsx`**
-- Accept optional props: `onCompare?: () => void` and `hasItinerary?: boolean`
-- For assistant messages where `hasItinerary` is true, render a small "Compare 3 options" button below the message bubble
-- Uses `ArrowRightLeft` icon from lucide-react, styled as a ghost button
+### 1. Multi-Day Calendar View
 
-**`src/hooks/useChat.ts`**
-- Export a helper `triggerComparison` callback that takes no args — it reads the latest itinerary title/destination and sends a message like `"Compare 3 different options for this trip"` with the comparison hint auto-appended
-- Add `triggerComparison` to the return object
+**What it does**: A visual timeline/calendar that shows each day of the itinerary as a column or row, with transport, hotels, and activities placed in time slots — instead of just a flat list.
 
-**`src/pages/Index.tsx`**
-- Pass `onCompare` and `hasItinerary` to each `ChatMessage` for assistant messages that were followed by an itinerary parse
-- Track which message IDs produced itineraries (check if a message's raw content contained itinerary-json blocks) by adding a small Set in the chat render logic
-- Wire `onCompare` to call `triggerComparison` from useChat
+**Implementation**:
+- Create `src/components/ItineraryCalendar.tsx` — a day-by-day grid view component
+  - Each column = one day, with time slots showing legs (transport, hotel, activity)
+  - Color-coded cards by leg type (blue for transport, green for hotel, orange for activity)
+  - Clickable cards that expand to show details
+- Add a toggle button on the Itinerary page to switch between "List view" (current) and "Calendar view"
+- Uses existing `ItineraryData.legs` with the `day` and `time` fields already present
 
-### Files Modified
+**Files**: `src/components/ItineraryCalendar.tsx` (new), `src/pages/Itinerary.tsx` (add toggle)
 
-| File | Change |
-|------|--------|
-| `src/hooks/useChat.ts` | Add `triggerComparison` callback |
-| `src/components/ChatMessage.tsx` | Add optional "Compare" button for itinerary messages |
-| `src/pages/Index.tsx` | Pass compare props to ChatMessage |
+---
+
+### 2. Budget Tracker
+
+**What it does**: Track spending vs budget with a visual breakdown by category (transport, hotels, activities) and a progress bar showing how much budget is used.
+
+**Implementation**:
+- Create `src/components/BudgetTracker.tsx` — a collapsible panel showing:
+  - Total budget (from TripSettings) vs total itinerary cost
+  - Progress bar with color (green/yellow/red based on %)
+  - Pie or bar chart breakdown by category (transport/hotel/activity) using simple CSS or a lightweight chart
+  - Per-person cost when travelers > 1
+- Add to the Itinerary page below the cost summary
+- Uses existing `legs[].cost`, `legs[].type`, `totalCost`, and `currency` from ItineraryData
+- Uses `tripSettings.budget` for the budget limit
+
+**Files**: `src/components/BudgetTracker.tsx` (new), `src/pages/Itinerary.tsx` (integrate)
+
+---
+
+### 3. Collaborative Trips (Share & Co-Edit)
+
+**What it does**: Generate a shareable link for a trip. Anyone with the link can view the itinerary, and authenticated users can add comments or suggest changes.
+
+**Implementation**:
+
+**Database** (requires migrations):
+- Create `shared_trips` table: `id`, `share_code` (unique), `title`, `itinerary_data` (jsonb), `created_by` (uuid, nullable), `created_at`
+- Create `trip_comments` table: `id`, `shared_trip_id` (FK), `author_name`, `content`, `created_at`
+- RLS: Anyone can SELECT shared_trips by share_code; only creator can UPDATE/DELETE; anyone can INSERT comments
+
+**Backend**:
+- Edge function `share-trip` — accepts itinerary JSON, generates a unique share code, stores in `shared_trips`, returns the shareable URL
+
+**Frontend**:
+- Create `src/pages/SharedTrip.tsx` — a public page at `/trip/:shareCode` that loads the shared itinerary and displays it read-only with a comments section
+- Update `src/components/ShareButtons.tsx` — add a "Copy share link" button that calls the edge function and copies the URL
+- Add route in `App.tsx`
+
+**Files**: `shared_trips` + `trip_comments` tables (migration), `supabase/functions/share-trip/index.ts` (new), `src/pages/SharedTrip.tsx` (new), `src/components/ShareButtons.tsx` (update), `src/App.tsx` (add route)
+
+---
+
+### Summary
+
+| Feature | New Files | Modified Files |
+|---------|-----------|----------------|
+| Calendar View | `ItineraryCalendar.tsx` | `Itinerary.tsx` |
+| Budget Tracker | `BudgetTracker.tsx` | `Itinerary.tsx` |
+| Collaborative Trips | `SharedTrip.tsx`, `share-trip/index.ts` | `ShareButtons.tsx`, `App.tsx` + DB migration |
+
+These are large features — I recommend implementing them one at a time, starting with Calendar View (simplest, no backend needed), then Budget Tracker, then Collaborative Trips.
 
