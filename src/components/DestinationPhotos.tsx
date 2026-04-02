@@ -87,7 +87,6 @@ function DestinationCard({
               className="w-full h-full object-cover"
               loading="lazy"
               referrerPolicy="no-referrer"
-              crossOrigin="anonymous"
               onError={() => setImgError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
