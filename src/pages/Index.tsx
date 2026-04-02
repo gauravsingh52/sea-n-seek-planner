@@ -53,7 +53,7 @@ export default function Index() {
     language: navigator.language?.slice(0, 2) || "en",
   });
   const [historyOpen, setHistoryOpen] = useState(false);
-  const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions } = useChat();
+  const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions, triggerComparison } = useChat();
   const { setItinerary } = useTrip();
   const { count: savedCount } = useSavedTrips();
   const { sessions, saveSession, renameSession, deleteSession, clearAll: clearHistory } = useChatHistory();
