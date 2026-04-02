@@ -1,8 +1,26 @@
 import { useMemo } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Camera } from "lucide-react";
+import { Camera, MapPin } from "lucide-react";
 import type { ItineraryData } from "@/types/itinerary";
+
+const GRADIENT_PAIRS = [
+  ["hsl(var(--primary))", "hsl(var(--accent))"],
+  ["hsl(var(--earth-mid))", "hsl(var(--sand))"],
+  ["hsl(var(--earth-light))", "hsl(var(--sunset))"],
+  ["hsl(var(--primary))", "hsl(var(--earth-light))"],
+  ["hsl(var(--accent))", "hsl(var(--earth-mid))"],
+  ["hsl(var(--sunset))", "hsl(var(--primary))"],
+];
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
 
 export function DestinationPhotos({ itinerary }: { itinerary: ItineraryData }) {
   const destinations = useMemo(() => {
@@ -29,21 +47,26 @@ export function DestinationPhotos({ itinerary }: { itinerary: ItineraryData }) {
         </CardTitle>
         <ScrollArea className="w-full">
           <div className="flex gap-3 pb-2">
-            {destinations.map((dest) => (
-              <div key={dest} className="flex-shrink-0 w-36">
-                <div className="relative w-36 h-24 rounded-xl overflow-hidden bg-muted">
-                  <img
-                    src={`https://source.unsplash.com/featured/288x192/?${encodeURIComponent(dest)},travel`}
-                    alt={dest}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1">
-                    <span className="text-white text-xs font-medium">{dest}</span>
+            {destinations.map((dest) => {
+              const idx = hashCode(dest) % GRADIENT_PAIRS.length;
+              const [from, to] = GRADIENT_PAIRS[idx];
+              const angle = (hashCode(dest + "angle") % 4) * 45 + 120;
+              return (
+                <div key={dest} className="flex-shrink-0 w-36">
+                  <div
+                    className="relative w-36 h-24 rounded-xl overflow-hidden flex flex-col items-center justify-center"
+                    style={{
+                      background: `linear-gradient(${angle}deg, ${from}, ${to})`,
+                    }}
+                  >
+                    <MapPin className="w-5 h-5 text-primary-foreground/80 mb-1" />
+                    <span className="text-primary-foreground text-xs font-semibold text-center px-2 leading-tight drop-shadow-sm">
+                      {dest}
+                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
