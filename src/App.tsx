@@ -7,6 +7,7 @@ import { TripProvider } from "@/contexts/TripContext";
 import Index from "./pages/Index";
 import Itinerary from "./pages/Itinerary";
 import SavedTrips from "./pages/SavedTrips";
+import SharedTrip from "./pages/SharedTrip";
 import NotFound from "./pages/NotFound";
 
 
@@ -23,6 +24,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/itinerary" element={<Itinerary />} />
             <Route path="/saved" element={<SavedTrips />} />
+            <Route path="/trip/:shareCode" element={<SharedTrip />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

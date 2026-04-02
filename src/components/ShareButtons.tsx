@@ -1,6 +1,8 @@
-import { Share2, MessageCircle, Send, FileDown, Link2 } from "lucide-react";
+import { useState } from "react";
+import { Share2, MessageCircle, Send, FileDown, Link2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
 import type { ItineraryData } from "@/types/itinerary";
 import { toast } from "sonner";
 
@@ -28,6 +30,7 @@ interface ShareButtonsProps {
 }
 
 export function ShareButtons({ itinerary }: ShareButtonsProps) {
+  const [sharing, setSharing] = useState(false);
   const text = formatItineraryText(itinerary);
   const encoded = encodeURIComponent(text);
 
@@ -56,6 +59,23 @@ export function ShareButtons({ itinerary }: ShareButtonsProps) {
     }
   };
 
+  const shareCollaborative = async () => {
+    setSharing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("share-trip", {
+        body: { itinerary, title: itinerary.title },
+      });
+      if (error) throw error;
+      const url = `${window.location.origin}/trip/${data.shareCode}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Collaborative share link copied! Anyone can view & comment.");
+    } catch (e: any) {
+      toast.error("Failed to create share link");
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -76,6 +96,10 @@ export function ShareButtons({ itinerary }: ShareButtonsProps) {
           </button>
           <button onClick={copyLink} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
             <Link2 className="w-4 h-4 text-primary" /> Copy Link
+          </button>
+          <div className="border-t border-border/30 my-1" />
+          <button onClick={shareCollaborative} disabled={sharing} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors disabled:opacity-50">
+            <Globe className="w-4 h-4 text-purple-500" /> {sharing ? "Creating..." : "Collaborative Link"}
           </button>
         </div>
       </PopoverContent>

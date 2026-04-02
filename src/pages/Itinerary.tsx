@@ -1,6 +1,6 @@
-import { lazy, Suspense, Component, ReactNode, useMemo } from "react";
+import { lazy, Suspense, Component, ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, CloudSun, Clock, Luggage } from "lucide-react";
+import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, CloudSun, Clock, Luggage, List, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,8 @@ import { BookingLinks } from "@/components/BookingLinks";
 import { DestinationPhotos } from "@/components/DestinationPhotos";
 import { TripDuration } from "@/components/TripDuration";
 import { EmergencyInfo } from "@/components/EmergencyInfo";
+import { ItineraryCalendar } from "@/components/ItineraryCalendar";
+import { BudgetTracker } from "@/components/BudgetTracker";
 import { useTrip } from "@/contexts/TripContext";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useWeather } from "@/hooks/useWeather";
@@ -106,6 +108,7 @@ function PackingListCard({ items }: { items: string[] }) {
 export default function Itinerary() {
   const navigate = useNavigate();
   const { itinerary, addCustomLeg } = useTrip();
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const { theme, toggleTheme } = useTheme();
   const { saveTrip, isSaved } = useSavedTrips();
   const { weather } = useWeather(itinerary);
@@ -181,6 +184,28 @@ export default function Itinerary() {
               <ShareButtons itinerary={itinerary} />
             </>
           )}
+          {itinerary && (
+            <div className="flex items-center glass rounded-lg p-0.5 mr-1">
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setViewMode("list")}
+                title="List view"
+              >
+                <List className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant={viewMode === "calendar" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setViewMode("calendar")}
+                title="Calendar view"
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          )}
           <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="glass text-foreground">
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
@@ -253,7 +278,9 @@ export default function Itinerary() {
               {/* Destination photos */}
               <DestinationPhotos itinerary={itinerary} />
 
-              {hasDays ? (
+              {viewMode === "calendar" ? (
+                <ItineraryCalendar itinerary={itinerary} currencySymbol={symbol} />
+              ) : hasDays ? (
                 Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
                   <div key={day}>
                     <div className="flex items-center gap-2 mb-3 mt-4 first:mt-0">
@@ -285,6 +312,9 @@ export default function Itinerary() {
 
               {/* Travel checklist */}
               <TravelChecklist tripId={itinerary.title} />
+
+              {/* Budget tracker */}
+              <BudgetTracker itinerary={itinerary} />
 
               {/* Cost breakdown */}
               <CostBreakdown legs={itinerary.legs} totalCost={itinerary.totalCost} currency={itinerary.currency} />
