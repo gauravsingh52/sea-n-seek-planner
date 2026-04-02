@@ -340,18 +340,33 @@ export function useGeoSuggestions(): GeoResult {
         const cc = geo.countryCode;
         setCountryCode(cc);
 
-        if (COUNTRY_PROMPTS[cc]) {
-          const prompts = COUNTRY_PROMPTS[cc].map((p) => ({
+        // Resolve city alias for obscure locations
+        const resolvedCity = geo.city && CITY_ALIASES[geo.city] ? CITY_ALIASES[geo.city] : geo.city;
+
+        // Prioritize state-level prompts (India), then country, then region
+        const stateKey = geo.state;
+        let selectedPrompts: GeoSuggestion[] | null = null;
+
+        if (stateKey && STATE_PROMPTS[stateKey]) {
+          selectedPrompts = STATE_PROMPTS[stateKey];
+        } else if (COUNTRY_PROMPTS[cc]) {
+          selectedPrompts = COUNTRY_PROMPTS[cc];
+        }
+
+        if (selectedPrompts) {
+          const prompts = selectedPrompts.map((p) => ({
             ...p,
-            text: geo!.city ? p.text.replace("{city}", geo!.city) : p.text.replace(/from \{city\} /g, ""),
+            text: resolvedCity ? p.text.replace("{city}", resolvedCity) : p.text.replace(/from \{city\} /g, ""),
           }));
           setSuggestions(prompts);
         } else if (geo.continent && REGION_PROMPTS[geo.continent]) {
           setSuggestions(REGION_PROMPTS[geo.continent]);
         }
 
-        if (geo.city) {
-          setLocationLabel(`Popular trips near ${geo.city}`);
+        if (resolvedCity) {
+          setLocationLabel(`Popular trips near ${resolvedCity}`);
+        } else if (geo.state) {
+          setLocationLabel(`Suggested trips in ${geo.state}`);
         } else if (geo.country) {
           setLocationLabel(`Suggested for travelers in ${geo.country}`);
         }
