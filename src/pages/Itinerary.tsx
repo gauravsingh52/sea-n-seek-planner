@@ -278,7 +278,9 @@ export default function Itinerary() {
               {/* Destination photos */}
               <DestinationPhotos itinerary={itinerary} />
 
-              {hasDays ? (
+              {viewMode === "calendar" ? (
+                <ItineraryCalendar itinerary={itinerary} currencySymbol={symbol} />
+              ) : hasDays ? (
                 Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
                   <div key={day}>
                     <div className="flex items-center gap-2 mb-3 mt-4 first:mt-0">
