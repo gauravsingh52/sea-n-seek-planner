@@ -11,9 +11,24 @@ const imageCache = new Map<string, { thumb: string; full: string } | null>();
 function extractPlaceName(dest: string): string {
   return dest
     .replace(/\(.*?\)/g, "")
-    .replace(/\b(bus stand|railway station|airport|junction|terminal|station|stop)\b/gi, "")
+    .replace(/\b(bus stand|railway station|airport|junction|terminal|station|stop|city|isbt|cantonment|cantt|depot|main|central|sector)\b/gi, "")
+    .replace(/\d+/g, "")
+    .replace(/[\/\\]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+async function fetchWikipediaImage(name: string): Promise<{ thumb: string; full: string } | null> {
+  try {
+    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+    const data = await r.json();
+    const thumb = data.thumbnail?.source;
+    const full = data.originalimage?.source || thumb;
+    if (thumb) return { thumb, full: full || thumb };
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 function DestinationCard({
@@ -37,23 +52,25 @@ function DestinationCard({
       return;
     }
 
-    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`)
-      .then((r) => r.json())
-      .then((data) => {
-        const thumb = data.thumbnail?.source;
-        const full = data.originalimage?.source || thumb;
-        if (thumb) {
-          imageCache.set(cacheKey, { thumb, full: full || thumb });
-          setImageUrl(thumb);
-        } else {
-          imageCache.set(cacheKey, null);
-          setImgError(true);
+    (async () => {
+      let result = await fetchWikipediaImage(name);
+
+      // Fallback: retry with just the first word (core city name)
+      if (!result) {
+        const simpler = name.split(" ")[0];
+        if (simpler && simpler.toLowerCase() !== name.toLowerCase()) {
+          result = await fetchWikipediaImage(simpler);
         }
-      })
-      .catch(() => {
+      }
+
+      if (result) {
+        imageCache.set(cacheKey, result);
+        setImageUrl(result.thumb);
+      } else {
         imageCache.set(cacheKey, null);
         setImgError(true);
-      });
+      }
+    })();
   }, [dest]);
 
   return (
