@@ -116,7 +116,6 @@ export function useChat() {
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     setFollowUpSuggestions([]);
-    setComparisonItineraries([]);
 
     let assistantContent = "";
     const assistantId = crypto.randomUUID();
