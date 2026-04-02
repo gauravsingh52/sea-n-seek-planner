@@ -323,9 +323,19 @@ export function useGeoSuggestions(): GeoResult {
     (async () => {
       let geo: GeoData | null = null;
 
-      for (const provider of PROVIDERS) {
-        geo = await tryProvider(provider.url, provider.normalize, controller.signal);
-        if (geo && geo.countryCode) break;
+      // Try sessionStorage cache first for instant load
+      try {
+        const cached = sessionStorage.getItem("geo_cache");
+        if (cached) {
+          geo = JSON.parse(cached) as GeoData;
+        }
+      } catch {}
+
+      if (!geo || !geo.countryCode) {
+        for (const provider of PROVIDERS) {
+          geo = await tryProvider(provider.url, provider.normalize, controller.signal);
+          if (geo && geo.countryCode) break;
+        }
       }
 
       // Language-based fallback
