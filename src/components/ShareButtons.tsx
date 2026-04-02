@@ -1,6 +1,8 @@
-import { Share2, MessageCircle, Send, FileDown, Link2 } from "lucide-react";
+import { useState } from "react";
+import { Share2, MessageCircle, Send, FileDown, Link2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
 import type { ItineraryData } from "@/types/itinerary";
 import { toast } from "sonner";
 
