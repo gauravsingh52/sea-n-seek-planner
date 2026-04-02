@@ -76,11 +76,24 @@ export default function Index() {
     }
   }, [latestItinerary, setItinerary]);
 
-  // Auto-save to chat history when assistant replies
+  // Auto-save to chat history only after streaming completes
+  const wasLoading = useRef(false);
   useEffect(() => {
-    if (messages.length > 0 && messages[messages.length - 1]?.role === "assistant") {
+    if (wasLoading.current && !isLoading && messages.length > 0) {
       saveSession(messages, latestItinerary);
     }
+    wasLoading.current = isLoading;
+  }, [isLoading, messages, latestItinerary, saveSession]);
+
+  // Save on browser close to catch mid-chat exits
+  useEffect(() => {
+    const handleUnload = () => {
+      if (messages.length > 0) {
+        saveSession(messages, latestItinerary);
+      }
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
   }, [messages, latestItinerary, saveSession]);
 
   useEffect(() => {
