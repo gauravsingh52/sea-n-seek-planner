@@ -271,21 +271,7 @@ export default function Itinerary() {
           {Object.keys(weather).length > 0 && (
             <div className="px-4 pb-2">
               <div className="max-w-3xl mx-auto">
-                <Card className="glass-strong gradient-border">
-                  <CardHeader className="py-3 px-5">
-                    <CardTitle className="text-sm font-display gradient-text mb-2 flex items-center gap-1.5">
-                      <CloudSun className="w-4 h-4" /> Weather Forecast
-                    </CardTitle>
-                    <div className="flex flex-wrap gap-3">
-                      {Object.entries(weather).map(([name, data]) => (
-                        <div key={name} className="flex items-center gap-2 text-sm">
-                          <span className="text-foreground font-medium">{name}</span>
-                          <WeatherBadge data={data} />
-                        </div>
-                      ))}
-                    </div>
-                  </CardHeader>
-                </Card>
+                <WeatherWidget weather={weather} />
               </div>
             </div>
           )}
