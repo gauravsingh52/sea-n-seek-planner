@@ -208,7 +208,7 @@ export default function Itinerary() {
               >
                 {saved ? <BookmarkCheck className="w-4 h-4 text-primary" /> : <Bookmark className="w-4 h-4" />}
               </Button>
-              <ShareButtons itinerary={itinerary} />
+              <ShareButtons itinerary={itinerary} onCollaborate={(url) => window.open(url, "_blank")} />
             </>
           )}
           {itinerary && (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Share2, MessageCircle, Send, Link2 } from "lucide-react";
+import { Share2, MessageCircle, Send, Link2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,65 +29,100 @@ async function createShareLink(itinerary: ItineraryData): Promise<string> {
   const { data, error } = await supabase.functions.invoke("share-trip", {
     body: { itinerary, title: itinerary.title },
   });
+
+  console.log("share-trip response:", { data, error });
+
   if (error) throw error;
-  return `${window.location.origin}/trip/${data.shareCode}`;
+
+  // Handle different SDK response shapes
+  const shareCode = data?.shareCode ?? data?.data?.shareCode;
+  if (!shareCode) {
+    throw new Error("No share code returned from server");
+  }
+
+  return `${window.location.origin}/trip/${shareCode}`;
+}
+
+function fallbackCopy(value: string): boolean {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = value;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function tryCopy(value: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    return fallbackCopy(value);
+  }
 }
 
 interface ShareButtonsProps {
   itinerary: ItineraryData;
+  onCollaborate?: (shareUrl: string) => void;
 }
 
-export function ShareButtons({ itinerary }: ShareButtonsProps) {
+export function ShareButtons({ itinerary, onCollaborate }: ShareButtonsProps) {
   const [sharing, setSharing] = useState(false);
+  const [collaborating, setCollaborating] = useState(false);
   const text = formatItineraryText(itinerary);
   const encoded = encodeURIComponent(text);
 
   const shareWhatsApp = () => window.open(`https://wa.me/?text=${encoded}`, "_blank");
   const shareTelegram = () => window.open(`https://t.me/share/url?text=${encoded}`, "_blank");
 
-  const fallbackCopy = (value: string) => {
-    try {
-      const ta = document.createElement("textarea");
-      ta.value = value;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
   const copyLink = async () => {
     setSharing(true);
     try {
       const url = await createShareLink(itinerary);
-      let copied = false;
-      try {
-        await navigator.clipboard.writeText(url);
-        copied = true;
-      } catch {
-        copied = fallbackCopy(url);
-      }
+      const copied = await tryCopy(url);
       if (copied) {
         toast.success("Share link copied!");
       } else {
-        toast.success(`Share link: ${url}`, { description: "Copy this link manually", duration: 10000 });
+        toast.success(`Share link ready`, {
+          description: url,
+          duration: 15000,
+        });
       }
-    } catch {
-      let copied = false;
-      try {
-        await navigator.clipboard.writeText(text);
-        copied = true;
-      } catch {
-        copied = fallbackCopy(text);
-      }
-      toast.info(copied ? "Itinerary text copied (share link unavailable)" : "Could not copy — please try again");
+    } catch (err) {
+      console.error("Share link failed:", err);
+      const copied = await tryCopy(text);
+      toast.info(copied ? "Itinerary text copied (link unavailable)" : "Could not copy — please try again");
     } finally {
       setSharing(false);
+    }
+  };
+
+  const collaborate = async () => {
+    setCollaborating(true);
+    try {
+      const url = await createShareLink(itinerary);
+      const copied = await tryCopy(url);
+      if (copied) {
+        toast.success("Collaborate link copied! Share it with friends to plan together.");
+      } else {
+        toast.success("Collaborate link ready", {
+          description: url,
+          duration: 15000,
+        });
+      }
+      if (onCollaborate) onCollaborate(url);
+    } catch (err) {
+      console.error("Collaborate link failed:", err);
+      toast.error("Could not create collaboration link. Please try again.");
+    } finally {
+      setCollaborating(false);
     }
   };
 
@@ -107,7 +142,11 @@ export function ShareButtons({ itinerary }: ShareButtonsProps) {
             <Send className="w-4 h-4 text-blue-500" /> Telegram
           </button>
           <button onClick={copyLink} disabled={sharing} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors disabled:opacity-50">
-            <Link2 className="w-4 h-4 text-primary" /> {sharing ? "Creating..." : "Copy Link"}
+            <Link2 className="w-4 h-4 text-primary" /> {sharing ? "Creating link..." : "Copy Link"}
+          </button>
+          <div className="border-t border-border my-1" />
+          <button onClick={collaborate} disabled={collaborating} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors disabled:opacity-50">
+            <Users className="w-4 h-4 text-accent-foreground" /> {collaborating ? "Creating..." : "Collaborate"}
           </button>
         </div>
       </PopoverContent>
