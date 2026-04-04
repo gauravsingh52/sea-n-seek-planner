@@ -16,6 +16,7 @@ import { TravelChecklist } from "@/components/TravelChecklist";
 import { CustomStop } from "@/components/CustomStop";
 import { BookingLinks } from "@/components/BookingLinks";
 import { DestinationPhotos } from "@/components/DestinationPhotos";
+import { WeatherWidget } from "@/components/WeatherWidget";
 import { TripDuration } from "@/components/TripDuration";
 import { EmergencyInfo } from "@/components/EmergencyInfo";
 import { ItineraryCalendar } from "@/components/ItineraryCalendar";
