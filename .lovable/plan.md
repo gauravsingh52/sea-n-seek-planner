@@ -1,37 +1,36 @@
 
 
-## Fix 4 Persistent Issues: Destination Photos, PDF, Copy Link, Scroll
+## Enhance Weather Widget for Destination Itineraries
 
-### 1. Destination Photos — `crossOrigin="anonymous"` Breaks Wikipedia Images
+### Current State
+The weather feature is already fully wired up and working:
+- Backend function (`supabase/functions/weather/index.ts`) calls Open-Meteo API — verified working, returns real live data
+- `useWeather` hook fetches weather for all destinations with coordinates
+- A compact "Weather Forecast" card shows at the top of the itinerary
+- Small weather badges appear on individual leg cards
 
-**Root cause**: The `crossOrigin="anonymous"` attribute on `<img>` tags causes the browser to make a CORS preflight request to `upload.wikimedia.org`. Wikipedia's image CDN does NOT return `Access-Control-Allow-Origin` headers for all image URLs, so the browser blocks the image entirely — worse than no attribute at all.
+### Enhancement Plan
+Make the weather widget more visually rich and useful:
 
-**Fix**: Remove `crossOrigin="anonymous"` from all `<img>` tags. Keep `referrerPolicy="no-referrer"` (this works fine — it just omits the Referer header). Also add `console.warn` in the fetch catch block so failures are visible during debugging.
+**`src/pages/Itinerary.tsx`** (or extract to new `src/components/WeatherWidget.tsx`):
+- Replace the current compact inline display with a proper card grid — one card per destination
+- Each card shows: destination name, weather icon (large), high/low temps, condition text
+- Add a subtle gradient background matching the weather condition (sunny = warm yellow, rain = cool blue, etc.)
+- Show "3-day forecast" by extending the backend to return all 3 days (it already fetches 3 days but only returns day 1)
 
-### 2. PDF Export — Layout Issues
+**`supabase/functions/weather/index.ts`**:
+- Return all 3 forecast days instead of just day 1
+- Add `humidity` and `precipitation_probability` to the response for richer display
 
-**Root cause**: The current PDF code works but has minor issues: the `safe()` function is too aggressive stripping non-ASCII, and there's no visual separator between days. The structure is correct but needs polish.
-
-**Fix**: Already has page numbers and footer from last fix. Add a light gray background rect for day headers to visually separate sections. Widen description text wrap from 145 to 155.
-
-### 3. Copy Link — Clipboard Blocked in Iframe
-
-**Root cause**: Already fixed with `fallbackCopy()` using `document.execCommand('copy')`. The current code looks correct. The remaining issue: if the share-trip function call fails (network error), the toast says "Itinerary text copied!" which is misleading.
-
-**Fix**: Add explicit error distinction — if link creation fails, show "Could not create share link. Itinerary text copied instead." If link succeeds but clipboard fails, show the URL in the toast so users can manually copy it.
-
-### 4. Scroll — Page Not Scrolling
-
-**Root cause**: The outer `div` has `min-h-screen` but the content inside uses `relative z-10` without `overflow` handling. The `h-[40vh]` map section combined with `min-h-screen` on the wrapper works fine in theory, but the `travel-bg` class or `particles` div may have `position: fixed` or `overflow: hidden` that blocks scroll.
-
-**Fix**: Check `travel-bg` and `particles` CSS classes in `index.css`. Add `overflow-y: auto` to the main content wrapper if needed. Ensure no parent element has `overflow: hidden`.
+**`src/types/itinerary.ts`**:
+- Extend `WeatherData` to include `forecast` array (3 days), `humidity`, `precipChance`
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/DestinationPhotos.tsx` | Remove `crossOrigin="anonymous"` from all img tags |
-| `src/components/ExportPDF.tsx` | Add day header background rects, widen text wrap |
-| `src/components/ShareButtons.tsx` | Improve error toast messages with URL display |
-| `src/index.css` | Check/fix travel-bg and particles overflow rules |
+| `supabase/functions/weather/index.ts` | Return 3-day forecast with humidity and precip chance |
+| `src/types/itinerary.ts` | Extend WeatherData type with forecast array |
+| `src/components/WeatherWidget.tsx` | New component with per-destination weather cards and 3-day mini forecast |
+| `src/pages/Itinerary.tsx` | Replace inline weather display with new WeatherWidget component |
 
