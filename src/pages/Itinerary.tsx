@@ -1,6 +1,6 @@
 import { lazy, Suspense, Component, ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, CloudSun, Clock, Luggage, List, CalendarDays, GripVertical } from "lucide-react";
+import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, Clock, Luggage, List, CalendarDays, GripVertical } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -16,6 +16,7 @@ import { TravelChecklist } from "@/components/TravelChecklist";
 import { CustomStop } from "@/components/CustomStop";
 import { BookingLinks } from "@/components/BookingLinks";
 import { DestinationPhotos } from "@/components/DestinationPhotos";
+import { WeatherWidget } from "@/components/WeatherWidget";
 import { TripDuration } from "@/components/TripDuration";
 import { EmergencyInfo } from "@/components/EmergencyInfo";
 import { ItineraryCalendar } from "@/components/ItineraryCalendar";
@@ -270,21 +271,7 @@ export default function Itinerary() {
           {Object.keys(weather).length > 0 && (
             <div className="px-4 pb-2">
               <div className="max-w-3xl mx-auto">
-                <Card className="glass-strong gradient-border">
-                  <CardHeader className="py-3 px-5">
-                    <CardTitle className="text-sm font-display gradient-text mb-2 flex items-center gap-1.5">
-                      <CloudSun className="w-4 h-4" /> Weather Forecast
-                    </CardTitle>
-                    <div className="flex flex-wrap gap-3">
-                      {Object.entries(weather).map(([name, data]) => (
-                        <div key={name} className="flex items-center gap-2 text-sm">
-                          <span className="text-foreground font-medium">{name}</span>
-                          <WeatherBadge data={data} />
-                        </div>
-                      ))}
-                    </div>
-                  </CardHeader>
-                </Card>
+                <WeatherWidget weather={weather} />
               </div>
             </div>
           )}

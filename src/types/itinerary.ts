@@ -15,11 +15,22 @@ export interface ItineraryLeg {
   day?: number;
 }
 
+export interface WeatherDayForecast {
+  date: string;
+  tempHigh: number;
+  tempLow: number;
+  condition: string;
+  icon: string;
+}
+
 export interface WeatherData {
   tempHigh: number;
   tempLow: number;
   condition: string;
   icon: string;
+  humidity?: number;
+  precipChance?: number;
+  forecast?: WeatherDayForecast[];
 }
 
 export interface EmergencyInfo {
