@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { CheckSquare, Plus, X } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -70,17 +69,39 @@ export function TravelChecklist({ tripId }: { tripId?: string }) {
           />
         </div>
 
-        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+        <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
           {items.map((item) => (
-            <div key={item.id} className="flex items-center gap-2 group">
-              <Checkbox checked={item.checked} onCheckedChange={() => toggle(item.id)} />
-              <span className={`text-sm flex-1 ${item.checked ? "line-through text-muted-foreground" : "text-foreground"}`}>
+            <label
+              key={item.id}
+              className="flex items-center gap-2.5 group cursor-pointer py-1.5 px-1 rounded-lg hover:bg-muted/30 transition-colors"
+            >
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={item.checked}
+                onClick={() => toggle(item.id)}
+                className={`flex-shrink-0 w-4.5 h-4.5 min-w-[18px] min-h-[18px] rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                  item.checked
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "border-muted-foreground/40 hover:border-primary"
+                }`}
+              >
+                {item.checked && (
+                  <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                    <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+              <span className={`text-sm flex-1 transition-all duration-200 ${item.checked ? "line-through text-muted-foreground" : "text-foreground"}`}>
                 {item.text}
               </span>
-              <button onClick={() => removeItem(item.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive">
+              <button
+                onClick={(e) => { e.preventDefault(); removeItem(item.id); }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+              >
                 <X className="w-3 h-3" />
               </button>
-            </div>
+            </label>
           ))}
         </div>
 
