@@ -1,35 +1,62 @@
 
 
-## Fix: Share Link "Creating..." Stuck + Add Missing Collaborate Feature + Destination Photos
+## Fix 4 Issues: Animated Weather Icons, Collaborate Page, Travel Checklist, Currency Converter
 
-### Issues Found
+### 1. Animated Weather Icons (Replace Emojis)
 
-1. **Share Link shows "Creating..." but never completes** — The edge function returns 200 with `{ shareCode: "..." }` successfully. However, `supabase.functions.invoke()` returns the response body inside `data` — but if the SDK version wraps it differently, `data.shareCode` could be undefined, causing `createShareLink` to return a URL like `/trip/undefined`. The clipboard then fails in the iframe, and the catch block runs. Also, the `finally` block resets `sharing` to false, but the popover may close before the toast shows.
+**Problem**: Weather widget uses emoji strings from the backend. Need CSS-animated SVG icons instead.
 
-2. **No "Collaborate" feature exists** — There is a SharedTrip page (`/trip/:shareCode`) with comments, but no way to reach it except via the share link. The user expects a visible "Collaborate" option.
+**Solution**: Create animated weather icon components using Lucide icons with CSS animations (pulsing sun, falling rain drops, drifting clouds, etc.). Map weather conditions to these animated components in WeatherWidget.
 
-3. **Destination Photos** — Wikipedia API returns 200 with valid thumbnails (confirmed in network logs). The photos ARE loading for some destinations. This seems to be working now.
+**Changes**:
+- `src/components/WeatherWidget.tsx` — Replace `{data.icon}` emoji with an `<AnimatedWeatherIcon condition={data.condition} />` component that renders animated Lucide icons (Sun with pulse, Cloud with drift, CloudRain with drop animation, Snowflake with float, CloudLightning with flash)
+- `src/index.css` — Add keyframe animations: `@keyframes spin-slow`, `@keyframes rain-drop`, `@keyframes cloud-drift`, `@keyframes snow-float`, `@keyframes lightning-flash`
 
-### Fixes
+### 2. Collaborate Page — Missing Features
 
-**1. Fix Share Link (`src/components/ShareButtons.tsx`)**
-- Add `console.log` to debug the response from `supabase.functions.invoke`
-- Handle the case where `data` might be wrapped: check `data?.shareCode` or `data?.data?.shareCode`
-- After creating the link, show the URL in a toast with a clickable link even if clipboard fails
-- Replace "Creating..." with a proper loading state that resolves
+**Problem**: The SharedTrip page (`/trip/:shareCode`) only shows a calendar grid and comments. It's missing: destination photos, weather, packing list, cost breakdown, map, checklist — all the features the main itinerary page has.
 
-**2. Add Collaborate Button (`src/pages/Itinerary.tsx` + `src/components/ShareButtons.tsx`)**
-- Add a "Collaborate" option in the share popover that creates a share link AND navigates to the shared trip page
-- This opens the `/trip/:shareCode` page where others can comment
+**Solution**: Port key sections from the Itinerary page into SharedTrip:
+- Add the TripMap component (lazy loaded)
+- Add DestinationPhotos
+- Add WeatherWidget (with useWeather hook)
+- Add Packing List display
+- Add Cost Breakdown
+- Add TripDuration stats
+- Fix the calendar overflow (already has `overflow-x-auto`)
 
-**3. Destination Photos — No changes needed**
-- Network logs confirm Wikipedia API returns valid thumbnails (200 status)
-- Photos are loading correctly based on the API responses
+**Changes**:
+- `src/pages/SharedTrip.tsx` — Import and render TripMap, DestinationPhotos, WeatherWidget, TripDuration, PackingListCard, CostBreakdown. Reuse existing components. Add proper layout matching the main Itinerary page structure.
+
+### 3. Travel Checklist Not Working
+
+**Problem**: The checklist component code looks correct — it uses localStorage and Radix Checkbox. The likely issue is that `onCheckedChange` receives a `CheckedState` (boolean | "indeterminate") but the toggle function expects a simple call. Looking at the code, `toggle(item.id)` is called correctly via `onCheckedChange={() => toggle(item.id)}`. 
+
+The real problem: the `select` dropdowns in CurrencyConverter use `className="bg-transparent"` which in dark mode makes `<option>` elements invisible (dark text on dark background). Same pattern may affect checkbox visibility.
+
+**Investigation**: The checkbox code looks functionally correct. The issue may be that clicking checkboxes doesn't visually update due to CSS conflicts with the `glass-strong` card styling, or the `max-h-48 overflow-y-auto` container is eating scroll events. Will ensure the checkbox container allows proper interaction and add visual feedback.
+
+**Changes**:
+- `src/components/TravelChecklist.tsx` — Increase `max-h-48` to `max-h-64` to show more items, ensure checkbox click area is large enough, add a subtle animation on check
+
+### 4. Currency Converter Not Working
+
+**Problem**: The `<select>` elements use `className="bg-transparent"` which in dark mode renders `<option>` text as invisible (browser renders option text in the system default color). The converter logic itself is correct (hardcoded rates, simple math).
+
+**Solution**: Style the `<select>` and `<option>` elements properly for dark mode. Use `bg-background text-foreground` on the select, and add explicit colors on `<option>` elements.
+
+**Changes**:
+- `src/components/CurrencyConverter.tsx` — Fix select styling: use `bg-background text-foreground` and add `className="bg-background text-foreground"` to each `<option>`. Also add NZD to rates.
+
+---
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/ShareButtons.tsx` | Fix data access from SDK response, add Collaborate option, improve error handling |
-| `supabase/functions/share-trip/index.ts` | Add logging for debugging |
+| `src/components/WeatherWidget.tsx` | Replace emoji icons with animated Lucide SVG icons |
+| `src/index.css` | Add weather animation keyframes |
+| `src/pages/SharedTrip.tsx` | Add map, photos, weather, packing list, cost breakdown, duration |
+| `src/components/TravelChecklist.tsx` | Fix scroll container height, improve checkbox interaction |
+| `src/components/CurrencyConverter.tsx` | Fix dark mode select/option styling |
 
