@@ -1,6 +1,37 @@
-import { Droplets, CloudRain, CloudSun } from "lucide-react";
+import { Droplets, CloudRain, Sun, Cloud, CloudSnow, CloudLightning, CloudSun, CloudFog, Thermometer } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import type { WeatherData } from "@/types/itinerary";
+
+function AnimatedWeatherIcon({ condition, size = "lg" }: { condition: string; size?: "sm" | "lg" }) {
+  const cls = size === "lg" ? "w-8 h-8" : "w-4 h-4";
+  const c = condition.toLowerCase();
+
+  if (c.includes("thunder") || c.includes("lightning")) {
+    return <CloudLightning className={`${cls} text-indigo-400 animate-weather-lightning`} />;
+  }
+  if (c.includes("snow")) {
+    return <CloudSnow className={`${cls} text-sky-300 animate-weather-snow`} />;
+  }
+  if (c.includes("heavy rain")) {
+    return <CloudRain className={`${cls} text-blue-500 animate-weather-rain`} />;
+  }
+  if (c.includes("rain") || c.includes("drizzle")) {
+    return <CloudRain className={`${cls} text-blue-400 animate-weather-rain`} />;
+  }
+  if (c.includes("fog") || c.includes("mist") || c.includes("haze")) {
+    return <CloudFog className={`${cls} text-muted-foreground animate-weather-drift`} />;
+  }
+  if (c.includes("overcast")) {
+    return <Cloud className={`${cls} text-muted-foreground animate-weather-drift`} />;
+  }
+  if (c.includes("partly") || c.includes("mainly clear")) {
+    return <CloudSun className={`${cls} text-amber-400 animate-weather-sun`} />;
+  }
+  if (c.includes("clear") || c.includes("sunny")) {
+    return <Sun className={`${cls} text-amber-400 animate-weather-sun`} />;
+  }
+  return <Thermometer className={`${cls} text-muted-foreground`} />;
+}
 
 const conditionGradients: Record<string, string> = {
   "Clear sky": "from-amber-500/15 to-yellow-500/10",
@@ -52,10 +83,10 @@ export function WeatherWidget({ weather }: WeatherWidgetProps) {
             <CardHeader className="py-3 px-4 space-y-2">
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="text-sm font-sans font-semibold text-foreground">{name}</CardTitle>
+                  <h4 className="text-sm font-sans font-semibold text-foreground">{name}</h4>
                   <p className="text-xs text-muted-foreground">{data.condition}</p>
                 </div>
-                <span className="text-3xl leading-none">{data.icon}</span>
+                <AnimatedWeatherIcon condition={data.condition} size="lg" />
               </div>
 
               <div className="flex items-center gap-3">
@@ -78,7 +109,9 @@ export function WeatherWidget({ weather }: WeatherWidgetProps) {
                   {data.forecast.map((day) => (
                     <div key={day.date} className="flex-1 text-center">
                       <p className="text-[10px] text-muted-foreground font-medium">{formatDay(day.date)}</p>
-                      <p className="text-sm leading-none my-0.5">{day.icon}</p>
+                      <div className="flex justify-center my-0.5">
+                        <AnimatedWeatherIcon condition={day.condition} size="sm" />
+                      </div>
                       <p className="text-[10px] text-foreground font-medium">{day.tempHigh}°/{day.tempLow}°</p>
                     </div>
                   ))}

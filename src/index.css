@@ -336,3 +336,36 @@
 .prose tr:nth-child(even) td {
   background: hsl(var(--muted) / 0.4);
 }
+
+/* Weather icon animations */
+@keyframes weather-sun-pulse {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.15) rotate(15deg); }
+}
+@keyframes weather-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+@keyframes weather-rain {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(2px); }
+  50% { transform: translateY(0); }
+  75% { transform: translateY(1px); }
+  100% { transform: translateY(0); }
+}
+@keyframes weather-snow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(3px) rotate(180deg); }
+}
+@keyframes weather-lightning {
+  0%, 90%, 100% { opacity: 1; }
+  92% { opacity: 0.3; }
+  94% { opacity: 1; }
+  96% { opacity: 0.4; }
+}
+
+.animate-weather-sun { animation: weather-sun-pulse 3s ease-in-out infinite; }
+.animate-weather-drift { animation: weather-drift 4s ease-in-out infinite; }
+.animate-weather-rain { animation: weather-rain 1.5s ease-in-out infinite; }
+.animate-weather-snow { animation: weather-snow 3s ease-in-out infinite; }
+.animate-weather-lightning { animation: weather-lightning 2s ease-in-out infinite; }
