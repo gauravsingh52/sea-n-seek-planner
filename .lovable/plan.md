@@ -1,62 +1,63 @@
 
 
-## Fix 4 Issues: Animated Weather Icons, Collaborate Page, Travel Checklist, Currency Converter
+## Real-Time Collaborative Editing for Itineraries
 
-### 1. Animated Weather Icons (Replace Emojis)
+### How It Works
 
-**Problem**: Weather widget uses emoji strings from the backend. Need CSS-animated SVG icons instead.
+When a user opens a shared trip (`/trip/:shareCode`), they join a real-time channel. Any user on the same page can:
+- **Add stops** to the itinerary
+- **Remove stops** from the itinerary  
+- **Reorder stops** via drag-and-drop
+- **See who's online** (presence indicators)
+- All changes sync instantly across all connected browsers
 
-**Solution**: Create animated weather icon components using Lucide icons with CSS animations (pulsing sun, falling rain drops, drifting clouds, etc.). Map weather conditions to these animated components in WeatherWidget.
+### Architecture
 
-**Changes**:
-- `src/components/WeatherWidget.tsx` — Replace `{data.icon}` emoji with an `<AnimatedWeatherIcon condition={data.condition} />` component that renders animated Lucide icons (Sun with pulse, Cloud with drift, CloudRain with drop animation, Snowflake with float, CloudLightning with flash)
-- `src/index.css` — Add keyframe animations: `@keyframes spin-slow`, `@keyframes rain-drop`, `@keyframes cloud-drift`, `@keyframes snow-float`, `@keyframes lightning-flash`
+```text
+User A (browser)  ──┐
+                    ├──  Supabase Realtime Channel  ──  shared_trips table (JSONB)
+User B (browser)  ──┘
+```
 
-### 2. Collaborate Page — Missing Features
+- Use **Supabase Realtime Presence** for online user indicators
+- Use **Postgres Changes** subscription on `shared_trips` table to sync itinerary edits
+- Each edit writes to the `shared_trips.itinerary_data` JSONB column, which triggers a broadcast to all subscribers
 
-**Problem**: The SharedTrip page (`/trip/:shareCode`) only shows a calendar grid and comments. It's missing: destination photos, weather, packing list, cost breakdown, map, checklist — all the features the main itinerary page has.
+### Implementation
 
-**Solution**: Port key sections from the Itinerary page into SharedTrip:
-- Add the TripMap component (lazy loaded)
-- Add DestinationPhotos
-- Add WeatherWidget (with useWeather hook)
-- Add Packing List display
-- Add Cost Breakdown
-- Add TripDuration stats
-- Fix the calendar overflow (already has `overflow-x-auto`)
+**1. Enable Realtime on `shared_trips` table** (migration)
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.shared_trips;
+```
 
-**Changes**:
-- `src/pages/SharedTrip.tsx` — Import and render TripMap, DestinationPhotos, WeatherWidget, TripDuration, PackingListCard, CostBreakdown. Reuse existing components. Add proper layout matching the main Itinerary page structure.
+**2. New hook: `src/hooks/useCollaborativeTrip.ts`**
+- Subscribes to `postgres_changes` on `shared_trips` filtered by `share_code`
+- Tracks presence (each user picks a random color + name)
+- Provides `updateItinerary(newData)` that writes to DB → triggers broadcast
+- Debounces writes to avoid conflicts (last-write-wins for simplicity)
 
-### 3. Travel Checklist Not Working
+**3. Update `src/pages/SharedTrip.tsx`**
+- Use the new `useCollaborativeTrip` hook instead of one-time fetch
+- Add online user avatars bar at the top
+- Add "Add Stop" form (reuse `CustomStop` component)
+- Add drag-and-drop reordering (reuse `SortableLegCard` from Itinerary page)
+- Add delete button on each leg card
+- Show real-time cursor/presence dots
 
-**Problem**: The checklist component code looks correct — it uses localStorage and Radix Checkbox. The likely issue is that `onCheckedChange` receives a `CheckedState` (boolean | "indeterminate") but the toggle function expects a simple call. Looking at the code, `toggle(item.id)` is called correctly via `onCheckedChange={() => toggle(item.id)}`. 
+**4. Update RLS** — Already has public INSERT/SELECT. Need public UPDATE policy for collaborative edits:
+- Add UPDATE policy: `true` (anyone with the link can edit — this matches the collaboration model)
 
-The real problem: the `select` dropdowns in CurrencyConverter use `className="bg-transparent"` which in dark mode makes `<option>` elements invisible (dark text on dark background). Same pattern may affect checkbox visibility.
+Wait — UPDATE policy already exists but restricted to `auth.uid() = created_by`. Need a new policy allowing anyone to update.
 
-**Investigation**: The checkbox code looks functionally correct. The issue may be that clicking checkboxes doesn't visually update due to CSS conflicts with the `glass-strong` card styling, or the `max-h-48 overflow-y-auto` container is eating scroll events. Will ensure the checkbox container allows proper interaction and add visual feedback.
-
-**Changes**:
-- `src/components/TravelChecklist.tsx` — Increase `max-h-48` to `max-h-64` to show more items, ensure checkbox click area is large enough, add a subtle animation on check
-
-### 4. Currency Converter Not Working
-
-**Problem**: The `<select>` elements use `className="bg-transparent"` which in dark mode renders `<option>` text as invisible (browser renders option text in the system default color). The converter logic itself is correct (hardcoded rates, simple math).
-
-**Solution**: Style the `<select>` and `<option>` elements properly for dark mode. Use `bg-background text-foreground` on the select, and add explicit colors on `<option>` elements.
-
-**Changes**:
-- `src/components/CurrencyConverter.tsx` — Fix select styling: use `bg-background text-foreground` and add `className="bg-background text-foreground"` to each `<option>`. Also add NZD to rates.
-
----
+**5. Extract `SortableLegCard` and `LegCard`** from `src/pages/Itinerary.tsx` into `src/components/LegCard.tsx` for reuse on SharedTrip page.
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/WeatherWidget.tsx` | Replace emoji icons with animated Lucide SVG icons |
-| `src/index.css` | Add weather animation keyframes |
-| `src/pages/SharedTrip.tsx` | Add map, photos, weather, packing list, cost breakdown, duration |
-| `src/components/TravelChecklist.tsx` | Fix scroll container height, improve checkbox interaction |
-| `src/components/CurrencyConverter.tsx` | Fix dark mode select/option styling |
+| Migration | Enable realtime on `shared_trips`, add open UPDATE policy |
+| `src/hooks/useCollaborativeTrip.ts` | New hook: realtime subscription + presence + write-back |
+| `src/components/LegCard.tsx` | Extract SortableLegCard and LegCard from Itinerary page |
+| `src/pages/SharedTrip.tsx` | Add collaborative editing UI: presence bar, add/delete/reorder stops, real-time sync |
+| `src/pages/Itinerary.tsx` | Import LegCard from new shared component |
 
