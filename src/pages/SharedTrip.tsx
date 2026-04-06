@@ -1,6 +1,8 @@
-import { lazy, Suspense, useEffect, useState, Component, ReactNode } from "react";
+import { lazy, Suspense, Component, ReactNode, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MessageSquare, Send, MapPin, Luggage } from "lucide-react";
+import { ArrowLeft, MessageSquare, Send, MapPin, Luggage, Users, Trash2 } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +12,12 @@ import { ItineraryCalendar } from "@/components/ItineraryCalendar";
 import { DestinationPhotos } from "@/components/DestinationPhotos";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { TripDuration } from "@/components/TripDuration";
+import { CustomStop } from "@/components/CustomStop";
+import { SortableLegCard, LegCard } from "@/components/LegCard";
 import { useWeather } from "@/hooks/useWeather";
+import { useCollaborativeTrip } from "@/hooks/useCollaborativeTrip";
 import { supabase } from "@/integrations/supabase/client";
-import type { ItineraryData } from "@/types/itinerary";
+import type { ItineraryData, ItineraryLeg } from "@/types/itinerary";
 import { toast } from "sonner";
 
 const TripMap = lazy(() => import("@/components/TripMap").then(m => ({ default: m.TripMap })));
@@ -86,7 +91,34 @@ function CostBreakdown({ legs, totalCost, currency }: { legs: ItineraryData["leg
   );
 }
 
-function CommentsSection({ tripId, comments: initialComments }: { tripId: string; comments: Comment[] }) {
+function PresenceBar({ users }: { users: { id: string; name: string; color: string }[] }) {
+  if (users.length === 0) return null;
+  return (
+    <div className="flex items-center gap-2 px-1">
+      <Users className="w-3.5 h-3.5 text-muted-foreground" />
+      <span className="text-xs text-muted-foreground">{users.length} online</span>
+      <div className="flex -space-x-2">
+        {users.slice(0, 5).map((u) => (
+          <div
+            key={u.id}
+            className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-background"
+            style={{ backgroundColor: u.color }}
+            title={u.name}
+          >
+            {u.name[0]}
+          </div>
+        ))}
+        {users.length > 5 && (
+          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold bg-muted text-muted-foreground ring-2 ring-background">
+            +{users.length - 5}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CommentsSection({ tripId, initialComments }: { tripId: string; initialComments: Comment[] }) {
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [newComment, setNewComment] = useState("");
   const [authorName, setAuthorName] = useState("");
@@ -149,41 +181,99 @@ function CommentsSection({ tripId, comments: initialComments }: { tripId: string
 export default function SharedTrip() {
   const { shareCode } = useParams<{ shareCode: string }>();
   const navigate = useNavigate();
-  const [itinerary, setItinerary] = useState<ItineraryData | null>(null);
-  const [title, setTitle] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [tripId, setTripId] = useState<string>("");
+  const { itinerary, title, tripId, loading, onlineUsers, updateItinerary } = useCollaborativeTrip(shareCode);
   const { weather } = useWeather(itinerary);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!shareCode) return;
-    (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("shared_trips")
-        .select("*")
-        .eq("share_code", shareCode)
-        .maybeSingle();
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
 
-      if (error || !data) { setLoading(false); return; }
-
-      setItinerary(data.itinerary_data as unknown as ItineraryData);
-      setTitle(data.title || "Shared Trip");
-      setTripId(data.id);
-
-      const { data: commentsData } = await supabase
+  // Load comments once tripId is available
+  useState(() => {
+    if (tripId && !commentsLoaded) {
+      supabase
         .from("trip_comments")
         .select("*")
-        .eq("shared_trip_id", data.id)
-        .order("created_at", { ascending: true });
+        .eq("shared_trip_id", tripId)
+        .order("created_at", { ascending: true })
+        .then(({ data }) => {
+          setComments((data as Comment[]) || []);
+          setCommentsLoaded(true);
+        });
+    }
+  });
 
-      setComments((commentsData as Comment[]) || []);
-      setLoading(false);
-    })();
-  }, [shareCode]);
+  // Re-fetch comments when tripId changes
+  const [prevTripId, setPrevTripId] = useState("");
+  if (tripId && tripId !== prevTripId) {
+    setPrevTripId(tripId);
+    supabase
+      .from("trip_comments")
+      .select("*")
+      .eq("shared_trip_id", tripId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        setComments((data as Comment[]) || []);
+        setCommentsLoaded(true);
+      });
+  }
 
   const symbol = itinerary ? (currencySymbols[itinerary.currency] || itinerary.currency || "$") : "$";
+  const maxDay = itinerary?.days || Math.max(...(itinerary?.legs.map(l => l.day || 1) || [1]));
+
+  const dayGroups: Record<number, typeof itinerary.legs> = {};
+  if (itinerary) {
+    itinerary.legs.forEach((leg) => {
+      const day = leg.day || 1;
+      if (!dayGroups[day]) dayGroups[day] = [];
+      dayGroups[day].push(leg);
+    });
+  }
+  const hasDays = itinerary && Object.keys(dayGroups).length > 1;
+
+  const handleAddStop = (leg: ItineraryLeg) => {
+    if (!itinerary) return;
+    updateItinerary({
+      ...itinerary,
+      legs: [...itinerary.legs, leg],
+      totalCost: itinerary.totalCost + leg.cost,
+    });
+    toast.success("Stop added — synced to all viewers!");
+  };
+
+  const handleDeleteStop = (legId: string) => {
+    if (!itinerary) return;
+    const leg = itinerary.legs.find(l => l.id === legId);
+    updateItinerary({
+      ...itinerary,
+      legs: itinerary.legs.filter(l => l.id !== legId),
+      totalCost: itinerary.totalCost - (leg?.cost || 0),
+    });
+    toast.success("Stop removed");
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDragId(null);
+    const { active, over } = event;
+    if (!over || active.id === over.id || !itinerary) return;
+    const oldIndex = itinerary.legs.findIndex((l) => l.id === active.id);
+    const newIndex = itinerary.legs.findIndex((l) => l.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newLegs = arrayMove(itinerary.legs, oldIndex, newIndex);
+      updateItinerary({ ...itinerary, legs: newLegs });
+      toast.success("Itinerary reordered");
+    }
+  };
+
+  const activeLeg = activeDragId ? itinerary?.legs.find((l) => l.id === activeDragId) : null;
 
   if (loading) {
     return (
@@ -220,7 +310,10 @@ export default function SharedTrip() {
           <Logo size={36} />
           <div>
             <h1 className="text-lg font-display font-bold gradient-text">{title}</h1>
-            <p className="text-xs text-muted-foreground">Shared itinerary • {itinerary.legs.length} stops</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground">Collaborative itinerary • {itinerary.legs.length} stops</p>
+              <PresenceBar users={onlineUsers} />
+            </div>
           </div>
         </div>
       </header>
@@ -244,6 +337,40 @@ export default function SharedTrip() {
         {/* Destination photos */}
         <DestinationPhotos itinerary={itinerary} />
 
+        {/* Drag-and-drop itinerary list */}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <SortableContext items={itinerary.legs.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+            {hasDays ? (
+              Object.entries(dayGroups).sort(([a], [b]) => Number(a) - Number(b)).map(([day, legs]) => (
+                <div key={day}>
+                  <div className="flex items-center gap-2 mb-3 mt-4 first:mt-0">
+                    <div className="w-8 h-8 rounded-full earth-gradient flex items-center justify-center text-primary-foreground text-xs font-bold">{day}</div>
+                    <span className="text-sm font-display font-semibold text-foreground">Day {day}</span>
+                    <div className="flex-1 h-px bg-border/30" />
+                  </div>
+                  {legs.map((leg, i) => (
+                    <SortableLegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === legs.length - 1} index={i} onDelete={handleDeleteStop} />
+                  ))}
+                </div>
+              ))
+            ) : (
+              itinerary.legs.map((leg, i) => (
+                <SortableLegCard key={leg.id} leg={leg} symbol={symbol} weather={weather} isLast={i === itinerary.legs.length - 1} index={i} onDelete={handleDeleteStop} />
+              ))
+            )}
+          </SortableContext>
+          <DragOverlay>
+            {activeLeg ? (
+              <div className="opacity-90 scale-105">
+                <LegCard leg={activeLeg} symbol={symbol} weather={weather} isLast index={0} />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+
+        {/* Add custom stop */}
+        <CustomStop onAdd={handleAddStop} maxDay={maxDay} />
+
         {/* Calendar view */}
         <Card className="glass-strong gradient-border p-4 overflow-x-auto">
           <div className="min-w-[600px]">
@@ -266,7 +393,7 @@ export default function SharedTrip() {
         </div>
 
         {/* Comments */}
-        <CommentsSection tripId={tripId} comments={comments} />
+        {tripId && <CommentsSection tripId={tripId} initialComments={comments} />}
       </div>
     </div>
   );
