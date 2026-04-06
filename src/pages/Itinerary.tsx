@@ -1,6 +1,6 @@
 import { lazy, Suspense, Component, ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Ship, Hotel, Bus, MapPin, Train, Car, Plane, Sun, Moon, Bookmark, BookmarkCheck, Clock, Luggage, List, CalendarDays, GripVertical } from "lucide-react";
+import { ArrowLeft, MapPin, Sun, Moon, Bookmark, BookmarkCheck, Clock, Luggage, List, CalendarDays } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { SortableLegCard, LegCard } from "@/components/LegCard";
@@ -39,26 +39,7 @@ class MapErrorBoundary extends Component<{ children: ReactNode }, { hasError: bo
   }
 }
 
-const iconMap: Record<string, any> = { ship: Ship, train: Train, car: Car, plane: Plane, bus: Bus, hotel: Hotel, pin: MapPin };
-
-function getIcon(leg: ItineraryLeg) {
-  if (leg.icon && iconMap[leg.icon]) return iconMap[leg.icon];
-  if (leg.type === "transport") return Ship;
-  if (leg.type === "hotel") return Hotel;
-  return MapPin;
-}
-
-const legColors: Record<string, string> = { transport: "border-l-primary", hotel: "border-l-accent", activity: "border-l-secondary" };
-const legIconBg: Record<string, string> = { transport: "bg-primary/15 text-primary", hotel: "bg-accent/15 text-accent", activity: "bg-secondary/15 text-secondary-foreground" };
 const currencySymbols: Record<string, string> = { INR: "₹", EUR: "€", USD: "$", GBP: "£", JPY: "¥", THB: "฿", AUD: "A$", CAD: "C$", SGD: "S$", MYR: "RM", NZD: "NZ$" };
-
-function WeatherBadge({ data }: { data: WeatherData }) {
-  return (
-    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground" title={data.condition}>
-      {data.icon} {data.tempHigh}°/{data.tempLow}°C
-    </span>
-  );
-}
 
 function CostBreakdown({ legs, totalCost, currency }: { legs: ItineraryLeg[]; totalCost: number; currency: string }) {
   const categories: Record<string, number> = {};
