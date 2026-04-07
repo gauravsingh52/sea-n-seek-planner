@@ -207,6 +207,7 @@ export default function Index() {
                 </Button>
               </>
             )}
+            <UserMenu />
           </div>
         </div>
       </header>
