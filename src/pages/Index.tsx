@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Send, Trash2, Map, ArrowRight, Sun, Moon, Bookmark, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,14 +17,17 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { ChatHistory } from "@/components/ChatHistory";
 import { TripComparison } from "@/components/TripComparison";
 import { TripTemplates } from "@/components/TripTemplates";
+import { UserMenu } from "@/components/UserMenu";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useGeoSuggestions } from "@/hooks/useGeoSuggestions";
 import { useSmartSuggestions } from "@/hooks/useSmartSuggestions";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { toast } from "sonner";
 
 function Particles() {
   return (
