@@ -107,10 +107,20 @@ export default function Index() {
     }
   }, [messages]);
 
+  const handleSendWithCredits = useCallback((text: string) => {
+    if (credits <= 0) {
+      toast.error("No credits remaining! You've used all 10 credits.");
+      return;
+    }
+    sendMessage(text, tripSettings, (remaining) => {
+      refreshCredits();
+    });
+  }, [credits, sendMessage, tripSettings, refreshCredits]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    sendMessage(input.trim(), tripSettings);
+    handleSendWithCredits(input.trim());
     setInput("");
   };
 
