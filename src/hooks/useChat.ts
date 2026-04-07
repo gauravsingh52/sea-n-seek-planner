@@ -158,6 +158,12 @@ export function useChat() {
         throw new Error(errData.error || `Error ${resp.status}`);
       }
 
+      // Update credits from response header
+      const creditsHeader = resp.headers.get("X-Credits-Remaining");
+      if (creditsHeader && onCreditsUpdate) {
+        onCreditsUpdate(parseInt(creditsHeader, 10));
+      }
+
       if (!resp.body) throw new Error("No response body");
 
       const reader = resp.body.getReader();
