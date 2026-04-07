@@ -3,6 +3,7 @@ import type { ItineraryData } from "@/types/itinerary";
 import { playMessageSound } from "@/hooks/useMessageSound";
 import type { TripSettingsData } from "@/components/TripSettings";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Message = {
   id: string;
@@ -110,7 +111,7 @@ export function useChat() {
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [packingList, setPackingList] = useState<string[]>([]);
 
-  const sendMessage = useCallback(async (input: string, settings?: TripSettingsData) => {
+  const sendMessage = useCallback(async (input: string, settings?: TripSettingsData, onCreditsUpdate?: (credits: number) => void) => {
     const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: input };
     const allMessages = [...messages, userMsg];
     setMessages(prev => [...prev, userMsg]);
@@ -137,11 +138,14 @@ export function useChat() {
         lastMsg.content += "\n\n[SYSTEM HINT: User wants comparison — output 2-3 SEPARATE itinerary-json blocks, one per option]";
       }
 
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           messages: apiMessages,
@@ -152,6 +156,12 @@ export function useChat() {
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({ error: "Request failed" }));
         throw new Error(errData.error || `Error ${resp.status}`);
+      }
+
+      // Update credits from response header
+      const creditsHeader = resp.headers.get("X-Credits-Remaining");
+      if (creditsHeader && onCreditsUpdate) {
+        onCreditsUpdate(parseInt(creditsHeader, 10));
       }
 
       if (!resp.body) throw new Error("No response body");

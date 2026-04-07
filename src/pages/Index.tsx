@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Send, Trash2, Map, ArrowRight, Sun, Moon, Bookmark, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,14 +17,17 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { ChatHistory } from "@/components/ChatHistory";
 import { TripComparison } from "@/components/TripComparison";
 import { TripTemplates } from "@/components/TripTemplates";
+import { UserMenu } from "@/components/UserMenu";
 import { useChat } from "@/hooks/useChat";
 import { useTrip } from "@/contexts/TripContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useGeoSuggestions } from "@/hooks/useGeoSuggestions";
 import { useSmartSuggestions } from "@/hooks/useSmartSuggestions";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { toast } from "sonner";
 
 function Particles() {
   return (
@@ -55,6 +58,7 @@ export default function Index() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions, triggerComparison } = useChat();
   const { setItinerary } = useTrip();
+  const { credits, refreshCredits } = useAuthContext();
   const { count: savedCount } = useSavedTrips();
   const { sessions, saveSession, saveSessionDirect, renameSession, deleteSession, clearAll: clearHistory } = useChatHistory();
   const { suggestions: geoSuggestions, locationLabel: geoLabel, isLoading: geoLoading, countryCode } = useGeoSuggestions();
@@ -103,10 +107,20 @@ export default function Index() {
     }
   }, [messages]);
 
+  const handleSendWithCredits = useCallback((text: string) => {
+    if (credits <= 0) {
+      toast.error("No credits remaining! You've used all 10 credits.");
+      return;
+    }
+    sendMessage(text, tripSettings, (remaining) => {
+      refreshCredits();
+    });
+  }, [credits, sendMessage, tripSettings, refreshCredits]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    sendMessage(input.trim(), tripSettings);
+    handleSendWithCredits(input.trim());
     setInput("");
   };
 
@@ -193,6 +207,7 @@ export default function Index() {
                 </Button>
               </>
             )}
+            <UserMenu />
           </div>
         </div>
       </header>
@@ -231,7 +246,7 @@ export default function Index() {
                 : suggestions.map((prompt, i) => (
                     <button
                       key={prompt.text}
-                      onClick={() => sendMessage(prompt.text, tripSettings)}
+                      onClick={() => handleSendWithCredits(prompt.text)}
                       className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 animate-slide-up-fade"
                       style={{ animationDelay: `${0.4 + i * 0.1}s` }}
                     >
@@ -245,7 +260,7 @@ export default function Index() {
                     </button>
                   ))}
             </div>
-            <TripTemplates onSelect={(prompt) => sendMessage(prompt, tripSettings)} />
+            <TripTemplates onSelect={(prompt) => handleSendWithCredits(prompt)} />
           </div>
         ) : (
           <div className="relative h-full">
@@ -269,7 +284,7 @@ export default function Index() {
                   <>
                     <FollowUpChips
                       suggestions={followUpSuggestions}
-                      onSelect={(text) => sendMessage(text, tripSettings)}
+                      onSelect={(text) => handleSendWithCredits(text)}
                       disabled={isLoading}
                       regionCode={countryCode}
                     />

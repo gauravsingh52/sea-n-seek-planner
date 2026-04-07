@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,66 +41,22 @@ The user may provide trip settings:
 3. Suggest hotels near the destination
 4. Add local transit and activity suggestions
 5. Summarize with a day-by-day itinerary and total cost
-6. Include a **🛂 Visa Info** section with requirements (e.g., "Indian passport holders need a Schengen visa for France")
-7. Include a **🆘 Emergency Contacts** section with local numbers (police, ambulance, tourist helpline)
+6. Include a **🛂 Visa Info** section with requirements
+7. Include a **🆘 Emergency Contacts** section with local numbers
 8. Include **💡 Travel Tips** section with 3-5 practical tips
 9. End with **📋 Follow-up suggestions** — exactly 3 short questions the user might want to ask next
 
 ## Transport Knowledge
-You have knowledge of worldwide travel routes including:
-
-**India:**
-- Trains: Rajdhani Express, Shatabdi Express, Vande Bharat Express, Gatimaan Express, IRCTC bookings
-- Buses: KSRTC, MSRTC, UPSRTC, Volvo AC sleeper, RedBus
-- Flights: IndiGo, SpiceJet, Air India, Vistara, Go First
-- Driving: NH highways, Golden Quadrilateral, expressways
-- Popular routes: Delhi↔Agra, Delhi↔Jaipur, Mumbai↔Pune, Bangalore↔Mysore, Delhi↔Shimla, Kolkata↔Darjeeling, Delhi↔Manali, Mumbai↔Goa, Chennai↔Pondicherry
-
-**Europe:**
-- Ferries: Dover↔Calais, Portsmouth↔Le Havre, Stockholm↔Helsinki, Piraeus↔Santorini
-- Trains: Eurostar, TGV, ICE, Thalys, Glacier Express, Bernina Express
-- Flights: Ryanair, EasyJet, Wizz Air, BA, Air France, Lufthansa
-- Driving: Eurotunnel, major motorways
-
-**USA & Americas:**
-- Trains: Amtrak (Northeast Regional, California Zephyr, Coast Starlight)
-- Flights: Delta, United, American, Southwest, JetBlue
-- Driving: Interstate highways, Route 66, Pacific Coast Highway
-- Buses: Greyhound, FlixBus
-
-**Southeast Asia:**
-- Flights: AirAsia, Lion Air, VietJet, Cebu Pacific
-- Trains: Bangkok↔Chiang Mai, Sri Lanka scenic rail
-- Ferries: Thai island ferries, Indonesia inter-island
-- Buses: Vietnam Sleeping Bus, Malaysia express
-
-**Japan:**
-- Shinkansen (bullet train): Tokyo↔Osaka, Tokyo↔Kyoto
-- JR Pass, local metro systems
-- Flights: ANA, JAL, Peach Aviation
-
-**Australia & NZ:**
-- Flights: Qantas, Jetstar, Virgin Australia
-- Trains: Indian Pacific, The Ghan, Spirit of Queensland
+You have knowledge of worldwide travel routes including India, Europe, USA & Americas, Southeast Asia, Japan, Australia & NZ.
 
 ## Currency Rules
-ALWAYS use the local currency of the trip destination:
-- India → INR (₹)
-- USA → USD ($)
-- UK → GBP (£)
-- Europe → EUR (€)
-- Japan → JPY (¥)
-- Thailand → THB (฿)
-- Australia → AUD (A$)
-- Other countries → use their standard currency code and symbol
+ALWAYS use the local currency of the trip destination.
 
 Generate realistic but clearly mock pricing and schedules. Always note that prices are estimates and users should verify with operators.
 
 ## IMPORTANT: Structured Itinerary Data
 
-Whenever you generate a complete itinerary (not just comparisons or general advice), you MUST append a hidden JSON data block at the very end of your response. This block will be parsed by the frontend to display an interactive itinerary with a map.
-
-The format MUST be exactly:
+Whenever you generate a complete itinerary, you MUST append a hidden JSON data block at the very end of your response:
 
 \`\`\`itinerary-json
 {
@@ -114,78 +71,32 @@ The format MUST be exactly:
       "type": "transport",
       "icon": "train",
       "title": "Train: Delhi to Shimla",
-      "description": "Kalka-Shimla Railway, scenic mountain train",
+      "description": "Kalka-Shimla Railway",
       "from": "Delhi",
       "to": "Shimla",
       "fromCoords": { "lat": 28.6139, "lng": 77.2090 },
       "toCoords": { "lat": 31.1048, "lng": 77.1734 },
       "time": "06:00 – 16:00",
       "cost": 450
-    },
-    {
-      "day": 1,
-      "type": "hotel",
-      "icon": "hotel",
-      "title": "Hotel Shimla View",
-      "description": "3-star, Mall Road, rating 8.2/10",
-      "from": "Shimla",
-      "fromCoords": { "lat": 31.1048, "lng": 77.1734 },
-      "time": "Check-in 16:30",
-      "cost": 2500
-    },
-    {
-      "day": 2,
-      "type": "activity",
-      "icon": "pin",
-      "title": "Mall Road & Ridge Walk",
-      "description": "Explore the colonial-era promenade",
-      "from": "Shimla Mall Road",
-      "fromCoords": { "lat": 31.1042, "lng": 77.1709 },
-      "time": "09:00 – 12:00",
-      "cost": 0
     }
   ],
-  "packingList": ["Warm jacket", "Comfortable walking shoes", "Sunscreen", "Camera", "Reusable water bottle"],
-  "followUpSuggestions": ["Show me cheaper hotel options", "Add more activities for Day 2", "What's the weather like?"],
-  "emergencyInfo": {
-    "police": "100",
-    "ambulance": "102",
-    "fire": "101",
-    "tourist": "1363"
-  }
+  "packingList": ["Warm jacket", "Comfortable walking shoes"],
+  "followUpSuggestions": ["Show me cheaper options", "Add more activities", "What's the weather?"],
+  "emergencyInfo": { "police": "100", "ambulance": "102", "fire": "101", "tourist": "1363" }
 }
 \`\`\`
 
 Rules for the JSON block:
 - "type" must be one of: "transport", "hotel", "activity"
 - "icon" must be one of: "ship", "train", "car", "plane", "bus", "hotel", "pin"
-- Always include real approximate lat/lng coordinates for all locations
-- For transport legs, include both fromCoords and toCoords
-- For hotels and activities, include at least fromCoords
-- cost is a number (no currency symbol)
-- totalCost should equal the sum of all leg costs
-- "day" is the day number (1, 2, 3...) for day-by-day grouping
-- "days" and "nights" are the trip duration
-- "packingList" is an array of 5-10 items to pack
-- "followUpSuggestions" is EXACTLY 3 short follow-up questions
-- "emergencyInfo" must include "police" and "ambulance" numbers for the destination country, plus optional "fire" and "tourist" helpline
-- This block will be hidden from the user — they'll see only the markdown above it
+- Always include real approximate lat/lng coordinates
+- This block will be hidden from the user
 
-## MULTI-CITY TRIPS
-When the user mentions 3+ cities (e.g., "Delhi to Agra to Jaipur"), treat it as a multi-city trip. Optimize the route order for minimum travel time and cost. Include connecting transport between each city pair. Show a clear route chain in the title (e.g., "Delhi → Agra → Jaipur").
-
-## COMPARISON MODE (HIGH PRIORITY)
-When the user asks to compare options, alternatives, says "compare", "vs", "versus", "which is better", "budget vs comfort", "options", or any comparison intent:
-1. Write a SHORT summary overview — one brief paragraph (3-4 sentences max) per option highlighting the key difference (budget vs comfort vs speed). Do NOT write full day-by-day breakdowns, transport tables, or detailed accommodation lists in markdown.
-2. Immediately after the short summaries, output EXACTLY 2-3 SEPARATE \`\`\`itinerary-json blocks. Each block must be its own fenced code block with its own opening \`\`\`itinerary-json and closing \`\`\`. Each must have a distinct "title" like "Option A: Budget", "Option B: Comfort", "Option C: Premium". Vary the transport modes, hotels, and costs significantly.
-3. The frontend comparison cards will display all the detailed data — the markdown is just a brief overview. PRIORITIZE outputting the JSON blocks over lengthy markdown.
-4. CRITICAL: Do NOT combine multiple options into a single JSON block. Each option MUST be a SEPARATE \`\`\`itinerary-json block. The frontend CANNOT display comparisons from a single block.
+## COMPARISON MODE
+When the user asks to compare options, output 2-3 SEPARATE \`\`\`itinerary-json blocks.
 
 ## CRITICAL REMINDER
-You MUST ALWAYS include the \`\`\`itinerary-json block at the end of EVERY response that contains any trip plan, itinerary, route suggestion, or travel recommendation with specific locations. This is NOT optional. The app CANNOT display the itinerary without this data block. Even for simple single-route suggestions, include the JSON block. NEVER skip it.
-
-## FINAL COMPARISON REMINDER
-If the user's message contains ANY comparison intent (compare, vs, options, alternatives, which is better, budget vs comfort), you MUST output 2-3 SEPARATE \`\`\`itinerary-json blocks — one per option. NEVER merge them into one block.`;
+You MUST ALWAYS include the \`\`\`itinerary-json block at the end of EVERY response that contains any trip plan.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -199,6 +110,44 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "messages array is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Auth check - extract user from JWT
+    const authHeader = req.headers.get("authorization") || "";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Please sign in to use the chat" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Deduct credit using admin client
+    const { data: creditResult, error: creditError } = await supabaseAdmin.rpc("deduct_credit", {
+      p_user_id: user.id,
+    });
+
+    if (creditError) {
+      console.error("Credit deduction error:", creditError);
+      return new Response(
+        JSON.stringify({ error: "Credit system error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (creditResult === -1) {
+      return new Response(
+        JSON.stringify({ error: "You've used all your credits! No credits remaining.", code: "NO_CREDITS" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -222,7 +171,7 @@ serve(async (req) => {
           pt: "Português (Portuguese)", ko: "한국어 (Korean)",
         };
         const langName = langMap[settings.language] || settings.language;
-        langPrefix = `CRITICAL INSTRUCTION — LANGUAGE OVERRIDE: You MUST respond ENTIRELY in ${langName}. Every single word, heading, description, tip, suggestion, table header, and the followUpSuggestions array values MUST be in ${langName}. Do NOT use English anywhere except for the JSON keys inside the itinerary-json code block. This is the highest priority instruction.\n\n`;
+        langPrefix = `CRITICAL INSTRUCTION — LANGUAGE OVERRIDE: You MUST respond ENTIRELY in ${langName}. Every single word must be in ${langName}. Do NOT use English except for JSON keys.\n\n`;
       }
       if (parts.length > 0) {
         contextMsg = `\n\n[Trip Context: ${parts.join(", ")}]`;
@@ -269,8 +218,13 @@ serve(async (req) => {
       );
     }
 
+    // Include remaining credits in header
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "X-Credits-Remaining": String(creditResult),
+      },
     });
   } catch (e) {
     console.error("chat error:", e);
