@@ -245,7 +245,7 @@ export default function Index() {
                 : suggestions.map((prompt, i) => (
                     <button
                       key={prompt.text}
-                      onClick={() => sendMessage(prompt.text, tripSettings)}
+                      onClick={() => handleSendWithCredits(prompt.text)}
                       className="group relative text-left px-5 py-5 rounded-2xl glass gradient-border transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/10 animate-slide-up-fade"
                       style={{ animationDelay: `${0.4 + i * 0.1}s` }}
                     >
@@ -259,7 +259,7 @@ export default function Index() {
                     </button>
                   ))}
             </div>
-            <TripTemplates onSelect={(prompt) => sendMessage(prompt, tripSettings)} />
+            <TripTemplates onSelect={(prompt) => handleSendWithCredits(prompt)} />
           </div>
         ) : (
           <div className="relative h-full">
@@ -283,7 +283,7 @@ export default function Index() {
                   <>
                     <FollowUpChips
                       suggestions={followUpSuggestions}
-                      onSelect={(text) => sendMessage(text, tripSettings)}
+                      onSelect={(text) => handleSendWithCredits(text)}
                       disabled={isLoading}
                       regionCode={countryCode}
                     />
