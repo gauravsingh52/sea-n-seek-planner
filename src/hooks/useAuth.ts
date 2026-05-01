@@ -32,6 +32,13 @@ export function useAuth() {
   }, []);
 
   const fetchCredits = async (userId: string) => {
+    // Call refresh_daily_credits which auto-resets if 24h passed
+    const { data: refreshed } = await supabase.rpc("refresh_daily_credits", { p_user_id: userId });
+    if (typeof refreshed === "number") {
+      setCredits(refreshed);
+      return;
+    }
+    // Fallback
     const { data } = await supabase
       .from("profiles")
       .select("credits")
