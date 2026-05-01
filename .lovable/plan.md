@@ -1,63 +1,43 @@
 
+## Two Deliverables
 
-## Real-Time Collaborative Editing for Itineraries
+### 1. Daily 10 Credits + Guest Access (ChatGPT-style)
 
-### How It Works
+**How it works:**
+- Anonymous users (not logged in) get 2-3 free chats stored in localStorage. No login required.
+- After the free chats are used, a login prompt appears.
+- Logged-in users receive 10 credits daily. Credits reset every 24 hours (tracked by a `last_credit_refresh` timestamp on the `profiles` table).
 
-When a user opens a shared trip (`/trip/:shareCode`), they join a real-time channel. Any user on the same page can:
-- **Add stops** to the itinerary
-- **Remove stops** from the itinerary  
-- **Reorder stops** via drag-and-drop
-- **See who's online** (presence indicators)
-- All changes sync instantly across all connected browsers
+**Database changes:**
+- Add `last_credit_refresh` column (timestamp) to `profiles` table.
+- Update the `deduct_credit` function to auto-refresh credits to 10 if 24+ hours have passed since `last_credit_refresh`.
 
-### Architecture
-
-```text
-User A (browser)  ──┐
-                    ├──  Supabase Realtime Channel  ──  shared_trips table (JSONB)
-User B (browser)  ──┘
-```
-
-- Use **Supabase Realtime Presence** for online user indicators
-- Use **Postgres Changes** subscription on `shared_trips` table to sync itinerary edits
-- Each edit writes to the `shared_trips.itinerary_data` JSONB column, which triggers a broadcast to all subscribers
-
-### Implementation
-
-**1. Enable Realtime on `shared_trips` table** (migration)
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.shared_trips;
-```
-
-**2. New hook: `src/hooks/useCollaborativeTrip.ts`**
-- Subscribes to `postgres_changes` on `shared_trips` filtered by `share_code`
-- Tracks presence (each user picks a random color + name)
-- Provides `updateItinerary(newData)` that writes to DB → triggers broadcast
-- Debounces writes to avoid conflicts (last-write-wins for simplicity)
-
-**3. Update `src/pages/SharedTrip.tsx`**
-- Use the new `useCollaborativeTrip` hook instead of one-time fetch
-- Add online user avatars bar at the top
-- Add "Add Stop" form (reuse `CustomStop` component)
-- Add drag-and-drop reordering (reuse `SortableLegCard` from Itinerary page)
-- Add delete button on each leg card
-- Show real-time cursor/presence dots
-
-**4. Update RLS** — Already has public INSERT/SELECT. Need public UPDATE policy for collaborative edits:
-- Add UPDATE policy: `true` (anyone with the link can edit — this matches the collaboration model)
-
-Wait — UPDATE policy already exists but restricted to `auth.uid() = created_by`. Need a new policy allowing anyone to update.
-
-**5. Extract `SortableLegCard` and `LegCard`** from `src/pages/Itinerary.tsx` into `src/components/LegCard.tsx` for reuse on SharedTrip page.
-
-### Files Modified
+**App changes:**
 
 | File | Change |
 |------|--------|
-| Migration | Enable realtime on `shared_trips`, add open UPDATE policy |
-| `src/hooks/useCollaborativeTrip.ts` | New hook: realtime subscription + presence + write-back |
-| `src/components/LegCard.tsx` | Extract SortableLegCard and LegCard from Itinerary page |
-| `src/pages/SharedTrip.tsx` | Add collaborative editing UI: presence bar, add/delete/reorder stops, real-time sync |
-| `src/pages/Itinerary.tsx` | Import LegCard from new shared component |
+| `src/App.tsx` | Remove `ProtectedRoute` wrapper from `/` route so guests can access the chat page |
+| `src/pages/Index.tsx` | Track guest message count in localStorage. After 2-3 messages, show a login modal instead of sending. Logged-in users use credits as before. |
+| `src/components/CreditBar.tsx` | Show "Guest: X/3 free chats" for anonymous users, normal credit bar for logged-in users |
+| `supabase/functions/chat/index.ts` | Allow unauthenticated requests with a rate limit (max 3 per IP/session). For authenticated users, keep credit deduction as-is. |
+| `src/hooks/useAuth.ts` | On login, call `refreshCredits` which now auto-resets if 24h passed (handled server-side) |
+| Migration | Add `last_credit_refresh` to profiles, update `deduct_credit` RPC |
 
+**Guest flow:**
+1. User lands on `/` without logging in -- sees chat UI
+2. Can send up to 3 messages (tracked in localStorage)
+3. On 4th message, a modal appears: "Sign up to continue -- get 10 free credits daily!"
+4. After signup/login, credits work normally with daily refresh
+
+### 2. Downloadable .pptx Presentation
+
+A professionally designed PowerPoint file about TripMap Planner covering:
+- Project overview and purpose
+- Key features (AI chat, itinerary planning, real-time collaboration, weather, currency converter, etc.)
+- Tech stack (React, Supabase, AI Gateway)
+- Architecture diagram
+- Credit system explanation
+- Demo screenshots description
+- Future roadmap
+
+Output: `/mnt/documents/TripMap_Planner_Presentation.pptx`
