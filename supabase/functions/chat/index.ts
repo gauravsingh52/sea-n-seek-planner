@@ -226,13 +226,17 @@ serve(async (req) => {
     }
 
     // Include remaining credits in header
-    return new Response(response.body, {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "X-Credits-Remaining": String(creditResult),
-      },
-    });
+    const responseHeaders: Record<string, string> = {
+      ...corsHeaders,
+      "Content-Type": "text/event-stream",
+    };
+    if (creditResult !== null) {
+      responseHeaders["X-Credits-Remaining"] = String(creditResult);
+    }
+    if (isGuest) {
+      responseHeaders["X-Guest-Mode"] = "true";
+    }
+    return new Response(response.body, { headers: responseHeaders });
   } catch (e) {
     console.error("chat error:", e);
     return new Response(
