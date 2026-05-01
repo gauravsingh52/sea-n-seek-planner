@@ -373,6 +373,26 @@ export default function Index() {
           onOpenChange={setHistoryOpen}
         />
       </div>
+
+      {/* Login prompt for guests */}
+      <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">You've used your free chats! 🎒</DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              Sign up for a free account and get <strong>10 credits every day</strong> to plan unlimited trips.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-4">
+            <Button onClick={() => navigate("/auth")} className="earth-gradient text-primary-foreground gap-2">
+              <LogIn className="w-4 h-4" /> Sign up — it's free
+            </Button>
+            <Button variant="ghost" onClick={() => setShowLoginPrompt(false)}>
+              Maybe later
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
