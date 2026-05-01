@@ -58,7 +58,8 @@ export default function Index() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions, triggerComparison } = useChat();
   const { setItinerary } = useTrip();
-  const { credits, refreshCredits } = useAuthContext();
+  const { user, credits, refreshCredits } = useAuthContext();
+  const isGuest = !user;
   const { count: savedCount } = useSavedTrips();
   const { sessions, saveSession, saveSessionDirect, renameSession, deleteSession, clearAll: clearHistory } = useChatHistory();
   const { suggestions: geoSuggestions, locationLabel: geoLabel, isLoading: geoLoading, countryCode } = useGeoSuggestions();
