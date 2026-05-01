@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Trash2, Map, ArrowRight, Sun, Moon, Bookmark, MessageSquare } from "lucide-react";
+import { Send, Trash2, Map, ArrowRight, Sun, Moon, Bookmark, MessageSquare, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
