@@ -113,42 +113,49 @@ serve(async (req) => {
       );
     }
 
-    // Auth check - extract user from JWT
+    // Auth check - extract user from JWT (guest mode allowed)
     const authHeader = req.headers.get("authorization") || "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const supabaseClient = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    let user = null;
+    let isGuest = false;
+    let creditResult: number | null = null;
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Please sign in to use the chat" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Try to authenticate - if no valid token, treat as guest
+    if (authHeader && authHeader !== `Bearer ${supabaseKey}`) {
+      const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user: authUser } } = await supabaseClient.auth.getUser();
+      user = authUser;
     }
 
-    // Deduct credit using admin client
-    const { data: creditResult, error: creditError } = await supabaseAdmin.rpc("deduct_credit", {
-      p_user_id: user.id,
-    });
+    if (user) {
+      // Authenticated user - deduct credit
+      const { data, error: creditError } = await supabaseAdmin.rpc("deduct_credit", {
+        p_user_id: user.id,
+      });
+      creditResult = data;
 
-    if (creditError) {
-      console.error("Credit deduction error:", creditError);
-      return new Response(
-        JSON.stringify({ error: "Credit system error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+      if (creditError) {
+        console.error("Credit deduction error:", creditError);
+        return new Response(
+          JSON.stringify({ error: "Credit system error" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    if (creditResult === -1) {
-      return new Response(
-        JSON.stringify({ error: "You've used all your credits! No credits remaining.", code: "NO_CREDITS" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (creditResult === -1) {
+        return new Response(
+          JSON.stringify({ error: "You've used all your credits! No credits remaining.", code: "NO_CREDITS" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      // Guest mode - no server-side limit, client enforces 3 message cap
+      isGuest = true;
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
