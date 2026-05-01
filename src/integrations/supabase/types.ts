@@ -44,6 +44,7 @@ export type Database = {
           credits: number
           display_name: string | null
           id: string
+          last_credit_refresh: string
           updated_at: string
           user_id: string
         }
@@ -52,6 +53,7 @@ export type Database = {
           credits?: number
           display_name?: string | null
           id?: string
+          last_credit_refresh?: string
           updated_at?: string
           user_id: string
         }
@@ -60,6 +62,7 @@ export type Database = {
           credits?: number
           display_name?: string | null
           id?: string
+          last_credit_refresh?: string
           updated_at?: string
           user_id?: string
         }
@@ -130,6 +133,7 @@ export type Database = {
     }
     Functions: {
       deduct_credit: { Args: { p_user_id: string }; Returns: number }
+      refresh_daily_credits: { Args: { p_user_id: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

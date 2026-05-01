@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Trash2, Map, ArrowRight, Sun, Moon, Bookmark, MessageSquare } from "lucide-react";
+import { Send, Trash2, Map, ArrowRight, Sun, Moon, Bookmark, MessageSquare, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatMessage } from "@/components/ChatMessage";
@@ -58,7 +59,8 @@ export default function Index() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const { messages, isLoading, sendMessage, clearChat, loadChat, latestItinerary, comparisonItineraries, followUpSuggestions, triggerComparison } = useChat();
   const { setItinerary } = useTrip();
-  const { credits, refreshCredits } = useAuthContext();
+  const { user, credits, refreshCredits } = useAuthContext();
+  const isGuest = !user;
   const { count: savedCount } = useSavedTrips();
   const { sessions, saveSession, saveSessionDirect, renameSession, deleteSession, clearAll: clearHistory } = useChatHistory();
   const { suggestions: geoSuggestions, locationLabel: geoLabel, isLoading: geoLoading, countryCode } = useGeoSuggestions();
@@ -107,15 +109,32 @@ export default function Index() {
     }
   }, [messages]);
 
+  const GUEST_LIMIT = 3;
+  const [guestCount, setGuestCount] = useState(() => {
+    return parseInt(localStorage.getItem("tripmap_guest_chats") || "0", 10);
+  });
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
   const handleSendWithCredits = useCallback((text: string) => {
+    if (isGuest) {
+      if (guestCount >= GUEST_LIMIT) {
+        setShowLoginPrompt(true);
+        return;
+      }
+      const newCount = guestCount + 1;
+      setGuestCount(newCount);
+      localStorage.setItem("tripmap_guest_chats", String(newCount));
+      sendMessage(text, tripSettings);
+      return;
+    }
     if (credits <= 0) {
-      toast.error("No credits remaining! You've used all 10 credits.");
+      toast.error("No credits remaining! Credits refresh daily.");
       return;
     }
     sendMessage(text, tripSettings, (remaining) => {
       refreshCredits();
     });
-  }, [credits, sendMessage, tripSettings, refreshCredits]);
+  }, [isGuest, guestCount, credits, sendMessage, tripSettings, refreshCredits]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -354,6 +373,26 @@ export default function Index() {
           onOpenChange={setHistoryOpen}
         />
       </div>
+
+      {/* Login prompt for guests */}
+      <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">You've used your free chats! 🎒</DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              Sign up for a free account and get <strong>10 credits every day</strong> to plan unlimited trips.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-4">
+            <Button onClick={() => navigate("/auth")} className="earth-gradient text-primary-foreground gap-2">
+              <LogIn className="w-4 h-4" /> Sign up — it's free
+            </Button>
+            <Button variant="ghost" onClick={() => setShowLoginPrompt(false)}>
+              Maybe later
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

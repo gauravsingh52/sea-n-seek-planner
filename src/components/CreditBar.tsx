@@ -4,9 +4,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 interface CreditBarProps {
   credits: number;
   maxCredits?: number;
+  label?: string;
 }
 
-export function CreditBar({ credits, maxCredits = 10 }: CreditBarProps) {
+export function CreditBar({ credits, maxCredits = 10, label }: CreditBarProps) {
   const pct = Math.max(0, Math.min(100, (credits / maxCredits) * 100));
   const isLow = credits <= 2;
 
@@ -31,8 +32,10 @@ export function CreditBar({ credits, maxCredits = 10 }: CreditBarProps) {
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        <p>{credits} credits remaining out of {maxCredits}</p>
-        <p className="text-xs text-muted-foreground">1 credit per chat message</p>
+        <p>{label ? `${label}: ` : ""}{credits} {label === "Guest" ? "free chats" : "credits"} remaining out of {maxCredits}</p>
+        <p className="text-xs text-muted-foreground">
+          {label === "Guest" ? "Sign in for 10 daily credits!" : "1 credit per chat · resets daily"}
+        </p>
       </TooltipContent>
     </Tooltip>
   );
