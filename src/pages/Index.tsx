@@ -108,15 +108,32 @@ export default function Index() {
     }
   }, [messages]);
 
+  const GUEST_LIMIT = 3;
+  const [guestCount, setGuestCount] = useState(() => {
+    return parseInt(localStorage.getItem("tripmap_guest_chats") || "0", 10);
+  });
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
   const handleSendWithCredits = useCallback((text: string) => {
+    if (isGuest) {
+      if (guestCount >= GUEST_LIMIT) {
+        setShowLoginPrompt(true);
+        return;
+      }
+      const newCount = guestCount + 1;
+      setGuestCount(newCount);
+      localStorage.setItem("tripmap_guest_chats", String(newCount));
+      sendMessage(text, tripSettings);
+      return;
+    }
     if (credits <= 0) {
-      toast.error("No credits remaining! You've used all 10 credits.");
+      toast.error("No credits remaining! Credits refresh daily.");
       return;
     }
     sendMessage(text, tripSettings, (remaining) => {
       refreshCredits();
     });
-  }, [credits, sendMessage, tripSettings, refreshCredits]);
+  }, [isGuest, guestCount, credits, sendMessage, tripSettings, refreshCredits]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
