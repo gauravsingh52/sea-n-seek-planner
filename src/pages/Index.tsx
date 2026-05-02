@@ -110,8 +110,21 @@ export default function Index() {
   }, [messages]);
 
   const GUEST_LIMIT = 3;
+  const GUEST_RESET_HOURS = 24;
   const [guestCount, setGuestCount] = useState(() => {
-    return parseInt(localStorage.getItem("tripmap_guest_chats") || "0", 10);
+    try {
+      const raw = localStorage.getItem("tripmap_guest_chats");
+      if (!raw) return 0;
+      const data = JSON.parse(raw);
+      const elapsed = Date.now() - (data.timestamp || 0);
+      if (elapsed >= GUEST_RESET_HOURS * 60 * 60 * 1000) {
+        localStorage.setItem("tripmap_guest_chats", JSON.stringify({ count: 0, timestamp: Date.now() }));
+        return 0;
+      }
+      return data.count || 0;
+    } catch {
+      return 0;
+    }
   });
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
