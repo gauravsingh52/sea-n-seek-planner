@@ -136,7 +136,8 @@ export default function Index() {
       }
       const newCount = guestCount + 1;
       setGuestCount(newCount);
-      localStorage.setItem("tripmap_guest_chats", String(newCount));
+      const existing = JSON.parse(localStorage.getItem("tripmap_guest_chats") || "{}");
+      localStorage.setItem("tripmap_guest_chats", JSON.stringify({ count: newCount, timestamp: existing.timestamp || Date.now() }));
       sendMessage(text, tripSettings);
       return;
     }
