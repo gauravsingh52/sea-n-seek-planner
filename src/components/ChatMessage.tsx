@@ -17,6 +17,7 @@ interface ChatMessageProps {
   message: Message;
   hasItinerary?: boolean;
   onCompare?: () => void;
+  isStreaming?: boolean;
 }
 
 export function ChatMessage({ message, hasItinerary, onCompare }: ChatMessageProps) {
