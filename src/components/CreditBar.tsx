@@ -5,9 +5,10 @@ interface CreditBarProps {
   credits: number;
   maxCredits?: number;
   label?: string;
+  resetLabel?: string;
 }
 
-export function CreditBar({ credits, maxCredits = 10, label }: CreditBarProps) {
+export function CreditBar({ credits, maxCredits = 10, label, resetLabel }: CreditBarProps) {
   const pct = Math.max(0, Math.min(100, (credits / maxCredits) * 100));
   const isLow = credits <= 2;
 
@@ -33,6 +34,7 @@ export function CreditBar({ credits, maxCredits = 10, label }: CreditBarProps) {
       </TooltipTrigger>
       <TooltipContent>
         <p>{label ? `${label}: ` : ""}{credits} {label === "Guest" ? "free chats" : "credits"} remaining out of {maxCredits}</p>
+        {resetLabel && <p className="text-xs text-primary font-medium">{resetLabel}</p>}
         <p className="text-xs text-muted-foreground">
           {label === "Guest" ? "Sign in for 10 daily credits!" : "1 credit per chat · resets daily"}
         </p>
