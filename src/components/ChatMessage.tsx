@@ -56,7 +56,7 @@ export function ChatMessage({ message, hasItinerary, onCompare, isStreaming }: C
           {isUser ? (
             <p>{message.content}</p>
           ) : (
-            <AssistantContent content={message.content} />
+            <AssistantContent content={message.content} isStreaming={isStreaming} />
           )}
         </div>
         {!isUser && hasItinerary && onCompare && (
