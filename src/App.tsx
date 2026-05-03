@@ -48,6 +48,7 @@ const App = () => (
               <Route path="/itinerary" element={<ProtectedRoute><Itinerary /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><SavedTrips /></ProtectedRoute>} />
               <Route path="/trip/:shareCode" element={<SharedTrip />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
