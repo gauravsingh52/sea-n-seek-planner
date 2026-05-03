@@ -3,14 +3,12 @@ import remarkGfm from "remark-gfm";
 import { MapPin, Navigation, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Message } from "@/hooks/useChat";
-import { useTypingEffect } from "@/hooks/useTypingEffect";
 
-function AssistantContent({ content }: { content: string }) {
-  const { displayed, isTyping } = useTypingEffect(content);
+function AssistantContent({ content, isStreaming }: { content: string; isStreaming?: boolean }) {
   return (
     <div className="prose prose-sm max-w-none prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-td:text-foreground prose-th:text-foreground prose-a:text-primary overflow-x-auto">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayed}</ReactMarkdown>
-      {isTyping && <span className="typing-cursor">▍</span>}
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      {isStreaming && <span className="typing-cursor">▍</span>}
     </div>
   );
 }
