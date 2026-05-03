@@ -12,6 +12,7 @@ import SavedTrips from "./pages/SavedTrips";
 import SharedTrip from "./pages/SharedTrip";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
