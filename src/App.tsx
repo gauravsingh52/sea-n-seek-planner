@@ -12,6 +12,7 @@ import SavedTrips from "./pages/SavedTrips";
 import SharedTrip from "./pages/SharedTrip";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/itinerary" element={<ProtectedRoute><Itinerary /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><SavedTrips /></ProtectedRoute>} />
               <Route path="/trip/:shareCode" element={<SharedTrip />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

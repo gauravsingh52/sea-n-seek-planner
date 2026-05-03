@@ -1,38 +1,59 @@
 
-## Three Fixes
+## 1. Fix Itinerary PDF Export
 
-### 1. Daily Reset for Guest 3-Chat Limit
+The `ExportPDF` component already exists and works. The issue title says "sea trip plan" but this likely means any trip. I'll review and ensure the export works correctly from the Itinerary page — it's already wired up. No changes needed unless there's an actual bug.
 
-**Problem:** Guest chat count in `localStorage` never resets, so guests get only 3 chats ever.
+**If there is a rendering bug**: Will inspect and fix jsPDF output (encoding, page breaks, currency symbols).
 
-**Fix:** Store a timestamp alongside the guest count in `localStorage`. On each visit, check if 24 hours have passed since the timestamp was set. If so, reset the count to 0.
+## 2. Currency API Rate Caching with Retries
 
-| File | Change |
+**Current issue**: Single fetch attempt, no caching — if the API fails, users see fallback rates with no retry.
+
+**Changes to `src/components/CurrencyConverter.tsx`**:
+- Cache fetched rates in `localStorage` with a timestamp (key: `tripmap_exchange_rates`)
+- On mount, load cached rates immediately if less than 1 hour old (show as live)
+- Fetch fresh rates with up to 3 retry attempts (exponential backoff: 1s, 2s, 4s)
+- If all retries fail, fall back to cached rates (if any) before using hardcoded fallback
+- Show "Cached rates" / "Live rates" / "Approximate rates" label accordingly
+
+## 3. Guest Usage Meter with Reset Timer
+
+**Current issue**: Guest `CreditBar` in `UserMenu` shows remaining chats but no reset countdown.
+
+**Changes to `src/components/UserMenu.tsx`**:
+- Read the `tripmap_guest_chats` JSON from localStorage to get the timestamp
+- Calculate time remaining until 24h reset
+- Display a countdown like "Resets in 5h 23m" below the credit bar
+- Auto-update the countdown every minute using `setInterval`
+
+**Changes to `src/components/CreditBar.tsx`**:
+- Add optional `resetLabel` prop to display reset time info in the tooltip and inline
+
+## 4. Upgrade/Pricing Plan Page
+
+Create a pricing/upgrade page so users can see plan tiers for future monetization.
+
+**New file `src/pages/Pricing.tsx`**:
+- Three-tier pricing cards: Free, Pro, Premium
+- Free: 10 credits/day, 3 guest chats, basic itinerary
+- Pro: 50 credits/day, priority AI, PDF export, collaboration
+- Premium: Unlimited credits, API access, custom branding, priority support
+- "Current Plan" badge on Free tier for logged-in users
+- "Coming Soon" badge on Pro/Premium with email interest collection
+- Styled consistently with the app's glassmorphism theme
+
+**Changes to `src/App.tsx`**:
+- Add `/pricing` route
+
+**Changes to `src/components/UserMenu.tsx`**:
+- Add "Upgrade Plan" menu item linking to `/pricing`
+
+## Technical Details
+
+| File | Action |
 |------|--------|
-| `src/pages/Index.tsx` | Store `tripmap_guest_chats` as JSON `{ count, timestamp }`. On init, check if 24h elapsed; if so, reset to 0. |
-
-### 2. Rebuild Project Presentation (.pptx)
-
-**Problem:** The previous presentation was low quality.
-
-**Fix:** Create a professional, college-level presentation from scratch using `pptxgenjs` with:
-- Bold color palette (deep navy + gold accent), consistent design across all slides
-- Proper slide layouts: title slide, problem/solution, features showcase, tech stack, architecture, credit system, demo walkthrough, future roadmap, Q&A
-- Visual elements on every slide (icons, stat callouts, colored blocks, two-column layouts)
-- Professional typography and spacing
-- ~10 slides total
-
-Output: `/mnt/documents/TripMap_Planner_Presentation.pptx`
-
-### 3. Fix Currency Converter
-
-**Problem:** The converter uses static hardcoded exchange rates and may not render/function correctly.
-
-**Fix:**
-- Replace static rates with a free exchange rate API (ExchangeRate-API or similar) fetched on component mount
-- Add loading state and error fallback to the static rates
-- Ensure the component renders correctly with proper state handling
-
-| File | Change |
-|------|--------|
-| `src/components/CurrencyConverter.tsx` | Add `useEffect` to fetch live rates from a free API (e.g., `https://open.er-api.com/v6/latest/USD`). Fall back to static rates on error. Add loading spinner. |
+| `src/components/CurrencyConverter.tsx` | Add localStorage caching + 3 retries with backoff |
+| `src/components/UserMenu.tsx` | Add reset countdown for guests + upgrade link |
+| `src/components/CreditBar.tsx` | Add optional `resetLabel` prop |
+| `src/pages/Pricing.tsx` | New pricing page with 3 tiers |
+| `src/App.tsx` | Add `/pricing` route |
