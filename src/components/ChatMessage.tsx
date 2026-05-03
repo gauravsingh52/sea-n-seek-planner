@@ -20,7 +20,7 @@ interface ChatMessageProps {
   isStreaming?: boolean;
 }
 
-export function ChatMessage({ message, hasItinerary, onCompare }: ChatMessageProps) {
+export function ChatMessage({ message, hasItinerary, onCompare, isStreaming }: ChatMessageProps) {
   const isUser = message.role === "user";
 
   return (
