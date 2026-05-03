@@ -309,6 +309,7 @@ export default function Index() {
                       message={msg}
                       hasItinerary={hasItinerary}
                       onCompare={() => triggerComparison(tripSettings)}
+                      isStreaming={isLoading && idx === messages.length - 1 && msg.role === "assistant"}
                     />
                   );
                 })}
