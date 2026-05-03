@@ -3,14 +3,12 @@ import remarkGfm from "remark-gfm";
 import { MapPin, Navigation, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Message } from "@/hooks/useChat";
-import { useTypingEffect } from "@/hooks/useTypingEffect";
 
-function AssistantContent({ content }: { content: string }) {
-  const { displayed, isTyping } = useTypingEffect(content);
+function AssistantContent({ content, isStreaming }: { content: string; isStreaming?: boolean }) {
   return (
     <div className="prose prose-sm max-w-none prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-td:text-foreground prose-th:text-foreground prose-a:text-primary overflow-x-auto">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayed}</ReactMarkdown>
-      {isTyping && <span className="typing-cursor">▍</span>}
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      {isStreaming && <span className="typing-cursor">▍</span>}
     </div>
   );
 }
@@ -19,9 +17,10 @@ interface ChatMessageProps {
   message: Message;
   hasItinerary?: boolean;
   onCompare?: () => void;
+  isStreaming?: boolean;
 }
 
-export function ChatMessage({ message, hasItinerary, onCompare }: ChatMessageProps) {
+export function ChatMessage({ message, hasItinerary, onCompare, isStreaming }: ChatMessageProps) {
   const isUser = message.role === "user";
 
   return (
@@ -57,7 +56,7 @@ export function ChatMessage({ message, hasItinerary, onCompare }: ChatMessagePro
           {isUser ? (
             <p>{message.content}</p>
           ) : (
-            <AssistantContent content={message.content} />
+            <AssistantContent content={message.content} isStreaming={isStreaming} />
           )}
         </div>
         {!isUser && hasItinerary && onCompare && (
