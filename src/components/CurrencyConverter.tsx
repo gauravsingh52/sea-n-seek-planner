@@ -110,7 +110,7 @@ export function CurrencyConverter({ baseCurrency }: { baseCurrency?: string }) {
     : "Approximate rates for reference only";
 
   return (
-    <Card className="glass-strong gradient-border">
+    <Card className="glass-strong gradient-border relative z-10">
       <CardHeader className="py-4 px-5">
         <CardTitle className="text-base font-display gradient-text mb-3 flex items-center gap-2">
           💱 Currency Converter
