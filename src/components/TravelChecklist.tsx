@@ -51,7 +51,7 @@ export function TravelChecklist({ tripId }: { tripId?: string }) {
   const total = items.length;
 
   return (
-    <Card className="glass-strong gradient-border">
+    <Card className="glass-strong gradient-border relative z-10">
       <CardHeader className="py-4 px-5">
         <CardTitle className="text-base font-display gradient-text mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
