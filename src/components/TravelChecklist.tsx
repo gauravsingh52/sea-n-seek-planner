@@ -51,7 +51,7 @@ export function TravelChecklist({ tripId }: { tripId?: string }) {
   const total = items.length;
 
   return (
-    <Card className="glass-strong gradient-border">
+    <Card className="glass-strong gradient-border relative z-10">
       <CardHeader className="py-4 px-5">
         <CardTitle className="text-base font-display gradient-text mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
@@ -71,7 +71,7 @@ export function TravelChecklist({ tripId }: { tripId?: string }) {
 
         <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
           {items.map((item) => (
-            <label
+            <div
               key={item.id}
               className="flex items-center gap-2.5 group cursor-pointer py-1.5 px-1 rounded-lg hover:bg-muted/30 transition-colors"
             >
@@ -101,7 +101,7 @@ export function TravelChecklist({ tripId }: { tripId?: string }) {
               >
                 <X className="w-3 h-3" />
               </button>
-            </label>
+            </div>
           ))}
         </div>
 
